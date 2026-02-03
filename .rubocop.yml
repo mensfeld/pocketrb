@@ -1,3 +1,5 @@
+inherit_from: .rubocop_todo.yml
+
 require:
   - rubocop-rspec
   - rubocop-performance
@@ -25,11 +27,6 @@ Metrics/AbcSize:
 
 Metrics/ClassLength:
   Max: 200
-
-Metrics/BlockLength:
-  Exclude:
-    - 'spec/**/*'
-    - '*.gemspec'
 
 Layout/LineLength:
   Max: 120
