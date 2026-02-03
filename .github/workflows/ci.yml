@@ -15,23 +15,16 @@ jobs:
   specs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby:
-          - '3.2'
-          - '3.3'
-          - '3.4'
     steps:
       - uses: actions/checkout@v4
-      - name: Install Ruby ${{ matrix.ruby }}
+      - name: Install Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby }}
+          ruby-version: '4.0.1'
           bundler-cache: true
       - run: bundle exec rspec
         env:
-          COVERAGE: ${{ matrix.ruby == '3.4' }}
+          COVERAGE: true
 
   rubocop:
     runs-on: ubuntu-latest
@@ -41,7 +34,7 @@ jobs:
       - name: Install Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
+          ruby-version: '4.0.1'
           bundler-cache: true
       - run: bundle exec rubocop
 
@@ -53,7 +46,7 @@ jobs:
       - name: Install Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
+          ruby-version: '4.0.1'
           bundler-cache: true
       - run: bundle exec yard-lint lib/**/*.rb
 
