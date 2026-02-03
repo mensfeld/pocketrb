@@ -1,0 +1,76 @@
+# frozen_string_literal: true
+
+module Pocketrb
+  module Tools
+    # Tool for sending messages to chat channels programmatically
+    class Message < Base
+      def name
+        "message"
+      end
+
+      def description
+        "Send a message to a chat channel. Use this to proactively communicate with users, send notifications, or respond on specific channels."
+      end
+
+      def parameters
+        {
+          type: "object",
+          properties: {
+            content: {
+              type: "string",
+              description: "The message content to send"
+            },
+            channel: {
+              type: "string",
+              description: "Target channel (telegram, whatsapp, cli). Uses default if not specified."
+            },
+            chat_id: {
+              type: "string",
+              description: "Recipient chat ID. Uses default if not specified."
+            }
+          },
+          required: ["content"]
+        }
+      end
+
+      def execute(content:, channel: nil, chat_id: nil)
+        # Use defaults from context if not provided
+        channel = (channel || @context[:default_channel])&.to_sym
+        chat_id = chat_id || @context[:default_chat_id]
+
+        unless channel
+          return error("No channel specified and no default channel in context")
+        end
+
+        unless chat_id
+          return error("No chat_id specified and no default chat_id in context")
+        end
+
+        unless bus
+          return error("Message bus not available in context")
+        end
+
+        outbound = Bus::OutboundMessage.new(
+          channel: channel,
+          chat_id: chat_id,
+          content: content
+        )
+
+        bus.publish_outbound(outbound)
+        Pocketrb.logger.info("Message sent to #{channel}:#{chat_id}")
+
+        success("Message sent to #{channel}:#{chat_id}")
+      end
+
+      def available?
+        !bus.nil?
+      end
+
+      private
+
+      def bus
+        @context[:bus]
+      end
+    end
+  end
+end
