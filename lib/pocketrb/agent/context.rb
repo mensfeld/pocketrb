@@ -90,14 +90,10 @@ module Pocketrb
         parts = [@system_prompt]
 
         # Add workspace info
-        if @workspace
-          parts << "Working directory: #{@workspace}"
-        end
+        parts << "Working directory: #{@workspace}" if @workspace
 
         # Add skills summary
-        if @skills_summary && !@skills_summary.empty?
-          parts << "Available skills:\n#{@skills_summary}"
-        end
+        parts << "Available skills:\n#{@skills_summary}" if @skills_summary && !@skills_summary.empty?
 
         # Add memory context (passed directly or fetched from QMD)
         if memory_context && !memory_context.empty?
@@ -105,9 +101,7 @@ module Pocketrb
         elsif @qmd_memory && current_message
           # Fetch relevant context from QMD memory based on current message
           qmd_context = get_memory_context(current_message)
-          if qmd_context && !qmd_context.empty?
-            parts << "Relevant context from memory:\n#{qmd_context}"
-          end
+          parts << "Relevant context from memory:\n#{qmd_context}" if qmd_context && !qmd_context.empty?
         end
 
         # Add timestamp

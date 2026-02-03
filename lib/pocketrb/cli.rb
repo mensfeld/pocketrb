@@ -2,11 +2,14 @@
 
 require "thor"
 
+# Main namespace for Pocketrb gem
 module Pocketrb
   # Command-line interface
   class CLI < Thor
     include Thor::Actions
 
+    # Configures Thor to exit with error status on command failure
+    # @return [Boolean] true to exit on failure
     def self.exit_on_failure?
       true
     end
@@ -23,6 +26,8 @@ module Pocketrb
     option :provider, type: :string, aliases: "-p", desc: "LLM provider (anthropic, openrouter)"
     option :channel, type: :string, aliases: "-c", default: "cli", desc: "Channel to connect to"
     option :no_qmd, type: :boolean, desc: "Disable QMD memory integration"
+    # Starts the agent in continuous mode with CLI channel
+    # @return [void]
     def start
       setup_logging
       workspace = resolve_workspace
@@ -64,6 +69,8 @@ module Pocketrb
     option :provider, type: :string, aliases: "-p", desc: "LLM provider"
     option :system_prompt, type: :string, aliases: "-s", desc: "Custom system prompt"
     option :no_qmd, type: :boolean, desc: "Disable QMD memory integration"
+    # Starts an interactive chat session with the agent
+    # @return [void]
     def chat
       setup_logging
       workspace = resolve_workspace
@@ -160,6 +167,8 @@ module Pocketrb
     }
 
     desc "init", "Initialize a new Pocketrb workspace"
+    # Initializes a new Pocketrb workspace with config and default structure
+    # @return [void]
     def init
       workspace = resolve_workspace
       config_dir = workspace.join(".pocketrb")
@@ -176,9 +185,7 @@ module Pocketrb
 
       # Create default TOOLS.md
       tools_file = workspace.join("TOOLS.md")
-      unless tools_file.exist?
-        File.write(tools_file, default_tools_content)
-      end
+      File.write(tools_file, default_tools_content) unless tools_file.exist?
 
       say "Initialized Pocketrb workspace at #{workspace}", :green
       say "  - Created .pocketrb/config.yml"
@@ -189,11 +196,15 @@ module Pocketrb
     end
 
     desc "version", "Show version"
+    # Displays the current Pocketrb version
+    # @return [void]
     def version
       say "Pocketrb #{VERSION}"
     end
 
     desc "skills", "List available skills"
+    # Lists all available skills from the workspace skills directory
+    # @return [void]
     def skills
       workspace = resolve_workspace
       loader = Skills::Loader.new(workspace: workspace)
@@ -208,14 +219,16 @@ module Pocketrb
       skills.each do |skill|
         flags = []
         flags << "always" if skill.always?
-        flags << "triggers: #{skill.triggers.join(', ')}" if skill.triggers.any?
+        flags << "triggers: #{skill.triggers.join(", ")}" if skill.triggers.any?
 
-        flag_str = flags.any? ? " (#{flags.join(', ')})" : ""
+        flag_str = flags.any? ? " (#{flags.join(", ")})" : ""
         say "  - #{skill.name}: #{skill.description}#{flag_str}"
       end
     end
 
     desc "plans", "List active plans"
+    # Lists all active execution plans in the workspace
+    # @return [void]
     def plans
       workspace = resolve_workspace
       manager = Planning::Manager.new(workspace: workspace)
@@ -246,7 +259,7 @@ module Pocketrb
 
         if qmd.connect
           say "  Status: Connected", :green
-          say "  Server: #{qmd.client.instance_variable_get(:@server_info)&.dig('name') || 'unknown'}"
+          say "  Server: #{qmd.client.instance_variable_get(:@server_info)&.dig("name") || "unknown"}"
         else
           say "  Status: Not connected", :yellow
           say "  Make sure QMD server is running at #{endpoint}"
@@ -281,10 +294,10 @@ module Pocketrb
           say "  #{results[:local][0..300]}"
         end
 
-        if results[:daily]
-          say "\nDaily notes:", :green
-          say "  #{results[:daily][0..300]}"
-        end
+        return unless results[:daily]
+
+        say "\nDaily notes:", :green
+        say "  #{results[:daily][0..300]}"
       end
 
       desc "store CONTENT", "Store content to memory"
@@ -341,11 +354,13 @@ module Pocketrb
     option :provider, type: :string, aliases: "-p", desc: "LLM provider"
     option :token, type: :string, aliases: "-t", desc: "Telegram bot token (or TELEGRAM_BOT_TOKEN env)"
     option :allowed_users, type: :array, aliases: "-u", desc: "Allowed usernames or user IDs"
+    # Runs the agent as a Telegram bot
+    # @return [void]
     def telegram
       setup_logging
       workspace = resolve_workspace
 
-      token = options[:token] || ENV["TELEGRAM_BOT_TOKEN"]
+      token = options[:token] || ENV.fetch("TELEGRAM_BOT_TOKEN", nil)
       unless token
         say "Error: Telegram bot token required", :red
         say "Set TELEGRAM_BOT_TOKEN env var or use --token", :yellow
@@ -391,6 +406,8 @@ module Pocketrb
     option :provider, type: :string, aliases: "-p", desc: "LLM provider"
     option :bridge_url, type: :string, default: "ws://localhost:3001", desc: "WhatsApp bridge WebSocket URL"
     option :allowed_users, type: :array, aliases: "-u", desc: "Allowed phone numbers"
+    # Runs the agent as a WhatsApp bot using a WebSocket bridge
+    # @return [void]
     def whatsapp
       setup_logging
       workspace = resolve_workspace
@@ -440,6 +457,8 @@ module Pocketrb
     option :heartbeat_interval, type: :numeric, default: 1800, desc: "Heartbeat interval in seconds"
     option :enable_cron, type: :boolean, default: true, desc: "Enable cron service"
     option :enable_heartbeat, type: :boolean, default: true, desc: "Enable heartbeat service"
+    # Starts the gateway with all configured services (Telegram, WhatsApp, cron, heartbeat)
+    # @return [void]
     def gateway
       setup_logging
       workspace = resolve_workspace
@@ -467,7 +486,7 @@ module Pocketrb
       services = []
 
       # Start Telegram if token provided
-      telegram_token = options[:telegram_token] || ENV["TELEGRAM_BOT_TOKEN"]
+      telegram_token = options[:telegram_token] || ENV.fetch("TELEGRAM_BOT_TOKEN", nil)
       if telegram_token
         channels << Channels::Telegram.new(
           bus: bus,
@@ -663,7 +682,7 @@ module Pocketrb
       end
 
       desc "trigger JOB_ID", "Trigger a job manually"
-      def trigger(job_id)
+      def trigger(_job_id)
         say "Manual job execution requires running gateway", :yellow
         say "Use 'pocketrb gateway' and the job will be executed", :yellow
       end

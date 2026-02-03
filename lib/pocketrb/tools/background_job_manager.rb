@@ -174,9 +174,17 @@ module Pocketrb
           pid_file = File.join(job_dir, "pid")
           next nil unless File.exist?(pid_file)
 
-          pid = File.read(pid_file).strip.to_i rescue 0
+          pid = begin
+            File.read(pid_file).strip.to_i
+          rescue StandardError
+            0
+          end
           running = pid.positive? && process_running?(pid)
-          created = File.mtime(job_dir) rescue Time.now
+          created = begin
+            File.mtime(job_dir)
+          rescue StandardError
+            Time.now
+          end
 
           { dir: job_dir, running: running, created: created }
         end

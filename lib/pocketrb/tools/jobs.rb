@@ -58,9 +58,7 @@ module Pocketrb
       def list_jobs
         jobs = job_manager.list
 
-        if jobs.empty?
-          return "No background jobs found."
-        end
+        return "No background jobs found." if jobs.empty?
 
         output = ["Background Jobs:\n"]
 
@@ -95,7 +93,7 @@ module Pocketrb
         <<~STATUS
           Job: #{status[:job_id]}
           Name: #{status[:name]}
-          Status: #{status[:running] ? 'RUNNING' : 'COMPLETED'}
+          Status: #{status[:running] ? "RUNNING" : "COMPLETED"}
           PID: #{status[:pid]}
           Command: #{status[:command]}
 

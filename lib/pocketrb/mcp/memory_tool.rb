@@ -72,9 +72,7 @@ module Pocketrb
 
         results = @client.search(query: query, limit: limit)
 
-        if results.nil? || results.empty?
-          return "No relevant memories found for: #{query}"
-        end
+        return "No relevant memories found for: #{query}" if results.nil? || results.empty?
 
         format_search_results(results, query)
       rescue MCPError => e
@@ -92,7 +90,7 @@ module Pocketrb
         result = @client.store(content: content, metadata: metadata)
 
         if result
-          success("Stored to memory: #{content[0..100]}#{content.length > 100 ? '...' : ''}")
+          success("Stored to memory: #{content[0..100]}#{"..." if content.length > 100}")
         else
           error("Failed to store to memory")
         end
@@ -126,7 +124,7 @@ module Pocketrb
 
         parts = ["#{index}. #{content[0..500]}"]
         parts << "   Score: #{score.round(3)}" if score
-        parts << "   Tags: #{tags.join(', ')}" if tags && !tags.empty?
+        parts << "   Tags: #{tags.join(", ")}" if tags && !tags.empty?
 
         parts.join("\n")
       end

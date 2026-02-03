@@ -39,9 +39,7 @@ module Pocketrb
       end
 
       def execute(query:, count: 5)
-        unless api_key
-          return error("Web search requires BRAVE_API_KEY environment variable")
-        end
+        return error("Web search requires BRAVE_API_KEY environment variable") unless api_key
 
         count = [[count, 1].max, 20].min
 
@@ -50,9 +48,7 @@ module Pocketrb
           req.params["count"] = count
         end
 
-        unless response.success?
-          return error("Search failed: #{response.status}")
-        end
+        return error("Search failed: #{response.status}") unless response.success?
 
         data = JSON.parse(response.body)
         format_results(data, query)
@@ -65,7 +61,7 @@ module Pocketrb
       private
 
       def api_key
-        @context[:brave_api_key] || ENV["BRAVE_API_KEY"]
+        @context[:brave_api_key] || ENV.fetch("BRAVE_API_KEY", nil)
       end
 
       def client
@@ -79,9 +75,7 @@ module Pocketrb
       def format_results(data, query)
         results = data.dig("web", "results") || []
 
-        if results.empty?
-          return "No results found for: #{query}"
-        end
+        return "No results found for: #{query}" if results.empty?
 
         output = ["Search results for: #{query}\n"]
 

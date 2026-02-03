@@ -127,7 +127,9 @@ module Pocketrb
 
       def handle_telegram_message(message)
         return unless message.is_a?(::Telegram::Bot::Types::Message)
-        return unless message.text || message.caption || message.photo || message.voice || message.document || message.audio || message.video
+        unless message.text || message.caption || message.photo || message.voice || message.document || message.audio || message.video
+          return
+        end
 
         user = message.from
         return unless user
@@ -182,25 +184,15 @@ module Pocketrb
         parts << message.caption if message.caption
 
         # Add descriptive text for media (actual media is in media array)
-        if message.photo&.any?
-          parts << "[Image attached - I can see this image]" if @download_media
-        end
+        parts << "[Image attached - I can see this image]" if message.photo&.any? && @download_media
 
-        if message.voice
-          parts << "[Voice message attached]"
-        end
+        parts << "[Voice message attached]" if message.voice
 
-        if message.audio
-          parts << "[Audio: #{message.audio.title || message.audio.file_name || 'audio'}]"
-        end
+        parts << "[Audio: #{message.audio.title || message.audio.file_name || "audio"}]" if message.audio
 
-        if message.video
-          parts << "[Video attached]"
-        end
+        parts << "[Video attached]" if message.video
 
-        if message.document
-          parts << "[Document: #{message.document.file_name}]"
-        end
+        parts << "[Document: #{message.document.file_name}]" if message.document
 
         parts.empty? ? "[empty message]" : parts.join("\n")
       end
@@ -263,7 +255,7 @@ module Pocketrb
         media
       end
 
-      def download_telegram_file(file_id, type, mime_type, filename = nil)
+      def download_telegram_file(file_id, _type, mime_type, filename = nil)
         # Get file path from Telegram
         result = @bot.api.get_file(file_id: file_id)
         file_path = result.dig("result", "file_path")
@@ -296,7 +288,7 @@ module Pocketrb
 
         # Extract and protect code blocks
         code_blocks = []
-        result.gsub!(/```[\w]*\n?([\s\S]*?)```/) do
+        result.gsub!(/```\w*\n?([\s\S]*?)```/) do
           code_blocks << Regexp.last_match(1)
           "\x00CB#{code_blocks.length - 1}\x00"
         end

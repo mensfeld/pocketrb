@@ -66,9 +66,7 @@ module Pocketrb
         work_dir = resolve_working_dir(working_dir)
         return work_dir if work_dir.is_a?(String) && work_dir.start_with?("Error:")
 
-        if dangerous_command?(command)
-          return error("Command blocked for security reasons")
-        end
+        return error("Command blocked for security reasons") if dangerous_command?(command)
 
         # Determine if should run in background
         run_background = background.nil? ? job_manager.long_running?(command) : background
@@ -89,9 +87,8 @@ module Pocketrb
       def resolve_working_dir(working_dir)
         if working_dir
           resolved = resolve_path(working_dir)
-          unless path_allowed?(working_dir)
-            return error("Working directory outside workspace: #{working_dir}")
-          end
+          return error("Working directory outside workspace: #{working_dir}") unless path_allowed?(working_dir)
+
           resolved.to_s
         else
           workspace&.to_s || Dir.pwd
@@ -121,7 +118,7 @@ module Pocketrb
         timeout = explicit_timeout || smart_timeout(command)
         timeout = [timeout, 600].min if timeout
 
-        Pocketrb.logger.debug("Executing: #{command} in #{work_dir} (timeout: #{timeout || 'none'})")
+        Pocketrb.logger.debug("Executing: #{command} in #{work_dir} (timeout: #{timeout || "none"})")
 
         stdout, stderr, status = nil
 
@@ -155,10 +152,10 @@ module Pocketrb
 
       def dangerous_command?(command)
         dangerous_patterns = [
-          /\brm\s+-rf\s+[\/~]/,
+          %r{\brm\s+-rf\s+[/~]},
           /\bmkfs\b/,
-          /\bdd\s+.*of=\/dev/,
-          />\s*\/dev\/sd/,
+          %r{\bdd\s+.*of=/dev},
+          %r{>\s*/dev/sd},
           /\bshutdown\b/,
           /\breboot\b/,
           /\binit\s+0\b/,
@@ -171,23 +168,17 @@ module Pocketrb
       def format_result(stdout, stderr, status)
         output_parts = []
 
-        if status.success?
-          output_parts << "Exit code: 0"
-        else
-          output_parts << "Exit code: #{status.exitstatus}"
-        end
+        output_parts << if status.success?
+                          "Exit code: 0"
+                        else
+                          "Exit code: #{status.exitstatus}"
+                        end
 
-        if stdout && !stdout.empty?
-          output_parts << "STDOUT:\n#{truncate_output(stdout)}"
-        end
+        output_parts << "STDOUT:\n#{truncate_output(stdout)}" if stdout && !stdout.empty?
 
-        if stderr && !stderr.empty?
-          output_parts << "STDERR:\n#{truncate_output(stderr)}"
-        end
+        output_parts << "STDERR:\n#{truncate_output(stderr)}" if stderr && !stderr.empty?
 
-        if stdout.to_s.empty? && stderr.to_s.empty?
-          output_parts << "(no output)"
-        end
+        output_parts << "(no output)" if stdout.to_s.empty? && stderr.to_s.empty?
 
         output_parts.join("\n\n")
       end

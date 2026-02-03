@@ -105,24 +105,28 @@ module Pocketrb
         :text
       end
 
-      def extract_html_content(html, selector)
+      def extract_html_content(html, _selector)
         # Simple HTML to text conversion
         # A full implementation would use nokogiri
         text = html
-          .gsub(/<script[^>]*>.*?<\/script>/mi, "")
-          .gsub(/<style[^>]*>.*?<\/style>/mi, "")
-          .gsub(/<head[^>]*>.*?<\/head>/mi, "")
-          .gsub(/<nav[^>]*>.*?<\/nav>/mi, "")
-          .gsub(/<footer[^>]*>.*?<\/footer>/mi, "")
-          .gsub(/<[^>]+>/, "\n")
-          .gsub(/&nbsp;/, " ")
-          .gsub(/&amp;/, "&")
-          .gsub(/&lt;/, "<")
-          .gsub(/&gt;/, ">")
-          .gsub(/&quot;/, '"')
-          .gsub(/&#\d+;/) { |m| [m[2..-1].to_i].pack("U") rescue m }
-          .gsub(/\n{3,}/, "\n\n")
-          .strip
+               .gsub(%r{<script[^>]*>.*?</script>}mi, "")
+               .gsub(%r{<style[^>]*>.*?</style>}mi, "")
+               .gsub(%r{<head[^>]*>.*?</head>}mi, "")
+               .gsub(%r{<nav[^>]*>.*?</nav>}mi, "")
+               .gsub(%r{<footer[^>]*>.*?</footer>}mi, "")
+               .gsub(/<[^>]+>/, "\n")
+               .gsub("&nbsp;", " ")
+               .gsub("&amp;", "&")
+               .gsub("&lt;", "<")
+               .gsub("&gt;", ">")
+               .gsub("&quot;", '"')
+               .gsub(/&#\d+;/) do |m|
+                 [m[2..].to_i].pack("U")
+        rescue StandardError
+          m
+        end
+               .gsub(/\n{3,}/, "\n\n")
+               .strip
 
         # Clean up whitespace
         text.lines.map(&:strip).reject(&:empty?).join("\n")

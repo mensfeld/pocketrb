@@ -62,9 +62,7 @@ module Pocketrb
       )
         skill_file = workspace.join("skills", skill_name, "SKILL.md")
 
-        unless skill_file.exist?
-          return error("Skill '#{skill_name}' not found")
-        end
+        return error("Skill '#{skill_name}' not found") unless skill_file.exist?
 
         # Parse existing skill
         content = File.read(skill_file)

@@ -94,10 +94,9 @@ module Pocketrb
       end
 
       def build_ruby_llm_tool(tool)
-        func = tool[:function] || tool
+        tool[:function] || tool
         # RubyLLM uses a different tool format - this would need adaptation
         # based on actual RubyLLM API
-        func
       end
 
       def add_message_to_chat(chat, message)

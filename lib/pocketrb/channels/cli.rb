@@ -22,9 +22,7 @@ module Pocketrb
             next if input.empty?
 
             # Handle special commands
-            if handle_command(input)
-              next
-            end
+            next if handle_command(input)
 
             # Create and publish inbound message
             message = create_inbound_message(

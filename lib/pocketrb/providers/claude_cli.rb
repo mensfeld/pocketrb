@@ -86,9 +86,7 @@ module Pocketrb
           "--verbose"
         ]
 
-        if @config[:system_prompt]
-          args += ["--append-system-prompt", @config[:system_prompt]]
-        end
+        args += ["--append-system-prompt", @config[:system_prompt]] if @config[:system_prompt]
 
         @stdin, @stdout, @stderr, @wait_thread = Open3.popen3(*args)
       end
@@ -113,9 +111,9 @@ module Pocketrb
 
       def validate_config!
         # Check if claude CLI is available
-        unless system("which claude > /dev/null 2>&1")
-          raise ConfigurationError, "Claude CLI not found. Install with: npm install -g @anthropic-ai/claude-code"
-        end
+        return if system("which claude > /dev/null 2>&1")
+
+        raise ConfigurationError, "Claude CLI not found. Install with: npm install -g @anthropic-ai/claude-code"
       end
 
       private
@@ -264,9 +262,7 @@ module Pocketrb
         )
 
         # If there are tool calls, remove them from content
-        if tool_calls.any?
-          content = content.gsub(/```json\s*\{.*?"tool".*?\}\s*```/m, "").strip
-        end
+        content = content.gsub(/```json\s*\{.*?"tool".*?\}\s*```/m, "").strip if tool_calls.any?
 
         LLMResponse.new(
           content: content.empty? ? nil : content,
@@ -285,8 +281,22 @@ module Pocketrb
 
         # Look for JSON tool calls in code blocks
         text.scan(/```json\s*(\{.*?"tool".*?\})\s*```/m) do |match|
-          begin
-            parsed = JSON.parse(match[0])
+          parsed = JSON.parse(match[0])
+          if parsed["tool"]
+            tool_calls << ToolCall.new(
+              id: "cli_#{SecureRandom.hex(8)}",
+              name: parsed["tool"],
+              arguments: parsed["input"] || {}
+            )
+          end
+        rescue JSON::ParserError
+          # Skip malformed JSON
+        end
+
+        # Also try inline JSON
+        if tool_calls.empty?
+          text.scan(/\{"tool"\s*:\s*"\w+"[^}]*\}/m) do |match|
+            parsed = JSON.parse(match)
             if parsed["tool"]
               tool_calls << ToolCall.new(
                 id: "cli_#{SecureRandom.hex(8)}",
@@ -296,24 +306,6 @@ module Pocketrb
             end
           rescue JSON::ParserError
             # Skip malformed JSON
-          end
-        end
-
-        # Also try inline JSON
-        if tool_calls.empty?
-          text.scan(/\{"tool"\s*:\s*"\w+"[^}]*\}/m) do |match|
-            begin
-              parsed = JSON.parse(match)
-              if parsed["tool"]
-                tool_calls << ToolCall.new(
-                  id: "cli_#{SecureRandom.hex(8)}",
-                  name: parsed["tool"],
-                  arguments: parsed["input"] || {}
-                )
-              end
-            rescue JSON::ParserError
-              # Skip malformed JSON
-            end
           end
         end
 

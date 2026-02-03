@@ -36,19 +36,13 @@ module Pocketrb
       def execute(content:, channel: nil, chat_id: nil)
         # Use defaults from context if not provided
         channel = (channel || @context[:default_channel])&.to_sym
-        chat_id = chat_id || @context[:default_chat_id]
+        chat_id ||= @context[:default_chat_id]
 
-        unless channel
-          return error("No channel specified and no default channel in context")
-        end
+        return error("No channel specified and no default channel in context") unless channel
 
-        unless chat_id
-          return error("No chat_id specified and no default chat_id in context")
-        end
+        return error("No chat_id specified and no default chat_id in context") unless chat_id
 
-        unless bus
-          return error("Message bus not available in context")
-        end
+        return error("Message bus not available in context") unless bus
 
         outbound = Bus::OutboundMessage.new(
           channel: channel,

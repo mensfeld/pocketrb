@@ -107,13 +107,9 @@ module Pocketrb
       def validate_path!(path, must_exist: true)
         resolved = resolve_path(path)
 
-        unless path_allowed?(path)
-          raise ToolError, "Path #{path} is outside workspace"
-        end
+        raise ToolError, "Path #{path} is outside workspace" unless path_allowed?(path)
 
-        if must_exist && !resolved.exist?
-          raise ToolError, "Path does not exist: #{path}"
-        end
+        raise ToolError, "Path does not exist: #{path}" if must_exist && !resolved.exist?
 
         resolved
       end

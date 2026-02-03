@@ -171,11 +171,11 @@ module Pocketrb
         daily = @daily_notes.context_summary(days: 7)
         parts << "DAILY NOTES (7 days):\n#{daily}" unless daily.empty?
 
-        if connected?
-          parts << "QMD: Connected to #{@endpoint}"
-        else
-          parts << "QMD: Not connected"
-        end
+        parts << if connected?
+                   "QMD: Connected to #{@endpoint}"
+                 else
+                   "QMD: Not connected"
+                 end
 
         parts.join("\n\n")
       end
@@ -190,19 +190,17 @@ module Pocketrb
         # Sync learned facts
         @local_memory.to_h.dig("facts", "learned")&.each do |topic, entries|
           entries.each do |entry|
-            begin
-              @client.store(
-                content: entry["info"],
-                metadata: {
-                  topic: topic,
-                  learned_at: entry["learned_at"],
-                  source: "local_memory_sync"
-                }
-              )
-              count += 1
-            rescue StandardError
-              # Skip failed entries
-            end
+            @client.store(
+              content: entry["info"],
+              metadata: {
+                topic: topic,
+                learned_at: entry["learned_at"],
+                source: "local_memory_sync"
+              }
+            )
+            count += 1
+          rescue StandardError
+            # Skip failed entries
           end
         end
 
@@ -242,7 +240,7 @@ module Pocketrb
 
       def format_daily_matches(matches)
         matches.map do |m|
-          "#{m[:date]}: #{m[:matches].join('; ')}"
+          "#{m[:date]}: #{m[:matches].join("; ")}"
         end.join("\n")
       end
 

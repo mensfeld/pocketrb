@@ -82,7 +82,7 @@ module Pocketrb
 
       # Check for OAuth token (Max subscription via `claude setup-token`)
       def oauth_token
-        @config[:anthropic_oauth_token] || ENV["ANTHROPIC_OAUTH_TOKEN"]
+        @config[:anthropic_oauth_token] || ENV.fetch("ANTHROPIC_OAUTH_TOKEN", nil)
       end
 
       def using_oauth?
@@ -122,9 +122,7 @@ module Pocketrb
         body[:temperature] = temperature unless thinking
         body[:tools] = format_tools(tools) if tools&.any?
 
-        if thinking
-          body[:thinking] = { type: "enabled", budget_tokens: [max_tokens / 2, 10_000].min }
-        end
+        body[:thinking] = { type: "enabled", budget_tokens: [max_tokens / 2, 10_000].min } if thinking
 
         body
       end
@@ -139,8 +137,8 @@ module Pocketrb
         when Role::USER
           { role: "user", content: format_user_content(message.content) }
         when Role::ASSISTANT
-          msg = { role: "assistant", content: format_assistant_content(message) }
-          msg
+          { role: "assistant", content: format_assistant_content(message) }
+
         when Role::TOOL
           {
             role: "user",
@@ -214,9 +212,7 @@ module Pocketrb
       def format_assistant_content(message)
         blocks = []
 
-        if message.content && !message.content.empty?
-          blocks << { type: "text", text: message.content }
-        end
+        blocks << { type: "text", text: message.content } if message.content && !message.content.empty?
 
         message.tool_calls&.each do |tc|
           blocks << {
@@ -250,7 +246,11 @@ module Pocketrb
 
       def handle_response(response)
         unless response.success?
-          error_body = JSON.parse(response.body) rescue { "error" => response.body }
+          error_body = begin
+            JSON.parse(response.body)
+          rescue StandardError
+            { "error" => response.body }
+          end
           raise ProviderError, "Anthropic API error: #{error_body["error"]}"
         end
 
@@ -304,11 +304,15 @@ module Pocketrb
         )
       end
 
-      def process_stream_chunk(chunk, accumulated_content, accumulated_tool_calls, &block)
+      def process_stream_chunk(chunk, accumulated_content, _accumulated_tool_calls, &block)
         chunk.split("\n").each do |line|
           next unless line.start_with?("data: ")
 
-          data = JSON.parse(line[6..]) rescue next
+          data = begin
+            JSON.parse(line[6..])
+          rescue StandardError
+            next
+          end
 
           case data["type"]
           when "content_block_delta"

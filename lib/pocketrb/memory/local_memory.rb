@@ -94,10 +94,10 @@ module Pocketrb
 
       def add_event(event_type, description)
         @recent.unshift({
-          "type" => event_type,
-          "description" => description,
-          "timestamp" => Time.now.utc.iso8601
-        })
+                          "type" => event_type,
+                          "description" => description,
+                          "timestamp" => Time.now.utc.iso8601
+                        })
         @recent = @recent.first(MAX_RECENT_EVENTS)
         save_recent!
       end
@@ -119,33 +119,37 @@ module Pocketrb
 
         # Always include self info
         if @facts["self"].any?
-          self_info = @facts["self"].map { |k, v| "#{k}: #{v['value']}" }.join(", ")
+          self_info = @facts["self"].map { |k, v| "#{k}: #{v["value"]}" }.join(", ")
           summary << "ABOUT ME: #{self_info}"
         end
 
         # Include user info
         if @facts["user"].any?
-          user_info = @facts["user"].map { |k, v| "#{k}: #{v['value']}" }.join(", ")
+          user_info = @facts["user"].map { |k, v| "#{k}: #{v["value"]}" }.join(", ")
           summary << "USER: #{user_info}"
         end
 
         # Include installed software only if message mentions related keywords
         install_keywords = %w[install package pip npm gem bundle apt brew]
         if @facts["installed"].any? && install_keywords.any? { |kw| message_lower.include?(kw) }
-          summary << "ALREADY INSTALLED: #{@facts['installed'].keys.join(', ')}"
+          summary << "ALREADY INSTALLED: #{@facts["installed"].keys.join(", ")}"
         end
 
         # Include learned facts that match keywords in the message
         @facts["learned"].each do |topic, entries|
-          if message_lower.include?(topic.downcase)
-            info = entries.last["info"] rescue entries.to_s
-            summary << "KNOWN ABOUT #{topic}: #{info}"
+          next unless message_lower.include?(topic.downcase)
+
+          info = begin
+            entries.last["info"]
+          rescue StandardError
+            entries.to_s
           end
+          summary << "KNOWN ABOUT #{topic}: #{info}"
         end
 
         # Recent events (last 3 only)
         if @recent.any?
-          recent = @recent.first(3).map { |e| "- #{e['description']}" }.join("\n")
+          recent = @recent.first(3).map { |e| "- #{e["description"]}" }.join("\n")
           summary << "RECENT:\n#{recent}"
         end
 
@@ -156,22 +160,20 @@ module Pocketrb
       def context_summary
         summary = []
 
-        if @facts["installed"].any?
-          summary << "INSTALLED: #{@facts['installed'].keys.join(', ')}"
-        end
+        summary << "INSTALLED: #{@facts["installed"].keys.join(", ")}" if @facts["installed"].any?
 
         if @facts["user"].any?
-          user_info = @facts["user"].map { |k, v| "#{k}: #{v['value']}" }.join(", ")
+          user_info = @facts["user"].map { |k, v| "#{k}: #{v["value"]}" }.join(", ")
           summary << "USER: #{user_info}"
         end
 
         if @facts["self"].any?
-          self_info = @facts["self"].map { |k, v| "#{k}: #{v['value']}" }.join(", ")
+          self_info = @facts["self"].map { |k, v| "#{k}: #{v["value"]}" }.join(", ")
           summary << "ABOUT ME: #{self_info}"
         end
 
         if @recent.any?
-          recent = @recent.first(5).map { |e| "- #{e['description']}" }.join("\n")
+          recent = @recent.first(5).map { |e| "- #{e["description"]}" }.join("\n")
           summary << "RECENT:\n#{recent}"
         end
 
@@ -227,7 +229,11 @@ module Pocketrb
           next if File.directory?(file)
 
           key = File.basename(file, ".*").tr("_", " ")
-          value = File.read(file).strip rescue next
+          value = begin
+            File.read(file).strip
+          rescue StandardError
+            next
+          end
           identity << "#{key}: #{value}" unless value.empty?
         end
         identity.join(", ")

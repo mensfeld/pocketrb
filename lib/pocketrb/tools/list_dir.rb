@@ -40,9 +40,7 @@ module Pocketrb
       def execute(path: nil, pattern: nil, recursive: false, include_hidden: false)
         resolved = path ? validate_path!(path) : workspace
 
-        unless resolved&.directory?
-          return error("Not a directory: #{path || 'workspace'}")
-        end
+        return error("Not a directory: #{path || "workspace"}") unless resolved&.directory?
 
         entries = if pattern
                     glob_pattern = resolved.join(recursive ? "**" : "", pattern)
@@ -54,9 +52,7 @@ module Pocketrb
                   end
 
         # Filter hidden files
-        unless include_hidden
-          entries = entries.reject { |e| File.basename(e).start_with?(".") }
-        end
+        entries = entries.reject { |e| File.basename(e).start_with?(".") } unless include_hidden
 
         # Sort entries
         entries.sort!

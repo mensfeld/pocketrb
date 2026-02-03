@@ -34,13 +34,9 @@ module Pocketrb
       def execute(path:, content:)
         resolved = resolve_path(path)
 
-        unless path_allowed?(path)
-          return error("Path is outside workspace: #{path}")
-        end
+        return error("Path is outside workspace: #{path}") unless path_allowed?(path)
 
-        if content.bytesize > MAX_FILE_SIZE
-          return error("Content exceeds maximum file size (10MB)")
-        end
+        return error("Content exceeds maximum file size (10MB)") if content.bytesize > MAX_FILE_SIZE
 
         # Create parent directories
         FileUtils.mkdir_p(resolved.dirname)

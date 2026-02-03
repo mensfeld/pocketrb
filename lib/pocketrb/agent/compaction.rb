@@ -10,7 +10,7 @@ module Pocketrb
       DEFAULT_KEEP_RECENT = 10            # Keep this many recent messages uncompacted
       CHARS_PER_TOKEN = 4                 # Rough estimate for token counting
 
-      COMPACTION_PROMPT = <<~PROMPT.freeze
+      COMPACTION_PROMPT = <<~PROMPT
         Summarize this conversation history concisely. Include:
         - Key decisions made
         - Important information learned
@@ -140,7 +140,7 @@ module Pocketrb
         messages.map do |msg|
           role = msg.role.capitalize
           content = extract_text_content(msg.content)
-          "#{role}: #{content[0..500]}#{'...' if content.length > 500}"
+          "#{role}: #{content[0..500]}#{"..." if content.length > 500}"
         end.join("\n\n")
       end
 
@@ -178,9 +178,7 @@ module Pocketrb
                                  .last(3)
                                  .map { |m| "- #{extract_text_content(m.content)[0..100]}" }
 
-        unless recent_queries.empty?
-          parts << "Recent topics:\n#{recent_queries.join("\n")}"
-        end
+        parts << "Recent topics:\n#{recent_queries.join("\n")}" unless recent_queries.empty?
 
         parts.join("\n\n")
       end

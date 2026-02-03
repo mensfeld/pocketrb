@@ -274,21 +274,20 @@ module Pocketrb
 
       def compute_cron_next(expr, tz = nil)
         # Try to use fugit if available
-        begin
-          require "fugit"
-          cron = Fugit.parse_cron(expr)
-          return nil unless cron
 
-          now = Time.now
-          now = now.in_time_zone(tz) if tz && now.respond_to?(:in_time_zone)
+        require "fugit"
+        cron = Fugit.parse_cron(expr)
+        return nil unless cron
 
-          next_time = cron.next_time(now)
-          (next_time.to_f * 1000).to_i
-        rescue LoadError
-          # Fallback: simple minute-based scheduling without fugit
-          Pocketrb.logger.warn("Fugit gem not available, cron expressions may not work correctly")
-          (Time.now.to_f * 1000 + 60_000).to_i
-        end
+        now = Time.now
+        now = now.in_time_zone(tz) if tz && now.respond_to?(:in_time_zone)
+
+        next_time = cron.next_time(now)
+        (next_time.to_f * 1000).to_i
+      rescue LoadError
+        # Fallback: simple minute-based scheduling without fugit
+        Pocketrb.logger.warn("Fugit gem not available, cron expressions may not work correctly")
+        ((Time.now.to_f * 1000) + 60_000).to_i
       end
 
       def arm_timer!

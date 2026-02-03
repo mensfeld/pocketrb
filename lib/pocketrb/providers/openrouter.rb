@@ -132,7 +132,11 @@ module Pocketrb
 
       def handle_response(response)
         unless response.success?
-          error_body = JSON.parse(response.body) rescue { "error" => response.body }
+          error_body = begin
+            JSON.parse(response.body)
+          rescue StandardError
+            { "error" => response.body }
+          end
           raise ProviderError, "OpenRouter API error: #{error_body["error"]}"
         end
 
@@ -177,12 +181,16 @@ module Pocketrb
         )
       end
 
-      def process_stream_chunk(chunk, accumulated_content, accumulated_tool_calls, &block)
+      def process_stream_chunk(chunk, accumulated_content, _accumulated_tool_calls, &block)
         chunk.split("\n").each do |line|
           next unless line.start_with?("data: ")
           next if line == "data: [DONE]"
 
-          data = JSON.parse(line[6..]) rescue next
+          data = begin
+            JSON.parse(line[6..])
+          rescue StandardError
+            next
+          end
           delta = data.dig("choices", 0, "delta")
           next unless delta
 

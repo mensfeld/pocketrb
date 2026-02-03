@@ -6,8 +6,8 @@ module Pocketrb
   module Agent
     # Core agent processing loop
     class Loop
-      attr_reader :bus, :provider, :tools, :sessions, :context
-      attr_reader :model, :max_iterations, :workspace, :qmd_memory, :compaction
+      attr_reader :bus, :provider, :tools, :sessions, :context, :model, :max_iterations, :workspace, :qmd_memory,
+                  :compaction
 
       def initialize(
         bus:,
@@ -30,9 +30,7 @@ module Pocketrb
         @sessions = Session::Manager.new(storage_dir: @workspace.join(".pocketrb", "sessions"))
 
         # Initialize QMD memory (combines local memory + QMD vector store)
-        @qmd_memory = if enable_qmd
-                        Memory::QMD.new(workspace: @workspace, endpoint: mcp_endpoint)
-                      end
+        @qmd_memory = (Memory::QMD.new(workspace: @workspace, endpoint: mcp_endpoint) if enable_qmd)
 
         @context = Context.new(
           workspace: @workspace,
@@ -100,7 +98,7 @@ module Pocketrb
         publish_state_change(msg.session_key, :idle, :processing)
 
         # Compact session history if needed (before building messages)
-        if @compaction && @compaction.needs_compaction?(session.messages)
+        if @compaction&.needs_compaction?(session.messages)
           @compaction.compact_session!(session)
           @sessions.save(session)
         end

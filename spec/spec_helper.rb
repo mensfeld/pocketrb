@@ -27,9 +27,9 @@ VCR.configure do |config|
   config.cassette_library_dir = "spec/fixtures/vcr_cassettes"
   config.hook_into :webmock
   config.configure_rspec_metadata!
-  config.filter_sensitive_data("<ANTHROPIC_API_KEY>") { ENV["ANTHROPIC_API_KEY"] }
-  config.filter_sensitive_data("<OPENROUTER_API_KEY>") { ENV["OPENROUTER_API_KEY"] }
-  config.filter_sensitive_data("<BRAVE_API_KEY>") { ENV["BRAVE_API_KEY"] }
+  config.filter_sensitive_data("<ANTHROPIC_API_KEY>") { ENV.fetch("ANTHROPIC_API_KEY", nil) }
+  config.filter_sensitive_data("<OPENROUTER_API_KEY>") { ENV.fetch("OPENROUTER_API_KEY", nil) }
+  config.filter_sensitive_data("<BRAVE_API_KEY>") { ENV.fetch("BRAVE_API_KEY", nil) }
 end
 
 RSpec.configure do |config|
@@ -68,7 +68,7 @@ end
 RSpec.configure do |config|
   config.include TestHelpers
 
-  config.after(:each) do
+  config.after do
     cleanup_temp_workspace
   end
 end
