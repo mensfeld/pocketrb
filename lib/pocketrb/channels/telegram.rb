@@ -40,8 +40,9 @@ module Pocketrb
           @bot = bot
 
           # Get bot info
-          me = bot.api.get_me["result"]
-          Pocketrb.logger.info("Telegram bot @#{me["username"]} connected")
+          me = bot.api.get_me
+          username = me.respond_to?(:username) ? me.username : me.dig("result", "username")
+          Pocketrb.logger.info("Telegram bot @#{username} connected")
 
           bot.listen do |message|
             break unless @running

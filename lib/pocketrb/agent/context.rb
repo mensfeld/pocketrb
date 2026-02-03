@@ -4,10 +4,11 @@ module Pocketrb
   module Agent
     # Builds context for LLM requests
     class Context
-      DEFAULT_SYSTEM_PROMPT = <<~PROMPT
-        You are Pocketrb, an AI assistant with access to tools for interacting with files, executing commands, and searching the web.
+      TOOL_GUIDELINES = <<~PROMPT
+        ## Tool Usage Guidelines
 
-        Guidelines:
+        You have access to tools for interacting with files, executing commands, and searching the web.
+
         - Use tools when they would help accomplish the user's request
         - Be concise and direct in your responses
         - When executing commands, explain what you're doing
@@ -17,14 +18,52 @@ module Pocketrb
         - Search memory when the user asks about something you may have learned before
       PROMPT
 
+      DEFAULT_IDENTITY = <<~PROMPT
+        You are Pocketrb, an AI assistant with access to tools for interacting with files, executing commands, and searching the web.
+      PROMPT
+
       attr_reader :system_prompt, :workspace, :skills_summary, :qmd_memory
 
       def initialize(workspace: nil, system_prompt: nil, skills_summary: nil, qmd_memory: nil)
         @workspace = workspace
-        @system_prompt = system_prompt || DEFAULT_SYSTEM_PROMPT
         @skills_summary = skills_summary
         @qmd_memory = qmd_memory
+        @system_prompt = system_prompt || build_base_prompt
       end
+
+      private
+
+      def build_base_prompt
+        parts = []
+
+        # Load identity from file or use default
+        identity = load_workspace_file("IDENTITY.md")
+        parts << (identity || DEFAULT_IDENTITY)
+
+        # Add tool guidelines
+        parts << TOOL_GUIDELINES
+
+        # Load static memory/knowledge if exists
+        memory = load_workspace_file("MEMORY.md")
+        parts << "## Background Knowledge\n\n#{memory}" if memory
+
+        parts.join("\n\n")
+      end
+
+      def load_workspace_file(filename)
+        return nil unless @workspace
+
+        path = @workspace.join(filename)
+        return nil unless path.exist?
+
+        content = File.read(path).strip
+        content.empty? ? nil : content
+      rescue StandardError => e
+        Pocketrb.logger.debug("Failed to load #{filename}: #{e.message}")
+        nil
+      end
+
+      public
 
       # Build the complete message array for an LLM request
       # @param history [Array<Message>] Conversation history

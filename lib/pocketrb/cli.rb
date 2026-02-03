@@ -15,7 +15,9 @@ module Pocketrb
     end
 
     class_option :workspace, type: :string, aliases: "-w",
-                             desc: "Workspace directory (default: current directory)"
+                             desc: "Workspace directory for file access (default: current directory)"
+    class_option :memory_dir, type: :string, aliases: "-M",
+                              desc: "Memory/persona directory (default: same as workspace)"
     class_option :verbose, type: :boolean, aliases: "-v",
                            desc: "Enable verbose output"
     class_option :quiet, type: :boolean, aliases: "-q",
@@ -31,8 +33,9 @@ module Pocketrb
     def start
       setup_logging
       workspace = resolve_workspace
+      memory_dir = resolve_memory_dir
 
-      config = Config.load(workspace)
+      config = Config.load(memory_dir)
       config[:model] = options[:model] if options[:model]
       config[:provider] = options[:provider] if options[:provider]
 
@@ -43,6 +46,7 @@ module Pocketrb
         bus: bus,
         provider: provider,
         workspace: workspace,
+        memory_dir: memory_dir,
         model: config[:model],
         max_iterations: config[:max_iterations],
         mcp_endpoint: config[:mcp_endpoint],
@@ -51,6 +55,7 @@ module Pocketrb
 
       say "Pocketrb started with #{config[:provider]}/#{config[:model]}", :green
       say "Workspace: #{workspace}"
+      say "Memory: #{memory_dir}" if memory_dir != workspace
       say "Press Ctrl+C to stop\n"
 
       # Start CLI channel
@@ -74,8 +79,9 @@ module Pocketrb
     def chat
       setup_logging
       workspace = resolve_workspace
+      memory_dir = resolve_memory_dir
 
-      config = Config.load(workspace)
+      config = Config.load(memory_dir)
       config[:model] = options[:model] if options[:model]
       config[:provider] = options[:provider] if options[:provider]
 
@@ -86,6 +92,7 @@ module Pocketrb
         bus: bus,
         provider: provider,
         workspace: workspace,
+        memory_dir: memory_dir,
         model: config[:model],
         system_prompt: options[:system_prompt],
         mcp_endpoint: config[:mcp_endpoint],
@@ -93,6 +100,7 @@ module Pocketrb
       )
 
       say "Pocketrb Chat - #{config[:model]}", :green
+      say "Memory: #{memory_dir}" if memory_dir != workspace
       say "Type 'exit' or 'quit' to end session\n"
 
       Async do
@@ -359,6 +367,7 @@ module Pocketrb
     def telegram
       setup_logging
       workspace = resolve_workspace
+      memory_dir = resolve_memory_dir
 
       token = options[:token] || ENV.fetch("TELEGRAM_BOT_TOKEN", nil)
       unless token
@@ -367,7 +376,7 @@ module Pocketrb
         exit 1
       end
 
-      config = Config.load(workspace)
+      config = Config.load(memory_dir)
       config[:model] = options[:model] if options[:model]
       config[:provider] = options[:provider] if options[:provider]
 
@@ -378,6 +387,7 @@ module Pocketrb
         bus: bus,
         provider: provider,
         workspace: workspace,
+        memory_dir: memory_dir,
         model: config[:model],
         max_iterations: config[:max_iterations]
       )
@@ -385,6 +395,7 @@ module Pocketrb
       say "Starting Pocketrb Telegram Bot", :green
       say "Provider: #{config[:provider]}/#{config[:model]}"
       say "Workspace: #{workspace}"
+      say "Memory: #{memory_dir}" if memory_dir != workspace
       say "Press Ctrl+C to stop\n"
 
       channel = Channels::Telegram.new(
@@ -411,8 +422,9 @@ module Pocketrb
     def whatsapp
       setup_logging
       workspace = resolve_workspace
+      memory_dir = resolve_memory_dir
 
-      config = Config.load(workspace)
+      config = Config.load(memory_dir)
       config[:model] = options[:model] if options[:model]
       config[:provider] = options[:provider] if options[:provider]
 
@@ -423,6 +435,7 @@ module Pocketrb
         bus: bus,
         provider: provider,
         workspace: workspace,
+        memory_dir: memory_dir,
         model: config[:model],
         max_iterations: config[:max_iterations]
       )
@@ -431,6 +444,7 @@ module Pocketrb
       say "Provider: #{config[:provider]}/#{config[:model]}"
       say "Bridge: #{options[:bridge_url]}"
       say "Workspace: #{workspace}"
+      say "Memory: #{memory_dir}" if memory_dir != workspace
       say "Press Ctrl+C to stop\n"
 
       channel = Channels::WhatsApp.new(
@@ -462,8 +476,9 @@ module Pocketrb
     def gateway
       setup_logging
       workspace = resolve_workspace
+      memory_dir = resolve_memory_dir
 
-      config = Config.load(workspace)
+      config = Config.load(memory_dir)
       config[:model] = options[:model] if options[:model]
       config[:provider] = options[:provider] if options[:provider]
 
@@ -474,6 +489,7 @@ module Pocketrb
         bus: bus,
         provider: provider,
         workspace: workspace,
+        memory_dir: memory_dir,
         model: config[:model],
         max_iterations: config[:max_iterations]
       )
@@ -481,6 +497,7 @@ module Pocketrb
       say "Starting Pocketrb Gateway", :green
       say "Provider: #{config[:provider]}/#{config[:model]}"
       say "Workspace: #{workspace}"
+      say "Memory: #{memory_dir}" if memory_dir != workspace
 
       channels = []
       services = []
@@ -733,6 +750,11 @@ module Pocketrb
 
     def resolve_workspace
       path = options[:workspace] || Dir.pwd
+      Pathname.new(path).expand_path
+    end
+
+    def resolve_memory_dir
+      path = options[:memory_dir] || options[:workspace] || Dir.pwd
       Pathname.new(path).expand_path
     end
 

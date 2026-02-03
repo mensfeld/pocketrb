@@ -17,3 +17,5 @@ group :development, :test do
   gem "yard", "~> 0.9"
   gem "yard-lint", "~> 1.4"
 end
+
+gem "playwright-ruby-client", "~> 1.58"

@@ -34,10 +34,23 @@ module Pocketrb
 
       def initialize(workspace:)
         @workspace = Pathname.new(workspace)
-        @jobs_dir = @workspace.join(".pocketrb", "jobs")
+        @jobs_dir = resolve_jobs_dir
         FileUtils.mkdir_p(@jobs_dir)
         cleanup_stale_jobs
       end
+
+      private
+
+      def resolve_jobs_dir
+        # Don't create .pocketrb in root filesystem
+        if @workspace.to_s == "/" || !@workspace.writable?
+          Pathname.new(Dir.home).join(".pocketrb", "jobs")
+        else
+          @workspace.join(".pocketrb", "jobs")
+        end
+      end
+
+      public
 
       # Check if command should auto-run in background
       def long_running?(command)

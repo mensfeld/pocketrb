@@ -2,6 +2,7 @@
 
 require "base64"
 require "fileutils"
+require "tmpdir"
 
 module Pocketrb
   module Media

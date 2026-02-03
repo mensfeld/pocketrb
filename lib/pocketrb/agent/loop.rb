@@ -6,13 +6,14 @@ module Pocketrb
   module Agent
     # Core agent processing loop
     class Loop
-      attr_reader :bus, :provider, :tools, :sessions, :context, :model, :max_iterations, :workspace, :qmd_memory,
-                  :compaction
+      attr_reader :bus, :provider, :tools, :sessions, :context, :model, :max_iterations, :workspace, :memory_dir,
+                  :qmd_memory, :compaction
 
       def initialize(
         bus:,
         provider:,
         workspace:,
+        memory_dir: nil,
         model: nil,
         max_iterations: 50,
         system_prompt: nil,
@@ -24,16 +25,17 @@ module Pocketrb
         @bus = bus
         @provider = provider
         @workspace = Pathname.new(workspace)
+        @memory_dir = Pathname.new(memory_dir || workspace)
         @model = model || provider.default_model
         @max_iterations = max_iterations
 
-        @sessions = Session::Manager.new(storage_dir: @workspace.join(".pocketrb", "sessions"))
+        @sessions = Session::Manager.new(storage_dir: @memory_dir.join(".pocketrb", "sessions"))
 
         # Initialize QMD memory (combines local memory + QMD vector store)
-        @qmd_memory = (Memory::QMD.new(workspace: @workspace, endpoint: mcp_endpoint) if enable_qmd)
+        @qmd_memory = (Memory::QMD.new(workspace: @memory_dir, endpoint: mcp_endpoint) if enable_qmd)
 
         @context = Context.new(
-          workspace: @workspace,
+          workspace: @memory_dir,
           system_prompt: system_prompt,
           qmd_memory: @qmd_memory
         )
@@ -44,7 +46,7 @@ module Pocketrb
         # Register memory tool with MCP client
         if @qmd_memory
           memory_tool = MCP::MemoryTool.new(
-            workspace: @workspace,
+            workspace: @memory_dir,
             bus: @bus,
             mcp_client: @qmd_memory.client
           )
