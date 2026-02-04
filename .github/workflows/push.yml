@@ -1,0 +1,36 @@
+name: Push Gem
+
+on:
+  push:
+    tags:
+      - v*
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    if: github.repository_owner == 'mensfeld'
+    runs-on: ubuntu-latest
+    environment: deployment
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: false
+          ruby-version: '4.0.1'
+
+      - name: Bundle install
+        run: |
+          bundle install --jobs 4 --retry 3
+
+      - uses: rubygems/release-gem@v1

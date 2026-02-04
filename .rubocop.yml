@@ -10,7 +10,6 @@ AllCops:
   SuggestExtensions: false
   Exclude:
     - 'vendor/**/*'
-    - 'spec/fixtures/**/*'
 
 # Layout
 Layout/LineLength:
