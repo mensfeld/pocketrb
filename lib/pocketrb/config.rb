@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "set"
 
 module Pocketrb
   # Configuration management
@@ -55,6 +56,12 @@ module Pocketrb
 
     # Get provider configuration
     def provider_config
+      # Warn about deprecated API key environment variables
+      warn_env_deprecated("ANTHROPIC_API_KEY", "anthropic_api_key") if ENV["ANTHROPIC_API_KEY"]
+      warn_env_deprecated("OPENROUTER_API_KEY", "openrouter_api_key") if ENV["OPENROUTER_API_KEY"]
+      warn_env_deprecated("OPENAI_API_KEY", "openai_api_key") if ENV["OPENAI_API_KEY"]
+      warn_env_deprecated("BRAVE_API_KEY", "brave_api_key") if ENV["BRAVE_API_KEY"]
+
       {
         anthropic_api_key: ENV["ANTHROPIC_API_KEY"] || self[:anthropic_api_key],
         openrouter_api_key: ENV["OPENROUTER_API_KEY"] || self[:openrouter_api_key],
@@ -140,19 +147,45 @@ module Pocketrb
 
     def load_env_overrides
       # Environment variables override config file
+      warn_env_deprecated("POCKETRB_PROVIDER", "provider") if ENV["POCKETRB_PROVIDER"]
       @data[:provider] = ENV["POCKETRB_PROVIDER"] if ENV["POCKETRB_PROVIDER"]
+
+      warn_env_deprecated("POCKETRB_MODEL", "model") if ENV["POCKETRB_MODEL"]
       @data[:model] = ENV["POCKETRB_MODEL"] if ENV["POCKETRB_MODEL"]
-      @data[:max_iterations] = ENV["POCKETRB_MAX_ITERATIONS"].to_i if ENV["POCKETRB_MAX_ITERATIONS"]
+
+      if ENV["POCKETRB_MAX_ITERATIONS"]
+        warn_env_deprecated("POCKETRB_MAX_ITERATIONS", "max_iterations")
+        @data[:max_iterations] = ENV["POCKETRB_MAX_ITERATIONS"].to_i
+      end
+
+      warn_env_deprecated("MCP_ENDPOINT", "mcp_endpoint") if ENV["MCP_ENDPOINT"]
       @data[:mcp_endpoint] = ENV["MCP_ENDPOINT"] if ENV["MCP_ENDPOINT"]
 
       # Autonomous mode (for sandboxed environments)
-      @data[:autonomous] = true if %w[1 true].include?(ENV["POCKETRB_AUTONOMOUS"])
+      if %w[1 true].include?(ENV["POCKETRB_AUTONOMOUS"])
+        warn_env_deprecated("POCKETRB_AUTONOMOUS", "autonomous")
+        @data[:autonomous] = true
+      end
 
       # Log level
       return unless ENV["POCKETRB_LOG_LEVEL"]
 
+      warn_env_deprecated("POCKETRB_LOG_LEVEL", "log_level")
       @data[:log_level] = ENV.fetch("POCKETRB_LOG_LEVEL", nil)
       Pocketrb.logger.level = Logger.const_get(ENV["POCKETRB_LOG_LEVEL"].upcase)
+    end
+
+    # Warn about deprecated environment variable usage
+    # @param env_var [String] environment variable name
+    # @param config_key [String] recommended config key
+    def warn_env_deprecated(env_var, config_key)
+      return if @warned_vars&.include?(env_var)
+
+      @warned_vars ||= Set.new
+      @warned_vars << env_var
+
+      Pocketrb.logger.warn("[DEPRECATION] ENV['#{env_var}'] is deprecated. " \
+                           "Use config.yml: #{config_key} = value")
     end
   end
 end
