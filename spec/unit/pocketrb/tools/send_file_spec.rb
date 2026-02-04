@@ -195,19 +195,14 @@ RSpec.describe Pocketrb::Tools::SendFile do
     end
 
     context "without defaults" do
-      let(:context_no_defaults) do
-        {
-          workspace: workspace,
-          bus: bus
-        }
-      end
-      let(:tool_no_defaults) { described_class.new(context_no_defaults) }
-
       before do
         File.write(workspace.join("test.png"), "data")
       end
 
       it "returns error when no channel specified" do
+        context_no_defaults = { workspace: workspace, bus: bus }
+        tool_no_defaults = described_class.new(context_no_defaults)
+
         result = tool_no_defaults.execute(path: "test.png")
 
         expect(result).to include("Error:")
@@ -215,6 +210,9 @@ RSpec.describe Pocketrb::Tools::SendFile do
       end
 
       it "returns error when no chat_id specified" do
+        context_no_defaults = { workspace: workspace, bus: bus }
+        tool_no_defaults = described_class.new(context_no_defaults)
+
         result = tool_no_defaults.execute(path: "test.png", channel: "telegram")
 
         expect(result).to include("Error:")
