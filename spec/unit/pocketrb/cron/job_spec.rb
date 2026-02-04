@@ -135,7 +135,7 @@ RSpec.describe Pocketrb::Cron do
     let(:schedule) do
       described_class::Schedule.new(
         kind: :every,
-        every_ms: 3600_000
+        every_ms: 3_600_000
       )
     end
 
@@ -298,7 +298,7 @@ RSpec.describe Pocketrb::Cron do
         hash = job.to_h
 
         expect(hash["schedule"]["kind"]).to eq("every")
-        expect(hash["schedule"]["every_ms"]).to eq(3600_000)
+        expect(hash["schedule"]["every_ms"]).to eq(3_600_000)
       end
 
       it "includes payload details" do
