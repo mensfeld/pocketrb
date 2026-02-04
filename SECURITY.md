@@ -2,60 +2,22 @@
 
 ## Supported Versions
 
-Currently supported versions with security updates:
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+Pocketrb follows a rolling release model. Security updates are provided for the latest stable release. For Ruby version compatibility, please refer to the gemspec which currently requires Ruby >= 4.0.0.
 
 ## Reporting a Vulnerability
 
-**Please do not report security vulnerabilities through public GitHub issues.**
+If you have identified a potential security vulnerability in Pocketrb, we encourage you to report it immediately. We take all reports of security issues seriously and will work diligently to address them.
 
-Instead, please report them via email to: **maciej@mensfeld.pl**
+To report a vulnerability, please send an email directly to maciej@mensfeld.pl.
 
-Include as much information as possible:
+We understand the importance of addressing security vulnerabilities promptly. You can expect a reply from us within 2 working days of your report. This initial response will confirm receipt of your report.
 
-- Type of vulnerability
-- Full paths of source file(s) related to the vulnerability
-- Location of affected source code (tag/branch/commit/direct URL)
-- Step-by-step instructions to reproduce the issue
-- Proof-of-concept or exploit code (if available)
-- Impact of the issue, including how an attacker might exploit it
+After acknowledging your report, we will:
 
-You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
+- Evaluate the reported vulnerability in the context of our project.
+- Provide you with regular updates on our progress.
+- Upon completing our assessment, we will inform you of the outcome. This includes whether the vulnerability will be accepted or declined for further action.
 
-## Security Considerations
+Your report will be kept confidential and not disclosed to third parties without your consent, except as required by law.
 
-### API Keys and Secrets
-
-- Never commit API keys or secrets to the repository
-- Use environment variables for sensitive configuration
-- The `.gitignore` file excludes `.env` and `.env.local` files
-- Review code for accidentally committed secrets before submitting PRs
-
-### Command Execution
-
-- The `exec` tool allows shell command execution - use with caution
-- In multi-user environments, consider restricting tool access
-- Use the `allowed_users` option for Telegram/WhatsApp channels
-
-### File Access
-
-- The agent has file system access within the configured workspace
-- Use `--workspace` to restrict access to specific directories
-- Be cautious when running as root or with elevated privileges
-
-### Third-Party Services
-
-- Web search requires Brave API key - keep it secure
-- LLM provider API keys should be protected
-- OAuth tokens should be handled securely
-
-## Best Practices
-
-1. **Limit workspace access**: Use `--workspace` to restrict file access
-2. **User allowlists**: Use `--allowed-users` for messaging channels
-3. **Secure API keys**: Use environment variables, never hardcode
-4. **Review commands**: Monitor what commands the agent executes
-5. **Keep updated**: Regularly update to the latest version for security patches
+We appreciate your assistance in keeping Pocketrb and its users safe by responsibly reporting vulnerabilities. Together, we can maintain a high standard of security for our community.
