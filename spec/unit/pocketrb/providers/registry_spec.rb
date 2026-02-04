@@ -20,7 +20,7 @@ RSpec.describe Pocketrb::Providers::Registry do
   end
 
   describe "#register" do
-    let(:mock_provider) { class_double("MockProvider") }
+    let(:mock_provider) { Class.new { def initialize(config); end } }
 
     it "registers a provider with symbol name" do
       registry.register(:test_provider, mock_provider)
@@ -96,7 +96,7 @@ RSpec.describe Pocketrb::Providers::Registry do
     end
 
     it "includes newly registered providers" do
-      mock_provider = class_double("NewProvider")
+      mock_provider = Class.new { def initialize(config); end }
       registry.register(:new_provider, mock_provider)
 
       expect(registry.available).to include(:new_provider)
@@ -118,7 +118,7 @@ RSpec.describe Pocketrb::Providers::Registry do
 
   describe ".register" do
     it "delegates to singleton instance" do
-      mock_provider = class_double("ClassMethodProvider")
+      mock_provider = Class.new { def initialize(config); end }
       described_class.register(:class_test, mock_provider)
 
       expect(described_class.instance.available).to include(:class_test)

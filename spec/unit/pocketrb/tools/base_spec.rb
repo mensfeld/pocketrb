@@ -1,25 +1,25 @@
 # frozen_string_literal: true
 
+# Concrete test implementation for Base specs
+class TestTool < Pocketrb::Tools::Base
+  def name
+    "test_tool"
+  end
+
+  def description
+    "A test tool"
+  end
+
+  def execute(**kwargs)
+    "executed with #{kwargs.inspect}"
+  end
+end
+
 RSpec.describe Pocketrb::Tools::Base do
   let(:workspace) { Pathname.new(Dir.mktmpdir) }
   let(:bus) { instance_double(Pocketrb::Bus::MessageBus) }
   let(:context) { { workspace: workspace, bus: bus } }
   let(:tool) { TestTool.new(context) }
-
-  # Concrete test implementation
-  class TestTool < Pocketrb::Tools::Base
-    def name
-      "test_tool"
-    end
-
-    def description
-      "A test tool"
-    end
-
-    def execute(**kwargs)
-      "executed with #{kwargs.inspect}"
-    end
-  end
 
   after do
     FileUtils.rm_rf(workspace)
@@ -64,10 +64,10 @@ RSpec.describe Pocketrb::Tools::Base do
   describe "#parameters" do
     it "returns default empty schema" do
       expect(tool.parameters).to eq({
-        type: "object",
-        properties: {},
-        required: []
-      })
+                                      type: "object",
+                                      properties: {},
+                                      required: []
+                                    })
     end
   end
 
