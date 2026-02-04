@@ -39,24 +39,18 @@ Gem::Specification.new do |spec|
   spec.add_dependency "yaml", "~> 0.3"
   spec.add_dependency "zeitwerk", "~> 2.6"
 
-  gem_files = %w[
-    lib/**/*
-    exe/**/*
-    LICENSE.txt
-    CHANGELOG.md
-    README.md
-    pocketrb.gemspec
-  ]
-
-  spec.files = Dir.glob(gem_files) & `git ls-files -z`.split("\x0")
-  spec.executables = %w[pocketrb]
+  spec.files = `git ls-files -z`.split("\x0").select do |f|
+    f.match(%r{^(lib|exe)/}) || %w[LICENSE.txt CHANGELOG.md README.md pocketrb.gemspec].include?(f)
+  end
+  spec.bindir = "exe"
+  spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = %w[lib]
 
   spec.metadata = {
-    "homepage_uri" => "https://github.com/mensfeld/pocketrb",
-    "changelog_uri" => "https://github.com/mensfeld/pocketrb/blob/master/CHANGELOG.md",
     "bug_tracker_uri" => "https://github.com/mensfeld/pocketrb/issues",
-    "source_code_uri" => "https://github.com/mensfeld/pocketrb",
+    "changelog_uri" => "https://github.com/mensfeld/pocketrb/blob/master/CHANGELOG.md",
+    "homepage_uri" => "https://github.com/mensfeld/pocketrb",
+    "source_code_uri" => "https://github.com/mensfeld/pocketrb/tree/master",
     "rubygems_mfa_required" => "true"
   }
 end
