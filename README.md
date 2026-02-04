@@ -1,15 +1,20 @@
 # Pocketrb
 
+[![Gem Version](https://badge.fury.io/rb/pocketrb.svg)](https://badge.fury.io/rb/pocketrb)
+[![CI](https://github.com/mensfeld/pocketrb/actions/workflows/ci.yml/badge.svg)](https://github.com/mensfeld/pocketrb/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
+
 A pocket-sized Ruby AI agent framework with multi-LLM support and advanced capabilities.
 
 ## Features
 
-- **Clean async architecture**: MessageBus, proper tool_use API, async processing, subagent spawning
-- **Multi-LLM support**: Claude (API + Max/OAuth), OpenRouter, OpenAI-compatible APIs
+- **Clean async architecture**: MessageBus, proper tool_use API, async processing
+- **Multi-LLM support**: Claude (API + Max/OAuth), OpenRouter, OpenAI-compatible APIs, RubyLLM
 - **Multi-channel**: CLI, Telegram, WhatsApp (via bridge)
-- **Advanced features**: Planning system, context compaction, runtime skills, QMD memory via MCP
+- **Advanced features**: Planning system, context compaction, runtime skills system
+- **Simple memory**: JSON-based memory with keyword matching (no external dependencies)
 - **Media support**: Vision (images) via Claude, document handling
-- **Scheduling**: Cron jobs, heartbeat service for periodic wake-ups
+- **Scheduling**: Cron jobs for automated tasks
 - **Personas**: Separate memory and identity from workspace for portable agent personalities
 
 ## Installation
@@ -47,10 +52,10 @@ pocketrb chat [options]
 
 Options:
 - `-m, --model MODEL` - Model to use (default: claude-sonnet-4-20250514)
-- `-p, --provider PROVIDER` - LLM provider (anthropic, openrouter)
+- `-p, --provider PROVIDER` - LLM provider (anthropic, openrouter, ruby_llm)
 - `-w, --workspace DIR` - Workspace directory for file access
 - `-M, --memory-dir DIR` - Memory/persona directory (default: same as workspace)
-- `--no-qmd` - Disable QMD memory integration
+- `-s, --system-prompt TEXT` - Custom system prompt
 
 ### Telegram Bot
 
@@ -291,38 +296,35 @@ pocketrb chat --provider openrouter --model anthropic/claude-sonnet-4
 
 ## Memory System
 
-Pocketrb has a multi-layer memory system:
+Pocketrb uses a simple, dependency-free memory system:
 
-### Local Memory
+### Static Memory
 
-- **MEMORY.md** - Static background knowledge
-- **Daily notes** - `memory/YYYY-MM-DD.md` files for daily learnings
+- **MEMORY.md** - Static background knowledge loaded into every conversation
+- **IDENTITY.md** - Agent personality and instructions
 
-### QMD Integration (Optional)
+### Dynamic Memory
 
-Connect to [QMD](https://github.com/user/qmd) for vector-based semantic search:
+The agent can store and recall facts using the `memory` tool:
 
-```bash
-export MCP_ENDPOINT=http://localhost:7878
-pocketrb chat  # QMD enabled by default
+**Categories:**
+- `learned` - Things the agent has learned (e.g., "deployment process")
+- `user` - User information (e.g., "timezone: UTC+1")
+- `preference` - User preferences (e.g., "coding_style: functional")
+- `context` - General context (e.g., "database: PostgreSQL 16")
+
+**Storage:**
+- Facts stored in `memory/facts.json`
+- Recent events in `memory/recent.json`
+- Simple keyword matching for relevance (no vector DB required)
+
+**Usage:**
 ```
+Agent: I'll remember that your timezone is UTC+1
+[Uses memory tool: store, category: user, key: "timezone", value: "UTC+1"]
 
-Disable with `--no-qmd`.
-
-### Memory Commands
-
-```bash
-# Check QMD status
-pocketrb qmd status
-
-# Search memory
-pocketrb qmd search "deployment process"
-
-# Store to memory
-pocketrb qmd store "PostgreSQL runs on port 5432" --topic infrastructure
-
-# Sync local to QMD
-pocketrb qmd sync
+User: What's my timezone?
+Agent: [Recalls from memory] Your timezone is UTC+1
 ```
 
 ## Scheduling
@@ -348,18 +350,6 @@ pocketrb cron list
 pocketrb cron remove job_id
 ```
 
-### Heartbeat Service
-
-Periodic wake-up to check for pending tasks. Create `HEARTBEAT.md` in your workspace:
-
-```markdown
-# Pending Tasks
-
-- [ ] Check if backup completed
-- [ ] Review overnight logs
-```
-
-The agent will periodically read this file and act on it.
 
 ## Gateway Mode
 
@@ -369,17 +359,15 @@ Run all services together:
 pocketrb gateway \
   --telegram-token "$TELEGRAM_BOT_TOKEN" \
   --telegram-users your_username \
-  --enable-cron \
-  --enable-heartbeat \
-  --heartbeat-interval 1800
+  --enable-cron
 ```
 
 ## Context Compaction
 
 Long conversations are automatically summarized to save tokens:
 
-- Triggers after 30 messages or ~50k tokens
-- Keeps last 10 messages intact
+- Triggers after 40 messages or ~50k tokens
+- Keeps last 15 messages intact
 - Summarizes older messages using the LLM
 - Falls back to basic summary if LLM fails
 
@@ -387,13 +375,12 @@ Long conversations are automatically summarized to save tokens:
 
 ### Config File
 
-Located at `workspace/.pocketrb/config.yml`:
+Located at `workspace/.pocketrb/config.yml` or `~/.pocketrb/config.yml`:
 
 ```yaml
 provider: anthropic
 model: claude-sonnet-4-20250514
 max_iterations: 50
-mcp_endpoint: http://localhost:7878
 ```
 
 ### Commands
@@ -411,10 +398,9 @@ pocketrb config get model
 | `ANTHROPIC_API_KEY` | Anthropic API key |
 | `ANTHROPIC_OAUTH_TOKEN` | Claude Max OAuth token |
 | `OPENROUTER_API_KEY` | OpenRouter API key |
-| `BRAVE_API_KEY` | Brave Search API key |
+| `BRAVE_API_KEY` | Brave Search API key (for web_search tool) |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token |
-| `MCP_ENDPOINT` | QMD/MCP server endpoint |
-| `POCKETRB_PROVIDER` | Default provider |
+| `POCKETRB_PROVIDER` | Default provider (anthropic, openrouter, ruby_llm, claude_cli) |
 | `POCKETRB_MODEL` | Default model |
 | `POCKETRB_LOG_LEVEL` | Log level (debug, info, warn, error) |
 
@@ -425,8 +411,8 @@ pocketrb config get model
 │                         Pocketrb Core                           │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ MessageBus  │  │ LLMProvider │  │    MCP Client           │  │
-│  │ (Async::Q)  │  │ (multi-LLM) │  │ (QMD Memory Bridge)     │  │
+│  │ MessageBus  │  │ LLMProvider │  │    Memory System        │  │
+│  │ (Async::Q)  │  │ (multi-LLM) │  │ (JSON + keyword match)  │  │
 │  └──────┬──────┘  └──────┬──────┘  └───────────┬─────────────┘  │
 │         │                │                      │                │
 │  ┌──────▼──────────────────▼──────────────────────▼─────────┐   │
@@ -434,13 +420,13 @@ pocketrb config get model
 │  │  - Context building (identity, memory, history)           │   │
 │  │  - Tool execution via ToolRegistry                        │   │
 │  │  - Context compaction for long conversations              │   │
-│  │  - Planning system                                        │   │
+│  │  - Session management (JSONL persistence)                 │   │
 │  └──────────────────────────────────────────────────────────┘   │
-│         │                │                      │                │
-│  ┌──────▼──────┐  ┌──────▼──────┐  ┌───────────▼─────────────┐  │
-│  │ SessionMgr  │  │ SkillLoader │  │    SubagentManager      │  │
-│  │ (JSONL)     │  │ (SKILL.md)  │  │    (spawn/coordinate)   │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+│         │                │                                       │
+│  ┌──────▼──────┐  ┌──────▼──────┐  ┌──────────────────────┐     │
+│  │ SkillLoader │  │ CronService │  │    ToolRegistry      │     │
+│  │ (SKILL.md)  │  │ (schedule)  │  │ (file, exec, web...) │     │
+│  └─────────────┘  └─────────────┘  └──────────────────────┘     │
 │         │                                                        │
 │  ┌──────▼────────────────────────────────────────────────────┐  │
 │  │                      Channels                              │  │
