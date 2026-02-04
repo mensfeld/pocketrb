@@ -27,38 +27,34 @@ RSpec.describe Pocketrb::CLI::Skills do
     end
 
     context "with skills" do
-      let(:basic_skill) do
-        instance_double(
-          Pocketrb::Skills::Skill,
-          name: "basic-skill",
-          description: "A basic test skill",
-          always?: false,
-          triggers: []
-        )
-      end
-
-      let(:trigger_skill) do
-        instance_double(
-          Pocketrb::Skills::Skill,
-          name: "trigger-skill",
-          description: "Skill with triggers",
-          always?: false,
-          triggers: %w[keyword1 keyword2]
-        )
-      end
-
-      let(:always_skill) do
-        instance_double(
-          Pocketrb::Skills::Skill,
-          name: "always-skill",
-          description: "Always active skill",
-          always?: true,
-          triggers: []
-        )
+      let(:skills) do
+        [
+          instance_double(
+            Pocketrb::Skills::Skill,
+            name: "basic-skill",
+            description: "A basic test skill",
+            always?: false,
+            triggers: []
+          ),
+          instance_double(
+            Pocketrb::Skills::Skill,
+            name: "trigger-skill",
+            description: "Skill with triggers",
+            always?: false,
+            triggers: %w[keyword1 keyword2]
+          ),
+          instance_double(
+            Pocketrb::Skills::Skill,
+            name: "always-skill",
+            description: "Always active skill",
+            always?: true,
+            triggers: []
+          )
+        ]
       end
 
       before do
-        allow(loader).to receive(:list_skills).and_return([basic_skill, trigger_skill, always_skill])
+        allow(loader).to receive(:list_skills).and_return(skills)
       end
 
       it "lists all skills" do

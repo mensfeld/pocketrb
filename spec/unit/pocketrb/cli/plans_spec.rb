@@ -27,14 +27,14 @@ RSpec.describe Pocketrb::CLI::Plans do
     end
 
     context "with plans" do
-      let(:plan1) do
+      let(:active_plan) do
         instance_double(
           Pocketrb::Planning::Plan,
           to_markdown: "# Plan 1\n\n- [ ] Step 1\n- [ ] Step 2"
         )
       end
 
-      let(:plan2) do
+      let(:partially_complete_plan) do
         instance_double(
           Pocketrb::Planning::Plan,
           to_markdown: "# Plan 2\n\n- [x] Step 1\n- [ ] Step 2"
@@ -42,7 +42,7 @@ RSpec.describe Pocketrb::CLI::Plans do
       end
 
       before do
-        allow(manager).to receive(:list_plans).and_return([plan1, plan2])
+        allow(manager).to receive(:list_plans).and_return([active_plan, partially_complete_plan])
       end
 
       it "lists all plans" do
