@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 RSpec.describe Pocketrb::Agent::SubagentManager do
   let(:bus) { instance_double(Pocketrb::Bus::MessageBus) }
   let(:provider) { instance_double(Pocketrb::Providers::Base) }
@@ -176,7 +177,7 @@ RSpec.describe Pocketrb::Agent::SubagentManager do
         origin_channel: :cli,
         origin_chat_id: "main"
       )
-      agent2 = manager.spawn(
+      manager.spawn(
         task: "Task 2",
         origin_channel: :cli,
         origin_chat_id: "main"
@@ -345,3 +346,4 @@ RSpec.describe Pocketrb::Agent::SubagentManager do
     end
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers
