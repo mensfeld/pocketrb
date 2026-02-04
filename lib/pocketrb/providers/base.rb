@@ -72,7 +72,7 @@ module Pocketrb
       end
 
       def api_key(key_name)
-        @config[key_name] || ENV[key_name.to_s.upcase]
+        @config[key_name] || ENV.fetch(key_name.to_s.upcase, nil)
       end
 
       # Convert internal message format to provider-specific format

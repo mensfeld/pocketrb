@@ -2,6 +2,7 @@
 
 require "base64"
 require "fileutils"
+require "tmpdir"
 
 module Pocketrb
   module Media
@@ -155,7 +156,7 @@ module Pocketrb
 
       # Clean up old cached files
       # @param older_than [Integer] Age in seconds
-      def cleanup_cache(older_than: 86400)
+      def cleanup_cache(older_than: 86_400)
         return unless @cache_dir.exist?
 
         cutoff = Time.now - older_than
@@ -184,11 +185,11 @@ module Pocketrb
 
       def detect_type(mime_type)
         case mime_type
-        when /^image\//
+        when %r{^image/}
           :image
-        when /^audio\//
+        when %r{^audio/}
           :audio
-        when /^video\//
+        when %r{^video/}
           :video
         else
           :file
@@ -209,7 +210,11 @@ module Pocketrb
 
       def extract_filename(url, content_type)
         # Try to get filename from URL
-        uri_path = URI.parse(url).path rescue ""
+        uri_path = begin
+          URI.parse(url).path
+        rescue StandardError
+          ""
+        end
         name = File.basename(uri_path)
 
         if name.empty? || !name.include?(".")

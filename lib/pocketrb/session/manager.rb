@@ -148,13 +148,39 @@ module Pocketrb
       def message_to_json(message)
         {
           role: message.role,
-          content: message.content,
+          content: sanitize_content(message.content),
           name: message.name,
           tool_call_id: message.tool_call_id,
           tool_calls: message.tool_calls&.map do |tc|
             { id: tc.id, name: tc.name, arguments: tc.arguments }
           end
         }.compact.to_json
+      end
+
+      # Sanitize content to ensure valid UTF-8 for JSON encoding
+      def sanitize_content(content)
+        return nil if content.nil?
+
+        if content.is_a?(String)
+          # Replace invalid UTF-8 bytes with replacement character
+          content.encode("UTF-8", invalid: :replace, undef: :replace, replace: "\uFFFD")
+        elsif content.is_a?(Array)
+          content.map { |block| sanitize_content_block(block) }
+        else
+          content
+        end
+      end
+
+      def sanitize_content_block(block)
+        return block unless block.is_a?(Hash)
+
+        block.transform_values do |v|
+          if v.is_a?(String)
+            v.encode("UTF-8", invalid: :replace, undef: :replace, replace: "\uFFFD")
+          else
+            v
+          end
+        end
       end
 
       def delete_session_file(key)

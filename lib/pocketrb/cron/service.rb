@@ -3,6 +3,7 @@
 require "json"
 require "securerandom"
 require "fileutils"
+require_relative "job"
 
 module Pocketrb
   module Cron
@@ -101,7 +102,7 @@ module Pocketrb
       # @param to [String, nil] Target chat ID
       # @return [Job]
       def add_interval_job(name:, every:, message:, deliver: false, channel: nil, to: nil)
-        schedule = Schedule.new(kind: :every, every_ms: every * 1000)
+        schedule = Pocketrb::Cron::Schedule.new(kind: :every, every_ms: every * 1000)
         add_job(name: name, schedule: schedule, message: message, deliver: deliver, channel: channel, to: to)
       end
 
@@ -115,7 +116,7 @@ module Pocketrb
       # @param to [String, nil] Target chat ID
       # @return [Job]
       def add_cron_job(name:, cron:, message:, tz: nil, deliver: false, channel: nil, to: nil)
-        schedule = Schedule.new(kind: :cron, expr: cron, tz: tz)
+        schedule = Pocketrb::Cron::Schedule.new(kind: :cron, expr: cron, tz: tz)
         add_job(name: name, schedule: schedule, message: message, deliver: deliver, channel: channel, to: to)
       end
 
@@ -129,7 +130,7 @@ module Pocketrb
       # @return [Job]
       def add_one_time_job(name:, at:, message:, deliver: false, channel: nil, to: nil)
         at_ms = at.is_a?(Time) ? (at.to_f * 1000).to_i : at * 1000
-        schedule = Schedule.new(kind: :at, at_ms: at_ms)
+        schedule = Pocketrb::Cron::Schedule.new(kind: :at, at_ms: at_ms)
         add_job(name: name, schedule: schedule, message: message, deliver: deliver, channel: channel, to: to)
       end
 
@@ -274,21 +275,20 @@ module Pocketrb
 
       def compute_cron_next(expr, tz = nil)
         # Try to use fugit if available
-        begin
-          require "fugit"
-          cron = Fugit.parse_cron(expr)
-          return nil unless cron
 
-          now = Time.now
-          now = now.in_time_zone(tz) if tz && now.respond_to?(:in_time_zone)
+        require "fugit"
+        cron = Fugit.parse_cron(expr)
+        return nil unless cron
 
-          next_time = cron.next_time(now)
-          (next_time.to_f * 1000).to_i
-        rescue LoadError
-          # Fallback: simple minute-based scheduling without fugit
-          Pocketrb.logger.warn("Fugit gem not available, cron expressions may not work correctly")
-          (Time.now.to_f * 1000 + 60_000).to_i
-        end
+        now = Time.now
+        now = now.in_time_zone(tz) if tz && now.respond_to?(:in_time_zone)
+
+        next_time = cron.next_time(now)
+        (next_time.to_f * 1000).to_i
+      rescue LoadError
+        # Fallback: simple minute-based scheduling without fugit
+        Pocketrb.logger.warn("Fugit gem not available, cron expressions may not work correctly")
+        ((Time.now.to_f * 1000) + 60_000).to_i
       end
 
       def arm_timer!

@@ -6,52 +6,47 @@ module Pocketrb
   module Agent
     # Core agent processing loop
     class Loop
-      attr_reader :bus, :provider, :tools, :sessions, :context
-      attr_reader :model, :max_iterations, :workspace, :qmd_memory, :compaction
+      attr_reader :bus, :provider, :tools, :sessions, :context, :model, :max_iterations, :workspace, :memory_dir,
+                  :memory, :compaction
 
       def initialize(
         bus:,
         provider:,
         workspace:,
+        memory_dir: nil,
         model: nil,
         max_iterations: 50,
         system_prompt: nil,
         mcp_endpoint: nil,
-        enable_qmd: true,
         enable_compaction: true,
         compaction_threshold: nil
       )
         @bus = bus
         @provider = provider
         @workspace = Pathname.new(workspace)
+        @memory_dir = Pathname.new(memory_dir || workspace)
         @model = model || provider.default_model
         @max_iterations = max_iterations
 
-        @sessions = Session::Manager.new(storage_dir: @workspace.join(".pocketrb", "sessions"))
+        @sessions = Session::Manager.new(storage_dir: @memory_dir.join(".pocketrb", "sessions"))
 
-        # Initialize QMD memory (combines local memory + QMD vector store)
-        @qmd_memory = if enable_qmd
-                        Memory::QMD.new(workspace: @workspace, endpoint: mcp_endpoint)
-                      end
+        # Initialize simple memory system
+        @memory = Memory.new(workspace: @memory_dir)
 
         @context = Context.new(
-          workspace: @workspace,
-          system_prompt: system_prompt,
-          qmd_memory: @qmd_memory
+          workspace: @memory_dir,
+          system_prompt: system_prompt
         )
 
-        @tools = Tools::Registry.new(workspace: @workspace, bus: @bus)
+        @tools = Tools::Registry.new(workspace: @workspace, memory_dir: @memory_dir, bus: @bus)
         @tools.register_defaults!
 
-        # Register memory tool with MCP client
-        if @qmd_memory
-          memory_tool = MCP::MemoryTool.new(
-            workspace: @workspace,
-            bus: @bus,
-            mcp_client: @qmd_memory.client
-          )
-          @tools.register(memory_tool)
-        end
+        # Pass memory instance to tools
+        @tools.update_context(memory: @memory)
+
+        # Load always-on skills into context
+        @skills_loader = Skills::Loader.new(workspace: @memory_dir)
+        load_always_skills!
 
         # Initialize context compaction
         @compaction = if enable_compaction
@@ -94,22 +89,32 @@ module Pocketrb
       # @param msg [Bus::InboundMessage]
       # @return [Bus::OutboundMessage|nil]
       def process_message(msg)
+        # Update tools context with current channel info for message/send_file tools
+        @tools.update_context(
+          default_channel: msg.channel,
+          default_chat_id: msg.chat_id
+        )
+
         session = @sessions.get_or_create(msg.session_key)
         session.add_user_message(msg.content, media: msg.media)
 
         publish_state_change(msg.session_key, :idle, :processing)
 
         # Compact session history if needed (before building messages)
-        if @compaction && @compaction.needs_compaction?(session.messages)
+        if @compaction&.needs_compaction?(session.messages)
           @compaction.compact_session!(session)
           @sessions.save(session)
         end
+
+        # Get relevant memory context for this message
+        memory_context = @memory.relevant_context(msg.content, max_facts: 10)
 
         # Build initial messages (with media support)
         messages = @context.build_messages(
           history: session.get_history(max_messages: 50),
           current: msg.content,
-          media: msg.media
+          media: msg.media,
+          memory_context: memory_context
         )
 
         # Drop the last message since we already added it to history
@@ -245,6 +250,25 @@ module Pocketrb
           reason: reason
         )
         @bus.publish_state_event(event)
+      end
+
+      # Load skills marked as always: true into the system prompt
+      def load_always_skills!
+        always_skills = @skills_loader.get_always_skills
+        return if always_skills.empty?
+
+        skill_content = always_skills.map(&:to_prompt).join("\n\n")
+        @context.append_to_system_prompt(skill_content)
+
+        Pocketrb.logger.debug("Loaded #{always_skills.size} always-on skills: #{always_skills.map(&:name).join(", ")}")
+      end
+
+      # Load skills triggered by a message (for context-aware skill loading)
+      def load_triggered_skills(text)
+        triggered = @skills_loader.get_triggered_skills(text)
+        return "" if triggered.empty?
+
+        triggered.map(&:to_prompt).join("\n\n")
       end
     end
   end

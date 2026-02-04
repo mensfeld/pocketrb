@@ -59,7 +59,12 @@ module Pocketrb
         anthropic_api_key: ENV["ANTHROPIC_API_KEY"] || self[:anthropic_api_key],
         openrouter_api_key: ENV["OPENROUTER_API_KEY"] || self[:openrouter_api_key],
         openai_api_key: ENV["OPENAI_API_KEY"] || self[:openai_api_key],
-        brave_api_key: ENV["BRAVE_API_KEY"] || self[:brave_api_key]
+        brave_api_key: ENV["BRAVE_API_KEY"] || self[:brave_api_key],
+        model: self[:model],
+        autonomous: self[:autonomous],
+        dangerously_skip_permissions: self[:dangerously_skip_permissions],
+        permission_mode: self[:permission_mode],
+        system_prompt: self[:system_prompt]
       }.compact
     end
 
@@ -116,7 +121,7 @@ module Pocketrb
       config_file = @workspace.join(CONFIG_DIR, CONFIG_FILE)
       return unless config_file.exist?
 
-      data = YAML.safe_load(File.read(config_file), permitted_classes: [Symbol])
+      data = YAML.safe_load_file(config_file, permitted_classes: [Symbol])
       merge!(data) if data.is_a?(Hash)
     rescue StandardError => e
       Pocketrb.logger.warn("Failed to load workspace config: #{e.message}")
@@ -126,7 +131,7 @@ module Pocketrb
       global_config = Pathname.new(Dir.home).join(".pocketrb", CONFIG_FILE)
       return unless global_config.exist?
 
-      data = YAML.safe_load(File.read(global_config), permitted_classes: [Symbol])
+      data = YAML.safe_load_file(global_config, permitted_classes: [Symbol])
       # Global config has lower priority than workspace config
       data.each { |k, v| @data[k.to_sym] ||= v } if data.is_a?(Hash)
     rescue StandardError => e
@@ -140,11 +145,14 @@ module Pocketrb
       @data[:max_iterations] = ENV["POCKETRB_MAX_ITERATIONS"].to_i if ENV["POCKETRB_MAX_ITERATIONS"]
       @data[:mcp_endpoint] = ENV["MCP_ENDPOINT"] if ENV["MCP_ENDPOINT"]
 
+      # Autonomous mode (for sandboxed environments)
+      @data[:autonomous] = true if %w[1 true].include?(ENV["POCKETRB_AUTONOMOUS"])
+
       # Log level
-      if ENV["POCKETRB_LOG_LEVEL"]
-        @data[:log_level] = ENV["POCKETRB_LOG_LEVEL"]
-        Pocketrb.logger.level = Logger.const_get(ENV["POCKETRB_LOG_LEVEL"].upcase)
-      end
+      return unless ENV["POCKETRB_LOG_LEVEL"]
+
+      @data[:log_level] = ENV.fetch("POCKETRB_LOG_LEVEL", nil)
+      Pocketrb.logger.level = Logger.const_get(ENV["POCKETRB_LOG_LEVEL"].upcase)
     end
   end
 end

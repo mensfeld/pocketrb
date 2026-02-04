@@ -80,8 +80,9 @@ module Pocketrb
         start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
         begin
-          # Convert string keys to symbols
+          # Convert string keys to symbols and filter to known parameters
           args = arguments.transform_keys(&:to_sym)
+          args = filter_arguments(tool, args)
           result = tool.execute(**args)
 
           duration = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).to_i
@@ -126,11 +127,33 @@ module Pocketrb
           ListDir,
           Exec,
           Jobs,
+          Cron,
           WebSearch,
           WebFetch,
           Think,
-          Message
+          Message,
+          SendFile,
+          BrowserAdvanced,
+          Memory
         ].each { |klass| register_class(klass) }
+      end
+
+      private
+
+      # Filter arguments to only include those defined in tool's parameter schema
+      # This prevents LLM from passing unexpected arguments like 'description'
+      def filter_arguments(tool, args)
+        schema = tool.parameters
+        return args unless schema.is_a?(Hash) && schema[:properties]
+
+        allowed_keys = schema[:properties].keys.map(&:to_sym)
+        filtered = args.slice(*allowed_keys)
+
+        # Log filtered out keys for debugging
+        removed = args.keys - filtered.keys
+        Pocketrb.logger.debug("Filtered out unknown arguments for #{tool.name}: #{removed.join(", ")}") if removed.any?
+
+        filtered
       end
     end
   end

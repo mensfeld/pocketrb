@@ -24,6 +24,7 @@ module Pocketrb
         @stdout = nil
         @stderr = nil
         @wait_thread = nil
+        @stderr_thread = nil
         @mutex = Mutex.new
         validate_config!
       end
@@ -86,11 +87,39 @@ module Pocketrb
           "--verbose"
         ]
 
-        if @config[:system_prompt]
-          args += ["--append-system-prompt", @config[:system_prompt]]
+        # Add autonomous/dangerous flags if configured or via ENV
+        # This skips all permission prompts - use only in trusted/sandboxed environments
+        if autonomous_mode?
+          args << "--allow-dangerously-skip-permissions"
+          args << "--dangerously-skip-permissions"
+          Pocketrb.logger.info("Autonomous mode enabled - skipping permission prompts")
         end
 
+        # Custom permission mode if specified
+        args += ["--permission-mode", @config[:permission_mode]] if @config[:permission_mode]
+
+        args += ["--append-system-prompt", @config[:system_prompt]] if @config[:system_prompt]
+
+        Pocketrb.logger.info("Starting Claude CLI: #{args.join(" ")}")
+        Pocketrb.logger.debug("Config: autonomous=#{@config[:autonomous]}, env=#{ENV.fetch("POCKETRB_AUTONOMOUS",
+                                                                                           nil)}")
         @stdin, @stdout, @stderr, @wait_thread = Open3.popen3(*args)
+
+        # Start stderr reader thread to capture errors
+        @stderr_thread = Thread.new do
+          while (line = @stderr.gets)
+            Pocketrb.logger.warn("Claude CLI stderr: #{line.strip}")
+          end
+        rescue IOError
+          # Expected when stderr is closed
+        end
+      end
+
+      def autonomous_mode?
+        @config[:autonomous] ||
+          @config[:dangerously_skip_permissions] ||
+          ENV["POCKETRB_AUTONOMOUS"] == "1" ||
+          ENV["POCKETRB_AUTONOMOUS"] == "true"
       end
 
       def stop!
@@ -98,7 +127,8 @@ module Pocketrb
         @stdout&.close
         @stderr&.close
         @wait_thread&.kill
-        @stdin = @stdout = @stderr = @wait_thread = nil
+        @stderr_thread&.kill
+        @stdin = @stdout = @stderr = @wait_thread = @stderr_thread = nil
       end
 
       def running?
@@ -113,19 +143,41 @@ module Pocketrb
 
       def validate_config!
         # Check if claude CLI is available
-        unless system("which claude > /dev/null 2>&1")
-          raise ConfigurationError, "Claude CLI not found. Install with: npm install -g @anthropic-ai/claude-code"
-        end
+        return if system("which claude > /dev/null 2>&1")
+
+        raise ConfigurationError, "Claude CLI not found. Install with: npm install -g @anthropic-ai/claude-code"
       end
 
       private
 
       def build_prompt(messages, tools)
-        # Build prompt from messages
-        prompt = messages.map do |msg|
+        # Build content blocks from messages, preserving images
+        content_blocks = []
+
+        messages.each do |msg|
           content = msg.content
-          content.is_a?(Array) ? content.map(&:to_s).join("\n") : content.to_s
-        end.join("\n\n")
+          if content.is_a?(Array)
+            # Handle content blocks (text + media)
+            content.each do |block|
+              if block.is_a?(Hash) && block[:type] == "media"
+                # Convert media to image block
+                media = block[:media]
+                if media&.image?
+                  image_block = format_image_for_cli(media)
+                  content_blocks << image_block if image_block
+                else
+                  content_blocks << { type: "text", text: "[Attached: #{media&.filename || "file"}]" }
+                end
+              elsif block.is_a?(Hash) && block[:type] == "text"
+                content_blocks << { type: "text", text: block[:text] }
+              elsif block.is_a?(String)
+                content_blocks << { type: "text", text: block }
+              end
+            end
+          elsif content.is_a?(String) && !content.empty?
+            content_blocks << { type: "text", text: content }
+          end
+        end
 
         # Add tool descriptions if provided
         if tools && !tools.empty?
@@ -139,7 +191,7 @@ module Pocketrb
             "- #{name}(#{param_names}): #{desc}"
           end.join("\n")
 
-          prompt = <<~PROMPT
+          tool_prompt = <<~PROMPT
             You have these tools available. To use a tool, respond with a JSON block:
             ```json
             {"tool": "tool_name", "input": {"param": "value"}}
@@ -149,17 +201,47 @@ module Pocketrb
             #{tool_desc}
 
             User request:
-            #{prompt}
           PROMPT
+
+          # Prepend tool instructions to content
+          content_blocks.unshift({ type: "text", text: tool_prompt })
         end
 
-        prompt
+        # Return content blocks (or just text if no images)
+        if content_blocks.all? { |b| b[:type] == "text" }
+          content_blocks.map { |b| b[:text] }.join("\n\n")
+        else
+          content_blocks
+        end
       end
 
-      def send_message(prompt)
+      def format_image_for_cli(media)
+        return nil unless media&.image?
+
+        # Get base64 data
+        data = if media.data
+                 media.data
+               elsif media.path && File.exist?(media.path)
+                 require "base64"
+                 Base64.strict_encode64(File.binread(media.path))
+               end
+
+        return nil unless data
+
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: media.mime_type,
+            data: data
+          }
+        }
+      end
+
+      def send_message(content)
         message = {
           type: "user",
-          message: { role: "user", content: prompt }
+          message: { role: "user", content: content }
         }
         @stdin.puts(message.to_json)
         @stdin.flush
@@ -169,15 +251,27 @@ module Pocketrb
         result_text = ""
         usage_data = {}
         start_time = Time.now
+        events_received = 0
 
         loop do
-          break if Time.now - start_time > TOTAL_TIMEOUT
+          elapsed = Time.now - start_time
+          if elapsed > TOTAL_TIMEOUT
+            Pocketrb.logger.error("Claude CLI timeout after #{elapsed.to_i}s, received #{events_received} events")
+            Pocketrb.logger.error("Process alive: #{@wait_thread&.alive?}, partial response: #{result_text[0..200]}")
+            break
+          end
 
           line = read_line_with_timeout
-          break if line.nil?
+          if line.nil?
+            Pocketrb.logger.debug("No more output from Claude CLI after #{events_received} events")
+            break
+          end
 
           event = parse_event(line)
           next unless event
+
+          events_received += 1
+          Pocketrb.logger.debug("Claude CLI event ##{events_received}: #{event["type"]}")
 
           case event["type"]
           when "assistant"
@@ -264,9 +358,7 @@ module Pocketrb
         )
 
         # If there are tool calls, remove them from content
-        if tool_calls.any?
-          content = content.gsub(/```json\s*\{.*?"tool".*?\}\s*```/m, "").strip
-        end
+        content = content.gsub(/```json\s*\{.*?"tool".*?\}\s*```/m, "").strip if tool_calls.any?
 
         LLMResponse.new(
           content: content.empty? ? nil : content,
@@ -285,8 +377,22 @@ module Pocketrb
 
         # Look for JSON tool calls in code blocks
         text.scan(/```json\s*(\{.*?"tool".*?\})\s*```/m) do |match|
-          begin
-            parsed = JSON.parse(match[0])
+          parsed = JSON.parse(match[0])
+          if parsed["tool"]
+            tool_calls << ToolCall.new(
+              id: "cli_#{SecureRandom.hex(8)}",
+              name: parsed["tool"],
+              arguments: parsed["input"] || {}
+            )
+          end
+        rescue JSON::ParserError
+          # Skip malformed JSON
+        end
+
+        # Also try inline JSON
+        if tool_calls.empty?
+          text.scan(/\{"tool"\s*:\s*"\w+"[^}]*\}/m) do |match|
+            parsed = JSON.parse(match)
             if parsed["tool"]
               tool_calls << ToolCall.new(
                 id: "cli_#{SecureRandom.hex(8)}",
@@ -296,24 +402,6 @@ module Pocketrb
             end
           rescue JSON::ParserError
             # Skip malformed JSON
-          end
-        end
-
-        # Also try inline JSON
-        if tool_calls.empty?
-          text.scan(/\{"tool"\s*:\s*"\w+"[^}]*\}/m) do |match|
-            begin
-              parsed = JSON.parse(match)
-              if parsed["tool"]
-                tool_calls << ToolCall.new(
-                  id: "cli_#{SecureRandom.hex(8)}",
-                  name: parsed["tool"],
-                  arguments: parsed["input"] || {}
-                )
-              end
-            rescue JSON::ParserError
-              # Skip malformed JSON
-            end
           end
         end
 

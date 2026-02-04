@@ -51,9 +51,7 @@ module Pocketrb
         # Create skill directory
         skill_dir = workspace.join("skills", skill_name)
 
-        if skill_dir.exist?
-          return error("Skill '#{skill_name}' already exists. Use skill_modify to update it.")
-        end
+        return error("Skill '#{skill_name}' already exists. Use skill_modify to update it.") if skill_dir.exist?
 
         FileUtils.mkdir_p(skill_dir)
 

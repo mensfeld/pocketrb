@@ -79,7 +79,7 @@ module Pocketrb
       # @param skill_names [Array<String>] Skills to include
       # @return [String]
       def build_skills_prompt(skill_names)
-        skills = skill_names.map { |name| load_skill(name) }.compact
+        skills = skill_names.filter_map { |name| load_skill(name) }
         skills.map(&:to_prompt).join("\n\n")
       end
 

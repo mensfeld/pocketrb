@@ -59,7 +59,7 @@ RSpec.describe Pocketrb::Bus::MessageBus do
     end
 
     it "raises on unknown event type" do
-      expect { bus.subscribe(:unknown) { } }.to raise_error(ArgumentError)
+      expect { bus.subscribe(:unknown) {} }.to raise_error(ArgumentError)
     end
   end
 

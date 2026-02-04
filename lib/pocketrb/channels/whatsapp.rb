@@ -113,7 +113,7 @@ module Pocketrb
         when "message"
           handle_incoming_message(message)
         when "status"
-          Pocketrb.logger.info("WhatsApp status: #{message['status']}")
+          Pocketrb.logger.info("WhatsApp status: #{message["status"]}")
         when "qr"
           handle_qr(message)
         when "ready"
@@ -121,9 +121,9 @@ module Pocketrb
         when "authenticated"
           Pocketrb.logger.info("WhatsApp: authenticated")
         when "error"
-          Pocketrb.logger.error("WhatsApp error: #{message['error']}")
+          Pocketrb.logger.error("WhatsApp error: #{message["error"]}")
         else
-          Pocketrb.logger.debug("WhatsApp: unknown message type: #{message['type']}")
+          Pocketrb.logger.debug("WhatsApp: unknown message type: #{message["type"]}")
         end
       rescue JSON::ParserError => e
         Pocketrb.logger.warn("WhatsApp: invalid JSON: #{e.message}")
@@ -205,10 +205,10 @@ module Pocketrb
       end
 
       def handle_qr(message)
-        if message["qr"]
-          Pocketrb.logger.info("WhatsApp: QR code received. Scan in bridge terminal or use the data URL.")
-          # Could save to file or display in terminal if needed
-        end
+        return unless message["qr"]
+
+        Pocketrb.logger.info("WhatsApp: QR code received. Scan in bridge terminal or use the data URL.")
+        # Could save to file or display in terminal if needed
       end
 
       def allowed_user?(phone)

@@ -52,6 +52,7 @@ module Pocketrb
         register(:openrouter, OpenRouter)
         register(:ruby_llm, RubyLLMProvider)
         register(:claude_cli, ClaudeCLI)
+        register(:claude_max_proxy, ClaudeMaxProxy)
       end
     end
   end

@@ -7,7 +7,7 @@ module Pocketrb
       DEFAULT_INTERVAL = 30 * 60 # 30 minutes
       HEARTBEAT_FILE = "HEARTBEAT.md"
 
-      HEARTBEAT_PROMPT = <<~PROMPT.freeze
+      HEARTBEAT_PROMPT = <<~PROMPT
         Read HEARTBEAT.md in your workspace. Follow any instructions or tasks listed there.
         If nothing needs attention, reply with: HEARTBEAT_OK
 

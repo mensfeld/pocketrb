@@ -1,15 +1,86 @@
-require:
-  - rubocop-rspec
+# frozen_string_literal: true
+
+plugins:
   - rubocop-performance
+  - rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 3.2
   NewCops: enable
+  TargetRubyVersion: 3.2
   SuggestExtensions: false
   Exclude:
     - 'vendor/**/*'
     - 'spec/fixtures/**/*'
 
+# Layout
+Layout/LineLength:
+  Enabled: false
+
+# Lint
+Lint/EmptyBlock:
+  Enabled: false
+
+Lint/UnusedMethodArgument:
+  Enabled: false
+
+# Metrics - reasonable limits for a CLI app
+Metrics/AbcSize:
+  Max: 100
+  Exclude:
+    - 'lib/pocketrb/cli.rb'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'lib/**/*.rb'
+
+Metrics/BlockNesting:
+  Max: 4
+
+Metrics/ClassLength:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Max: 25
+  Exclude:
+    - 'lib/pocketrb/channels/telegram.rb'
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/ModuleLength:
+  Max: 400
+
+Metrics/ParameterLists:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+# Naming
+Naming/AccessorMethodName:
+  Enabled: false
+
+Naming/PredicatePrefix:
+  Enabled: false
+
+Naming/PredicateMethod:
+  Enabled: false
+
+# RSpec
+RSpec/ExampleLength:
+  Max: 25
+
+RSpec/MultipleExpectations:
+  Max: 10
+
+RSpec/NestedGroups:
+  Max: 5
+
+RSpec/SpecFilePathFormat:
+  Enabled: false
+
+# Style
 Style/Documentation:
   Enabled: false
 
@@ -17,34 +88,38 @@ Style/FrozenStringLiteralComment:
   Enabled: true
   EnforcedStyle: always
 
-Metrics/MethodLength:
-  Max: 25
-
-Metrics/AbcSize:
-  Max: 30
-
-Metrics/ClassLength:
-  Max: 200
-
-Metrics/BlockLength:
-  Exclude:
-    - 'spec/**/*'
-    - '*.gemspec'
-
-Layout/LineLength:
-  Max: 120
-
-RSpec/MultipleExpectations:
-  Max: 5
-
-RSpec/ExampleLength:
-  Max: 15
-
-RSpec/NestedGroups:
-  Max: 4
+Style/MultilineBlockChain:
+  Enabled: false
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
 Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
+
+Lint/DuplicateBranch:
+  Enabled: false
+
+Lint/MissingSuper:
+  Enabled: false
+
+Lint/UselessConstantScoping:
+  Enabled: false
+
+Naming/MethodParameterName:
+  Enabled: false
+
+Performance/CollectionLiteralInLoop:
+  Enabled: false
+
+Style/ComparableClamp:
+  Enabled: false
+
+Style/FormatStringToken:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false

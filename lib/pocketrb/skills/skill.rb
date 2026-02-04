@@ -60,9 +60,9 @@ module Pocketrb
       def check_requirement(req)
         case req
         when /^env:(.+)/
-          ENV[$1] != nil
+          !ENV[::Regexp.last_match(1)].nil?
         when /^file:(.+)/
-          File.exist?($1)
+          File.exist?(::Regexp.last_match(1))
         when /^tool:(.+)/
           # Would need tool registry context
           true

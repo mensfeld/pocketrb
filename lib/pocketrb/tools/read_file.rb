@@ -36,21 +36,15 @@ module Pocketrb
       def execute(path:, offset: nil, limit: nil)
         resolved = validate_path!(path)
 
-        unless resolved.file?
-          return error("Not a file: #{path}")
-        end
+        return error("Not a file: #{path}") unless resolved.file?
 
         content = File.read(resolved)
         lines = content.lines
 
         # Apply offset and limit
-        if offset && offset > 1
-          lines = lines[(offset - 1)..]
-        end
+        lines = lines[(offset - 1)..] if offset && offset > 1
 
-        if limit
-          lines = lines.first(limit)
-        end
+        lines = lines.first(limit) if limit
 
         # Add line numbers
         start_line = offset || 1

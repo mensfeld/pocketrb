@@ -40,9 +40,7 @@ module Pocketrb
       def execute(path:, old_string:, new_string:, replace_all: false)
         resolved = validate_path!(path)
 
-        unless resolved.file?
-          return error("Not a file: #{path}")
-        end
+        return error("Not a file: #{path}") unless resolved.file?
 
         content = File.read(resolved)
 

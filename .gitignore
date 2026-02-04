@@ -26,3 +26,5 @@ Thumbs.db
 # Gem build
 *.gem
 Gemfile.lock
+.pocketrb/
+memory/

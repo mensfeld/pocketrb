@@ -34,10 +34,36 @@ module Pocketrb
 
       def initialize(workspace:)
         @workspace = Pathname.new(workspace)
-        @jobs_dir = @workspace.join(".pocketrb", "jobs")
-        FileUtils.mkdir_p(@jobs_dir)
-        cleanup_stale_jobs
+        @jobs_dir = resolve_jobs_dir
+        @available = setup_jobs_dir!
+        cleanup_stale_jobs if @available
       end
+
+      # Check if job manager is available (directory accessible)
+      def available?
+        @available
+      end
+
+      private
+
+      def resolve_jobs_dir
+        # Don't create .pocketrb in root filesystem
+        if @workspace.to_s == "/" || !@workspace.writable?
+          Pathname.new(Dir.home).join(".pocketrb", "jobs")
+        else
+          @workspace.join(".pocketrb", "jobs")
+        end
+      end
+
+      def setup_jobs_dir!
+        FileUtils.mkdir_p(@jobs_dir)
+        true
+      rescue Errno::EACCES, Errno::EROFS => e
+        Pocketrb.logger.warn("Cannot create jobs directory #{@jobs_dir}: #{e.message}")
+        false
+      end
+
+      public
 
       # Check if command should auto-run in background
       def long_running?(command)
@@ -174,9 +200,17 @@ module Pocketrb
           pid_file = File.join(job_dir, "pid")
           next nil unless File.exist?(pid_file)
 
-          pid = File.read(pid_file).strip.to_i rescue 0
+          pid = begin
+            File.read(pid_file).strip.to_i
+          rescue StandardError
+            0
+          end
           running = pid.positive? && process_running?(pid)
-          created = File.mtime(job_dir) rescue Time.now
+          created = begin
+            File.mtime(job_dir)
+          rescue StandardError
+            Time.now
+          end
 
           { dir: job_dir, running: running, created: created }
         end

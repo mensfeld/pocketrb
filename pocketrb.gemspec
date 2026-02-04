@@ -25,19 +25,19 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  spec.add_dependency "async", "~> 2.0"
-  spec.add_dependency "ruby_llm", "~> 1.0"
   spec.add_dependency "anthropic", "~> 0.3"
+  spec.add_dependency "async", "~> 2.0"
   spec.add_dependency "faraday", "~> 2.0"
   spec.add_dependency "faraday-follow_redirects", "~> 0.3"
-  spec.add_dependency "thor", "~> 1.3"
-  spec.add_dependency "zeitwerk", "~> 2.6"
-  spec.add_dependency "yaml", "~> 0.3"
   spec.add_dependency "json", "~> 2.7"
-  spec.add_dependency "tty-prompt", "~> 0.23"
-  spec.add_dependency "tty-markdown", "~> 0.7"
   spec.add_dependency "pastel", "~> 0.8"
+  spec.add_dependency "ruby_llm", "~> 1.0"
   spec.add_dependency "telegram-bot-ruby", "~> 2.0"
+  spec.add_dependency "thor", "~> 1.3"
+  spec.add_dependency "tty-markdown", "~> 0.7"
+  spec.add_dependency "tty-prompt", "~> 0.23"
+  spec.add_dependency "yaml", "~> 0.3"
+  spec.add_dependency "zeitwerk", "~> 2.6"
 
   # Optional dependencies (loaded on demand)
   # For WhatsApp bridge: gem install websocket-client-simple

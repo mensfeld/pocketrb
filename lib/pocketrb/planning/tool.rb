@@ -138,9 +138,7 @@ module Pocketrb
       def list_plans
         plans = manager.list_plans
 
-        if plans.empty?
-          return "No plans found"
-        end
+        return "No plans found" if plans.empty?
 
         output = ["# Plans\n"]
         plans.each do |plan|

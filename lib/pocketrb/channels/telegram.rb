@@ -21,6 +21,11 @@ module Pocketrb
 
       TELEGRAM_FILE_URL = "https://api.telegram.org/file/bot%<token>s/%<path>s"
 
+      # Special commands that bypass the agent
+      SPECIAL_COMMANDS = %w[/status /jobs /cron /help].freeze
+
+      attr_accessor :status_context
+
       def initialize(bus:, token:, allowed_users: nil, download_media: true)
         super(bus: bus, name: :telegram)
         @token = token
@@ -29,6 +34,8 @@ module Pocketrb
         @bot = nil
         @chat_ids = {} # Map sender_id to chat_id for replies
         @media_processor = Media::Processor.new
+        @status_context = {} # Will hold job_manager, cron_service, etc.
+        @started_at = Time.now
       end
 
       protected
@@ -36,19 +43,31 @@ module Pocketrb
       def run_inbound_loop
         Pocketrb.logger.info("Starting Telegram bot (polling mode)...")
 
-        ::Telegram::Bot::Client.run(@token) do |bot|
-          @bot = bot
+        # Run the blocking telegram listener in a separate thread
+        # so Async outbound consumer can process messages
+        @listener_thread = Thread.new do
+          ::Telegram::Bot::Client.run(@token) do |bot|
+            @bot = bot
 
-          # Get bot info
-          me = bot.api.get_me["result"]
-          Pocketrb.logger.info("Telegram bot @#{me["username"]} connected")
+            # Get bot info
+            me = bot.api.get_me
+            username = me.respond_to?(:username) ? me.username : me.dig("result", "username")
+            Pocketrb.logger.info("Telegram bot @#{username} connected")
 
-          bot.listen do |message|
-            break unless @running
+            bot.listen do |message|
+              break unless @running
 
-            handle_telegram_message(message)
+              handle_telegram_message(message)
+            end
           end
+        rescue StandardError => e
+          Pocketrb.logger.error("Telegram listener error: #{e.message}")
         end
+
+        # Keep the main fiber alive for async tasks
+        sleep 0.1 while @running
+
+        @listener_thread&.join
       rescue StandardError => e
         Pocketrb.logger.error("Telegram error: #{e.message}")
         raise
@@ -127,7 +146,9 @@ module Pocketrb
 
       def handle_telegram_message(message)
         return unless message.is_a?(::Telegram::Bot::Types::Message)
-        return unless message.text || message.caption || message.photo || message.voice || message.document || message.audio || message.video
+        unless message.text || message.caption || message.photo || message.voice || message.document || message.audio || message.video
+          return
+        end
 
         user = message.from
         return unless user
@@ -143,6 +164,9 @@ module Pocketrb
 
         # Store chat_id for replies
         @chat_ids[sender_id] = chat_id
+
+        # Handle special commands (bypass agent)
+        return if message.text && handle_special_command(message.text, chat_id)
 
         # Build content and download media
         content = build_content(message)
@@ -182,25 +206,15 @@ module Pocketrb
         parts << message.caption if message.caption
 
         # Add descriptive text for media (actual media is in media array)
-        if message.photo&.any?
-          parts << "[Image attached - I can see this image]" if @download_media
-        end
+        parts << "[Image attached - I can see this image]" if message.photo&.any? && @download_media
 
-        if message.voice
-          parts << "[Voice message attached]"
-        end
+        parts << "[Voice message attached]" if message.voice
 
-        if message.audio
-          parts << "[Audio: #{message.audio.title || message.audio.file_name || 'audio'}]"
-        end
+        parts << "[Audio: #{message.audio.title || message.audio.file_name || "audio"}]" if message.audio
 
-        if message.video
-          parts << "[Video attached]"
-        end
+        parts << "[Video attached]" if message.video
 
-        if message.document
-          parts << "[Document: #{message.document.file_name}]"
-        end
+        parts << "[Document: #{message.document.file_name}]" if message.document
 
         parts.empty? ? "[empty message]" : parts.join("\n")
       end
@@ -263,10 +277,16 @@ module Pocketrb
         media
       end
 
-      def download_telegram_file(file_id, type, mime_type, filename = nil)
+      def download_telegram_file(file_id, _type, mime_type, filename = nil)
         # Get file path from Telegram
         result = @bot.api.get_file(file_id: file_id)
-        file_path = result.dig("result", "file_path")
+
+        # Handle both telegram-bot-ruby v1 (hash) and v2 (typed object)
+        file_path = if result.respond_to?(:file_path)
+                      result.file_path
+                    else
+                      result.dig("result", "file_path")
+                    end
         return nil unless file_path
 
         # Build download URL
@@ -289,6 +309,241 @@ module Pocketrb
         end
       end
 
+      # Handle special commands that bypass the agent
+      def handle_special_command(text, chat_id)
+        cmd = text.strip.split.first&.downcase
+        return false unless SPECIAL_COMMANDS.include?(cmd)
+
+        response = case cmd
+                   when "/status" then build_status_response
+                   when "/jobs" then build_jobs_response
+                   when "/cron" then build_cron_response
+                   when "/help" then build_help_response
+                   else return false
+                   end
+
+        @bot.api.send_message(
+          chat_id: chat_id,
+          text: response,
+          parse_mode: "HTML"
+        )
+        true
+      rescue StandardError => e
+        Pocketrb.logger.error("Special command error: #{e.message}")
+        @bot.api.send_message(chat_id: chat_id, text: "Error: #{e.message}")
+        true
+      end
+
+      def build_status_response
+        lines = []
+        lines << "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        lines << "🤖 <b>Pocketrb Status</b>"
+        lines << "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+        # Uptime
+        uptime = format_uptime(Time.now - @started_at)
+        lines << "⏱ Uptime: #{uptime}"
+
+        # Provider info
+        if @status_context[:provider]
+          provider = @status_context[:provider]
+          lines << "🔌 Provider: #{provider.class.name.split("::").last}"
+          lines << "🧠 Model: #{@status_context[:model] || "default"}"
+        end
+
+        # Claude CLI status (if using claude_cli provider)
+        claude_status = get_claude_cli_status
+        if claude_status
+          lines << ""
+          lines << "🖥 <b>Claude CLI:</b>"
+          claude_status.each { |line| lines << "  #{line}" }
+        end
+
+        # Background jobs
+        jobs_info = get_jobs_summary
+        lines << ""
+        lines << "📋 <b>Background Jobs:</b> #{jobs_info[:summary]}"
+        jobs_info[:jobs].first(3).each { |j| lines << "  • #{j}" }
+        lines << "  ... and #{jobs_info[:jobs].length - 3} more" if jobs_info[:jobs].length > 3
+
+        # Cron jobs
+        cron_info = get_cron_summary
+        lines << ""
+        lines << "⏰ <b>Scheduled Jobs:</b> #{cron_info[:summary]}"
+        cron_info[:jobs].first(3).each { |j| lines << "  • #{j}" }
+        lines << "  ... and #{cron_info[:jobs].length - 3} more" if cron_info[:jobs].length > 3
+
+        # Session info
+        if @status_context[:sessions]
+          session_count = begin
+            @status_context[:sessions].list_sessions.length
+          rescue StandardError
+            0
+          end
+          lines << ""
+          lines << "💬 Sessions: #{session_count}"
+        end
+
+        lines << "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        lines.join("\n")
+      end
+
+      def build_jobs_response
+        jobs_info = get_jobs_summary
+        return "No background jobs." if jobs_info[:jobs].empty?
+
+        lines = ["<b>📋 Background Jobs</b>", ""]
+
+        running = jobs_info[:all].select { |j| j[:running] }
+        completed = jobs_info[:all].reject { |j| j[:running] }
+
+        if running.any?
+          lines << "<b>Running:</b>"
+          running.each do |job|
+            lines << "  🟢 [#{job[:job_id]}] #{job[:name]}"
+          end
+          lines << ""
+        end
+
+        if completed.any?
+          lines << "<b>Completed:</b>"
+          completed.first(10).each do |job|
+            lines << "  ⚪ [#{job[:job_id]}] #{job[:name]}"
+          end
+        end
+
+        lines.join("\n")
+      end
+
+      def build_cron_response
+        cron_info = get_cron_summary
+        return "No scheduled jobs." if cron_info[:all].empty?
+
+        lines = ["<b>⏰ Scheduled Jobs</b>", ""]
+
+        cron_info[:all].each do |job|
+          status = job.enabled ? "🟢" : "⚪"
+          next_run = if job.state.next_run_at_ms
+                       Time.at(job.state.next_run_at_ms / 1000).strftime("%m/%d %H:%M")
+                     else
+                       "—"
+                     end
+          lines << "#{status} <b>#{job.name}</b> [#{job.id}]"
+          lines << "    Next: #{next_run}"
+          lines << "    #{job.payload.message[0..40]}#{"..." if job.payload.message.length > 40}"
+          lines << ""
+        end
+
+        lines.join("\n")
+      end
+
+      def build_help_response
+        <<~HELP
+          <b>🤖 Pocketrb Commands</b>
+
+          <b>/status</b> - Show system status
+          <b>/jobs</b> - List background jobs
+          <b>/cron</b> - List scheduled tasks
+          <b>/help</b> - Show this help
+
+          Or just chat naturally - I can:
+          • Execute commands
+          • Read/write files
+          • Search the web
+          • Schedule reminders
+          • Remember things
+        HELP
+      end
+
+      def get_claude_cli_status
+        # Check if claude processes are running
+        claude_pids = `pgrep -f "claude" 2>/dev/null`.strip.split("\n")
+        return nil if claude_pids.empty?
+
+        lines = []
+
+        claude_pids.each do |pid|
+          # Get process info
+          cmd = `ps -p #{pid} -o args= 2>/dev/null`.strip
+          next if cmd.empty? || cmd.include?("pgrep")
+
+          # Get runtime
+          etime = `ps -p #{pid} -o etime= 2>/dev/null`.strip
+
+          # Try to get what it's doing (check /proc on Linux)
+          status = "running"
+          if File.exist?("/proc/#{pid}/fd")
+            # Check if it's doing I/O
+            fd_count = begin
+              Dir.glob("/proc/#{pid}/fd/*").length
+            rescue StandardError
+              0
+            end
+            status = "active (#{fd_count} fds)" if fd_count > 10
+          end
+
+          # Truncate command for display
+          display_cmd = cmd.length > 50 ? "#{cmd[0..47]}..." : cmd
+          lines << "PID #{pid}: #{status}"
+          lines << "  #{display_cmd}" if lines.length < 6
+          lines << "  Time: #{etime}" if etime.length.positive?
+        end
+
+        lines.empty? ? nil : lines.first(8)
+      end
+
+      def get_jobs_summary
+        job_manager = @status_context[:job_manager]
+
+        # Create job manager lazily from memory_dir if not provided
+        if job_manager.nil? && @status_context[:memory_dir]
+          begin
+            job_manager = Tools::BackgroundJobManager.new(workspace: @status_context[:memory_dir])
+          rescue StandardError
+            # Ignore if we can't create it
+          end
+        end
+
+        return { summary: "N/A", jobs: [], all: [] } unless job_manager&.available?
+
+        jobs = job_manager.list
+        running = jobs.count { |j| j[:running] }
+        completed = jobs.length - running
+
+        {
+          summary: "#{running} running, #{completed} completed",
+          jobs: jobs.map { |j| "#{j[:running] ? "🟢" : "⚪"} #{j[:name][0..30]}" },
+          all: jobs
+        }
+      end
+
+      def get_cron_summary
+        cron_service = @status_context[:cron_service]
+        return { summary: "N/A", jobs: [], all: [] } unless cron_service
+
+        jobs = cron_service.list_jobs(include_disabled: true)
+        enabled = jobs.count(&:enabled)
+
+        {
+          summary: "#{enabled} active, #{jobs.length - enabled} disabled",
+          jobs: jobs.select(&:enabled).map { |j| j.name.to_s },
+          all: jobs
+        }
+      end
+
+      def format_uptime(seconds)
+        seconds = seconds.to_i
+        if seconds < 60
+          "#{seconds}s"
+        elsif seconds < 3600
+          "#{seconds / 60}m #{seconds % 60}s"
+        elsif seconds < 86_400
+          "#{seconds / 3600}h #{(seconds % 3600) / 60}m"
+        else
+          "#{seconds / 86_400}d #{(seconds % 86_400) / 3600}h"
+        end
+      end
+
       def markdown_to_telegram_html(text)
         return "" if text.nil? || text.empty?
 
@@ -296,7 +551,7 @@ module Pocketrb
 
         # Extract and protect code blocks
         code_blocks = []
-        result.gsub!(/```[\w]*\n?([\s\S]*?)```/) do
+        result.gsub!(/```\w*\n?([\s\S]*?)```/) do
           code_blocks << Regexp.last_match(1)
           "\x00CB#{code_blocks.length - 1}\x00"
         end

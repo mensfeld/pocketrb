@@ -23,21 +23,21 @@ module Pocketrb
       # Initialize the MCP connection
       def connect
         response = rpc_call("initialize", {
-          protocolVersion: "2024-11-05",
-          capabilities: {
-            tools: {}
-          },
-          clientInfo: {
-            name: "pocketrb",
-            version: Pocketrb::VERSION
-          }
-        })
+                              protocolVersion: "2024-11-05",
+                              capabilities: {
+                                tools: {}
+                              },
+                              clientInfo: {
+                                name: "pocketrb",
+                                version: Pocketrb::VERSION
+                              }
+                            })
 
-        @connected = response["result"] != nil
+        @connected = !response["result"].nil?
         @server_info = response.dig("result", "serverInfo")
         @capabilities = response.dig("result", "capabilities")
 
-        Pocketrb.logger.info("MCP connected to #{@server_info&.dig('name') || 'server'}")
+        Pocketrb.logger.info("MCP connected to #{@server_info&.dig("name") || "server"}")
         @connected
       rescue StandardError => e
         Pocketrb.logger.warn("MCP connection failed: #{e.message}")
@@ -57,13 +57,11 @@ module Pocketrb
         ensure_connected!
 
         response = rpc_call("tools/call", {
-          name: name,
-          arguments: arguments
-        })
+                              name: name,
+                              arguments: arguments
+                            })
 
-        if response["error"]
-          raise MCPError, "Tool call failed: #{response['error']['message']}"
-        end
+        raise MCPError, "Tool call failed: #{response["error"]["message"]}" if response["error"]
 
         response.dig("result", "content")&.first&.dig("text")
       end
@@ -123,9 +121,7 @@ module Pocketrb
           req.body = request_body.to_json
         end
 
-        unless response.success?
-          raise MCPError, "RPC call failed: HTTP #{response.status}"
-        end
+        raise MCPError, "RPC call failed: HTTP #{response.status}" unless response.success?
 
         JSON.parse(response.body)
       rescue Faraday::Error => e

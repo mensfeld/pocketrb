@@ -21,7 +21,7 @@ module Pocketrb
       # @param origin_chat_id [String] Chat to report back to
       # @param model [String] Model to use (defaults to parent's model)
       # @return [String] Agent ID
-      def spawn(task:, skills: [], origin_channel:, origin_chat_id:, model: nil)
+      def spawn(task:, origin_channel:, origin_chat_id:, skills: [], model: nil)
         agent_id = SecureRandom.uuid[0..7]
 
         agent_info = {
@@ -68,9 +68,7 @@ module Pocketrb
       # @param agent_id [String]
       def terminate(agent_id)
         @mutex.synchronize do
-          if @active_agents[agent_id]
-            @active_agents[agent_id][:status] = :terminated
-          end
+          @active_agents[agent_id][:status] = :terminated if @active_agents[agent_id]
         end
       end
 
@@ -140,7 +138,6 @@ module Pocketrb
 
         # Send result back to origin
         announce_result(info, result)
-
       rescue StandardError => e
         Pocketrb.logger.error("Subagent #{agent_id} failed: #{e.message}")
         update_status(agent_id, :failed, result: "Error: #{e.message}")
@@ -176,10 +173,10 @@ module Pocketrb
         return if skill_names.empty?
 
         skills_loader = Skills::Loader.new(workspace: @parent_loop.workspace)
-        skill_content = skill_names.map do |name|
+        skill_content = skill_names.filter_map do |name|
           skill = skills_loader.load_skill(name)
           skill&.to_prompt
-        end.compact.join("\n\n")
+        end.join("\n\n")
 
         loop.context.append_to_system_prompt(skill_content) unless skill_content.empty?
       end

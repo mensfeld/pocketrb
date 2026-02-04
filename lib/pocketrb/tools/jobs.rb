@@ -52,15 +52,15 @@ module Pocketrb
       private
 
       def job_manager
-        @job_manager ||= BackgroundJobManager.new(workspace: workspace)
+        # Use memory_dir for job storage (falls back to workspace if not set)
+        storage_dir = @context[:memory_dir] || workspace
+        @job_manager ||= BackgroundJobManager.new(workspace: storage_dir)
       end
 
       def list_jobs
         jobs = job_manager.list
 
-        if jobs.empty?
-          return "No background jobs found."
-        end
+        return "No background jobs found." if jobs.empty?
 
         output = ["Background Jobs:\n"]
 
@@ -95,7 +95,7 @@ module Pocketrb
         <<~STATUS
           Job: #{status[:job_id]}
           Name: #{status[:name]}
-          Status: #{status[:running] ? 'RUNNING' : 'COMPLETED'}
+          Status: #{status[:running] ? "RUNNING" : "COMPLETED"}
           PID: #{status[:pid]}
           Command: #{status[:command]}
 

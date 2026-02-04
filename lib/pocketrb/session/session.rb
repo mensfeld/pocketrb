@@ -62,14 +62,25 @@ module Pocketrb
 
       # Add an assistant message
       def add_assistant_message(content, tool_calls: nil)
-        add_message(role: Providers::Role::ASSISTANT, content: content, tool_calls: tool_calls)
+        # Truncate large tool call arguments to prevent context bloat
+        sanitized_calls = sanitize_tool_calls(tool_calls) if tool_calls
+        add_message(role: Providers::Role::ASSISTANT, content: content, tool_calls: sanitized_calls)
       end
 
       # Add a tool result message
+      MAX_TOOL_RESULT_LENGTH = 2000
+
       def add_tool_result(tool_call_id:, name:, content:)
+        # Truncate large tool results to prevent context bloat
+        truncated_content = if content.is_a?(String) && content.length > MAX_TOOL_RESULT_LENGTH
+                              "#{content[0...MAX_TOOL_RESULT_LENGTH]}... [truncated #{content.length - MAX_TOOL_RESULT_LENGTH} chars]"
+                            else
+                              content
+                            end
+
         add_message(
           role: Providers::Role::TOOL,
-          content: content,
+          content: truncated_content,
           name: name,
           tool_call_id: tool_call_id
         )
@@ -158,6 +169,31 @@ module Pocketrb
       end
 
       private
+
+      # Truncate large arguments in tool calls to prevent context bloat
+      # Large content (scripts, files) shouldn't be stored in session history
+      MAX_ARG_LENGTH = 500
+
+      def sanitize_tool_calls(tool_calls)
+        return nil if tool_calls.nil?
+
+        tool_calls.map do |tc|
+          sanitized_args = tc.arguments.transform_values do |v|
+            if v.is_a?(String) && v.length > MAX_ARG_LENGTH
+              "#{v[0...MAX_ARG_LENGTH]}... [truncated #{v.length - MAX_ARG_LENGTH} chars]"
+            else
+              v
+            end
+          end
+
+          # Create new tool call with sanitized arguments
+          Providers::ToolCall.new(
+            id: tc.id,
+            name: tc.name,
+            arguments: sanitized_args
+          )
+        end
+      end
 
       def save_to_log(message)
         # Session manager handles persistence via JSONL

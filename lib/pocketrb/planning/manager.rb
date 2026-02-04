@@ -22,9 +22,7 @@ module Pocketrb
       # @param description [String] Plan description
       # @return [Plan]
       def create_plan(name:, steps:, description: nil)
-        if exists?(name)
-          raise Error, "Plan '#{name}' already exists"
-        end
+        raise Error, "Plan '#{name}' already exists" if exists?(name)
 
         plan = Plan.new(name: name, description: description)
         plan.add_steps(steps)
@@ -52,18 +50,12 @@ module Pocketrb
         plan = get_plan(name)
         raise Error, "Plan '#{name}' not found" unless plan
 
-        if completed_step
-          plan.complete_step(completed_step, notes: notes)
-        end
+        plan.complete_step(completed_step, notes: notes) if completed_step
 
-        if new_steps
-          plan.add_steps(new_steps)
-        end
+        plan.add_steps(new_steps) if new_steps
 
         # Auto-complete plan if all steps done
-        if plan.complete? && plan.status == Plan::PlanStatus::ACTIVE
-          plan.mark_complete!
-        end
+        plan.mark_complete! if plan.complete? && plan.status == Plan::PlanStatus::ACTIVE
 
         save_plan(plan)
         plan
@@ -125,10 +117,10 @@ module Pocketrb
       # Get all plans
       # @return [Array<Plan>]
       def list_plans
-        Dir.glob(@plans_dir.join("*.json")).map do |file|
+        Dir.glob(@plans_dir.join("*.json")).filter_map do |file|
           name = File.basename(file, ".json")
           get_plan(name)
-        end.compact
+        end
       end
 
       # Check if a plan exists
