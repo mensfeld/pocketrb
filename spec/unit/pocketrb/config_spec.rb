@@ -218,30 +218,31 @@ RSpec.describe Pocketrb::Config do
   end
 
   describe "ENV variable deprecation warnings" do
+    let(:original_logger) { Pocketrb.logger }
+    let(:log_output) { StringIO.new }
+
     before do
-      @original_logger = Pocketrb.logger
-      @log_output = StringIO.new
-      Pocketrb.logger = Logger.new(@log_output)
+      Pocketrb.logger = Logger.new(log_output)
     end
 
     after do
-      Pocketrb.logger = @original_logger
+      Pocketrb.logger = original_logger
       %w[POCKETRB_PROVIDER POCKETRB_MODEL ANTHROPIC_API_KEY].each { |k| ENV.delete(k) }
     end
 
     it "warns when POCKETRB_PROVIDER is used" do
       ENV["POCKETRB_PROVIDER"] = "test"
       described_class.new(workspace: workspace)
-      expect(@log_output.string).to include("DEPRECATION")
-      expect(@log_output.string).to include("POCKETRB_PROVIDER")
+      expect(log_output.string).to include("DEPRECATION")
+      expect(log_output.string).to include("POCKETRB_PROVIDER")
     end
 
     it "warns when ANTHROPIC_API_KEY is used" do
       ENV["ANTHROPIC_API_KEY"] = "test-key"
       config = described_class.new(workspace: workspace)
       config.provider_config
-      expect(@log_output.string).to include("DEPRECATION")
-      expect(@log_output.string).to include("ANTHROPIC_API_KEY")
+      expect(log_output.string).to include("DEPRECATION")
+      expect(log_output.string).to include("ANTHROPIC_API_KEY")
     end
 
     it "only warns once per ENV variable" do
@@ -250,7 +251,7 @@ RSpec.describe Pocketrb::Config do
       config.reload!
       config.reload!
       # Should only warn once
-      expect(@log_output.string.scan(/DEPRECATION.*POCKETRB_PROVIDER/).count).to eq(1)
+      expect(log_output.string.scan(/DEPRECATION.*POCKETRB_PROVIDER/).count).to eq(1)
     end
 
     it "respects ENV variable values" do
