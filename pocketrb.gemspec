@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
     JSON-based memory with keyword matching.
   DESC
 
-  spec.required_ruby_version = ">= 4.0.0"
+  spec.required_ruby_version = ">= 3.2.0"
 
   # Runtime dependencies
   spec.add_dependency "anthropic", "~> 0.3"

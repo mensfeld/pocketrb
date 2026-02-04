@@ -12,7 +12,7 @@ module Pocketrb
       provider: "anthropic",
       model: "claude-sonnet-4-20250514",
       max_iterations: 50,
-      heartbeat_interval: 900, # 15 minutes
+      heartbeat_interval: 1800, # 30 minutes (1800s)
       mcp_endpoint: "http://localhost:7878",
       log_level: "info",
       session_history_limit: 100,

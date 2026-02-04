@@ -263,11 +263,13 @@ module Pocketrb
     private
 
     def load_json(path)
-      return nil unless path.exist?
+      return nil unless path.exist? # Missing file OK (first run)
 
-      JSON.parse(path.read)
-    rescue JSON::ParserError
-      nil
+      content = path.read
+      JSON.parse(content)
+    rescue JSON::ParserError => e
+      raise Pocketrb::ConfigurationError,
+            "Invalid JSON in #{path}: #{e.message}\nContent preview: #{content[0..100]}"
     end
 
     def save_facts

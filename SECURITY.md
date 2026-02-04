@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Pocketrb follows a rolling release model. Security updates are provided for the latest stable release. For Ruby version compatibility, please refer to the gemspec which currently requires Ruby >= 4.0.0.
+Pocketrb follows a rolling release model. Security updates are provided for the latest stable release. For Ruby version compatibility, please refer to the gemspec which currently requires Ruby >= 3.2.0.
 
 ## Reporting a Vulnerability
 
