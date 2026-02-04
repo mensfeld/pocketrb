@@ -40,11 +40,6 @@ Metrics/BlockNesting:
 Metrics/ClassLength:
   Enabled: false
 
-Metrics/CyclomaticComplexity:
-  Max: 25
-  Exclude:
-    - 'lib/pocketrb/channels/telegram.rb'
-
 Metrics/MethodLength:
   Enabled: false
 
