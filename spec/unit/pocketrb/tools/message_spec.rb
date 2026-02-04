@@ -95,7 +95,7 @@ RSpec.describe Pocketrb::Tools::Message do
       end
     end
 
-    context "message content" do
+    context "with message content" do
       it "handles multiline content" do
         content = "Line 1\nLine 2\nLine 3"
 
