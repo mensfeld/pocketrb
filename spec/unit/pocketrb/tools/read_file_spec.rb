@@ -59,7 +59,7 @@ RSpec.describe Pocketrb::Tools::ReadFile do
       it "preserves newlines" do
         result = tool.execute(path: "test.txt")
 
-        expect(result.scan(/\n/).count).to eq(3)
+        expect(result.scan("\n").count).to eq(3)
       end
     end
 

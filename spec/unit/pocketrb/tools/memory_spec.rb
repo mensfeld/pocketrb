@@ -67,10 +67,7 @@ RSpec.describe Pocketrb::Tools::Memory do
 
     context "with store action" do
       before do
-        allow(memory).to receive(:remember_learned).and_return("Stored: test")
-        allow(memory).to receive(:remember_user).and_return("Stored: user fact")
-        allow(memory).to receive(:remember_preference).and_return("Stored: preference")
-        allow(memory).to receive(:remember_context).and_return("Stored: context")
+        allow(memory).to receive_messages(remember_learned: "Stored: test", remember_user: "Stored: user fact", remember_preference: "Stored: preference", remember_context: "Stored: context")
       end
 
       it "stores learned fact" do
