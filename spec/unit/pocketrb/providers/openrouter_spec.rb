@@ -112,15 +112,15 @@ RSpec.describe Pocketrb::Providers::OpenRouter do
     it "uses default model when not specified" do
       provider.chat(messages: messages)
 
-      expect(WebMock).to have_requested(:post, "https://openrouter.ai/api/v1/chat/completions")
-        .with { |req| JSON.parse(req.body)["model"] == "anthropic/claude-sonnet-4" }
+      expect(WebMock).to(have_requested(:post, "https://openrouter.ai/api/v1/chat/completions")
+        .with { |req| JSON.parse(req.body)["model"] == "anthropic/claude-sonnet-4" })
     end
 
     it "uses custom model when specified" do
       provider.chat(messages: messages, model: "openai/gpt-4o")
 
-      expect(WebMock).to have_requested(:post, "https://openrouter.ai/api/v1/chat/completions")
-        .with { |req| JSON.parse(req.body)["model"] == "openai/gpt-4o" }
+      expect(WebMock).to(have_requested(:post, "https://openrouter.ai/api/v1/chat/completions")
+        .with { |req| JSON.parse(req.body)["model"] == "openai/gpt-4o" })
     end
 
     it "includes tools in request when provided" do
@@ -128,8 +128,8 @@ RSpec.describe Pocketrb::Providers::OpenRouter do
 
       provider.chat(messages: messages, tools: tools)
 
-      expect(WebMock).to have_requested(:post, "https://openrouter.ai/api/v1/chat/completions")
-        .with { |req| JSON.parse(req.body).key?("tools") && JSON.parse(req.body)["tools"].any? }
+      expect(WebMock).to(have_requested(:post, "https://openrouter.ai/api/v1/chat/completions")
+        .with { |req| JSON.parse(req.body).key?("tools") && JSON.parse(req.body)["tools"].any? })
     end
 
     it "sets authorization header" do
