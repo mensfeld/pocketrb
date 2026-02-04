@@ -70,7 +70,7 @@ RSpec.describe Pocketrb::Providers do
       it "returns false when content is nil" do
         response = described_class::LLMResponse.new(content: nil)
 
-        expect(response.has_content?).to be_falsy
+        expect(response).not_to have_content
       end
 
       it "returns false when content is empty string" do
@@ -90,7 +90,7 @@ RSpec.describe Pocketrb::Providers do
       it "returns false when thinking is nil" do
         response = described_class::LLMResponse.new(content: "Hello")
 
-        expect(response.has_thinking?).to be_falsy
+        expect(response).not_to have_thinking
       end
 
       it "returns false when thinking is empty" do
