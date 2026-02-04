@@ -4,15 +4,11 @@ RSpec.describe Pocketrb::Tools::WebSearch do
   let(:context) { { brave_api_key: "test-api-key" } }
   let(:tool) { described_class.new(context) }
 
-  # Disable VCR for unit tests, use WebMock stubs instead
-  before do
-    VCR.turn_off!(ignore_cassettes: true)
-    WebMock.enable!
-  end
-
-  after do
-    VCR.turn_on!
-    WebMock.disable!
+  # Use VCR.turned_off to scope disable to just these tests
+  around do |example|
+    VCR.turned_off do
+      example.run
+    end
   end
 
   describe "#name" do
