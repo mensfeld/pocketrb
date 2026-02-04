@@ -109,7 +109,7 @@ RSpec.describe Pocketrb::Session::Manager do
 
   describe "#delete" do
     it "removes session from memory" do
-      session = manager.get_or_create("test:123")
+      manager.get_or_create("test:123")
       manager.delete("test:123")
 
       expect(manager.get("test:123")).to be_nil
@@ -170,7 +170,7 @@ RSpec.describe Pocketrb::Session::Manager do
 
   describe "#append_message" do
     it "appends message to session file" do
-      session = manager.get_or_create("test:append")
+      manager.get_or_create("test:append")
       message = Pocketrb::Providers::Message.user("Appended")
 
       manager.append_message("test:append", message)
@@ -280,7 +280,7 @@ RSpec.describe Pocketrb::Session::Manager do
 
     it "handles invalid UTF-8 in content" do
       session = Pocketrb::Session::Session.new(key: "test:utf8")
-      invalid_string = "Test \xFF invalid UTF-8".dup.force_encoding("UTF-8")
+      invalid_string = (+"Test \xFF invalid UTF-8").force_encoding("UTF-8")
       session.add_message(role: "user", content: invalid_string)
       manager.save(session)
 
