@@ -29,3 +29,24 @@ desc "Generate YARD documentation"
 task :docs do
   sh "yard doc --output-dir doc lib/"
 end
+
+desc "Run YARD documentation linter"
+task :yard_lint do
+  require "yard"
+  YARD::CLI::Yardoc.run("--no-save", "--no-output")
+
+  total = YARD::Registry.all(:method, :class, :module).count
+  documented = YARD::Registry.all(:method, :class, :module)
+                             .reject { |o| o.docstring.blank? }
+                             .count
+
+  coverage = (documented.to_f / total * 100).round(2)
+  puts "Documentation: #{documented}/#{total} (#{coverage}%)"
+
+  exit 1 if documented < total
+end
+
+desc "Show YARD documentation statistics"
+task :yard_stats do
+  sh "yard stats --list-undoc"
+end

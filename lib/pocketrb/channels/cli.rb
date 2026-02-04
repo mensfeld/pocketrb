@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Pocketrb
+  # Channels module provides multi-channel support (CLI, Telegram, WhatsApp, etc.)
   module Channels
     # Interactive CLI channel
     class CLI < Base

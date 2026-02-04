@@ -3,6 +3,7 @@
 require "async"
 
 module Pocketrb
+  # Agent module provides the core agentic loop and context management
   module Agent
     # Core agent processing loop
     class Loop

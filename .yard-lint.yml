@@ -1,0 +1,8 @@
+rules:
+  UndocumentedMethod:
+    enabled: true
+    severity: error
+    include_private: true
+  UndocumentedClass:
+    enabled: true
+    severity: error

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Pocketrb
+  # Bus module provides the message bus architecture for multi-channel communication
   module Bus
     # Inbound message from a channel to the agent
     InboundMessage = Data.define(

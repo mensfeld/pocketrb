@@ -10,20 +10,37 @@ require "pathname"
 
 # Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
+  # Base error class for all Pocketrb errors
   class Error < StandardError; end
+
+  # Raised when configuration is invalid or corrupted
   class ConfigurationError < Error; end
+
+  # Raised when LLM provider encounters an error
   class ProviderError < Error; end
+
+  # Raised when tool execution fails
   class ToolError < Error; end
+
+  # Raised when session management encounters an error
   class SessionError < Error; end
+
+  # Raised when MCP (Model Context Protocol) operations fail
   class MCPError < Error; end
 
   class << self
     attr_writer :logger
 
+    # Returns the logger instance for Pocketrb
+    # @return [Logger] the logger instance
     def logger
       @logger ||= Logger.new($stdout, level: Logger::INFO)
     end
 
+    # Returns the root directory of the Pocketrb gem
+    # @return [Pathname] the gem root directory
+    # @example
+    #   Pocketrb.root #=> #<Pathname:/path/to/pocketrb>
     def root
       @root ||= Pathname.new(__dir__).parent
     end
