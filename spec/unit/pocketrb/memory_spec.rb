@@ -18,16 +18,16 @@ RSpec.describe Pocketrb::Memory do
       facts_file = Pathname.new(workspace).join("memory", "facts.json")
       FileUtils.mkdir_p(facts_file.dirname)
       File.write(facts_file, JSON.pretty_generate({
-                                                     "learned" => { "ruby" => [{ "info" => "Ruby is awesome",
-                                                                                 "learned_at" => "2026-01-01T00:00:00Z" }] },
-                                                     "user" => {},
-                                                     "preferences" => {},
-                                                     "context" => {}
-                                                   }))
+                                                    "learned" => { "ruby" => [{ "info" => "Ruby is awesome",
+                                                                                "learned_at" => "2026-01-01T00:00:00Z" }] },
+                                                    "user" => {},
+                                                    "preferences" => {},
+                                                    "context" => {}
+                                                  }))
 
       mem = described_class.new(workspace: workspace)
       expect(mem.recall_learned("ruby")).to eq([{ "info" => "Ruby is awesome",
-                                                   "learned_at" => "2026-01-01T00:00:00Z" }])
+                                                  "learned_at" => "2026-01-01T00:00:00Z" }])
     end
 
     it "initializes with empty data if no files exist" do
@@ -49,7 +49,7 @@ RSpec.describe Pocketrb::Memory do
       it "includes file path in error message" do
         facts_file = Pathname.new(workspace).join("memory", "facts.json")
         FileUtils.mkdir_p(facts_file.dirname)
-        File.write(facts_file, '{ broken')
+        File.write(facts_file, "{ broken")
 
         expect do
           described_class.new(workspace: workspace)
@@ -73,12 +73,12 @@ RSpec.describe Pocketrb::Memory do
         FileUtils.mkdir_p(recent_file.dirname)
         # Create valid facts.json first
         File.write(recent_file.dirname.join("facts.json"), JSON.pretty_generate({
-                                                                                   "learned" => {},
-                                                                                   "user" => {},
-                                                                                   "preferences" => {},
-                                                                                   "context" => {}
-                                                                                 }))
-        File.write(recent_file, '[ invalid json ]')
+                                                                                  "learned" => {},
+                                                                                  "user" => {},
+                                                                                  "preferences" => {},
+                                                                                  "context" => {}
+                                                                                }))
+        File.write(recent_file, "[ invalid json ]")
 
         expect do
           described_class.new(workspace: workspace)
@@ -210,7 +210,7 @@ RSpec.describe Pocketrb::Memory do
       5.times { |i| memory.remember_learned("topic#{i}", "Fact #{i}") }
       context = memory.relevant_context("topic0 topic1 topic2 topic3 topic4", max_facts: 2)
       # Should only include 2 facts
-      fact_count = context.scan(/KNOWN ABOUT/).size
+      fact_count = context.scan("KNOWN ABOUT").size
       expect(fact_count).to eq(2)
     end
   end

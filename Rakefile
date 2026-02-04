@@ -37,8 +37,7 @@ task :yard_lint do
 
   total = YARD::Registry.all(:method, :class, :module).count
   documented = YARD::Registry.all(:method, :class, :module)
-                             .reject { |o| o.docstring.blank? }
-                             .count
+                             .count { |o| !o.docstring.blank? }
 
   coverage = (documented.to_f / total * 100).round(2)
   puts "Documentation: #{documented}/#{total} (#{coverage}%)"

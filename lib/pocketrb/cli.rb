@@ -33,21 +33,29 @@ module Pocketrb
 
     # Register individual commands by delegating to their classes
     desc "version", "Show version"
+    # Displays the current Pocketrb version
+    # @return [void]
     def version
       invoke CLI::Version, :call, [], options
     end
 
     desc "skills", "List available skills"
+    # Lists available skills from the workspace
+    # @return [void]
     def skills
       invoke CLI::Skills, :call, [], options
     end
 
     desc "plans", "List active plans"
+    # Lists all active execution plans
+    # @return [void]
     def plans
       invoke CLI::Plans, :call, [], options
     end
 
     desc "init", "Initialize a new Pocketrb workspace"
+    # Initializes a new Pocketrb workspace with configuration
+    # @return [void]
     def init
       invoke CLI::Init, :call, [], options
     end
@@ -56,6 +64,8 @@ module Pocketrb
     option :model, type: :string, aliases: "-m", desc: "Model to use"
     option :provider, type: :string, aliases: "-p", desc: "LLM provider"
     option :system_prompt, type: :string, aliases: "-s", desc: "Custom system prompt"
+    # Starts an interactive chat session
+    # @return [void]
     def chat
       invoke CLI::Chat, :call, [], options
     end
@@ -64,6 +74,8 @@ module Pocketrb
     option :model, type: :string, aliases: "-m", desc: "Model to use"
     option :provider, type: :string, aliases: "-p", desc: "LLM provider (anthropic, openrouter)"
     option :channel, type: :string, aliases: "-c", default: "cli", desc: "Channel to connect to"
+    # Starts the agent in continuous mode with CLI channel
+    # @return [void]
     def start
       invoke CLI::Start, :call, [], options
     end
@@ -75,6 +87,8 @@ module Pocketrb
     option :allowed_users, type: :array, aliases: "-u", desc: "Allowed usernames or user IDs"
     option :enable_cron, type: :boolean, default: true, desc: "Enable cron/scheduling service"
     option :autonomous, type: :boolean, default: false, desc: "Skip permission prompts (for sandboxed environments)"
+    # Runs the agent as a Telegram bot
+    # @return [void]
     def telegram
       invoke CLI::Telegram, :call, [], options
     end
@@ -84,6 +98,8 @@ module Pocketrb
     option :provider, type: :string, aliases: "-p", desc: "LLM provider"
     option :bridge_url, type: :string, default: "ws://localhost:3001", desc: "WhatsApp bridge WebSocket URL"
     option :allowed_users, type: :array, aliases: "-u", desc: "Allowed phone numbers"
+    # Runs the agent as a WhatsApp bot
+    # @return [void]
     def whatsapp
       invoke CLI::WhatsApp, :call, [], options
     end
@@ -99,6 +115,8 @@ module Pocketrb
     option :enable_cron, type: :boolean, default: true, desc: "Enable cron service"
     option :enable_heartbeat, type: :boolean, default: true, desc: "Enable heartbeat service"
     option :autonomous, type: :boolean, default: false, desc: "Skip permission prompts (for sandboxed environments)"
+    # Starts the gateway with all configured services
+    # @return [void]
     def gateway
       invoke CLI::Gateway, :call, [], options
     end
