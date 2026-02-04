@@ -36,7 +36,6 @@ loader.inflector.inflect(
   "cli" => "CLI",
   "llm" => "LLM",
   "mcp" => "MCP",
-  "qmd" => "QMD",
   "openrouter" => "OpenRouter",
   "ruby_llm_provider" => "RubyLLMProvider",
   "claude_cli" => "ClaudeCLI",

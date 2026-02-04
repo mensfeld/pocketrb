@@ -2,7 +2,7 @@
 
 module Pocketrb
   module MCP
-    # Tool for interacting with QMD memory via MCP
+    # Tool for interacting with memory via MCP
     class MemoryTool < Tools::Base
       def initialize(context = {})
         super

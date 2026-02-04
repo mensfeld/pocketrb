@@ -6,7 +6,7 @@ require "securerandom"
 
 module Pocketrb
   module MCP
-    # MCP client for connecting to QMD HTTP Bridge
+    # MCP client for connecting to MCP HTTP Bridge
     # Implements JSON-RPC 2.0 protocol for MCP communication
     class Client
       DEFAULT_ENDPOINT = "http://localhost:7878"
@@ -66,7 +66,7 @@ module Pocketrb
         response.dig("result", "content")&.first&.dig("text")
       end
 
-      # Search memory (QMD-specific)
+      # Search memory via MCP
       def search(query:, limit: 10)
         # Try MCP tool first
         if tool_available?("memory_search")
@@ -77,7 +77,7 @@ module Pocketrb
         end
       end
 
-      # Store to memory (QMD-specific)
+      # Store to memory via MCP
       def store(content:, metadata: {})
         # Try MCP tool first
         if tool_available?("memory_store")
@@ -143,7 +143,7 @@ module Pocketrb
         false
       end
 
-      # Direct HTTP endpoints for QMD (fallback when not using MCP tools)
+      # Direct HTTP endpoints (fallback when not using MCP tools)
       def http_search(query, limit)
         response = client.post("/search") do |req|
           req.body = { query: query, limit: limit }.to_json
