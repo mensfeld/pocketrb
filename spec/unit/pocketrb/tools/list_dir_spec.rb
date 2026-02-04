@@ -104,7 +104,7 @@ RSpec.describe Pocketrb::Tools::ListDir do
       end
     end
 
-    context "output format" do
+    context "with output format" do
       it "includes file size and modification time" do
         result = tool.execute
 

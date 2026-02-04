@@ -90,7 +90,7 @@ RSpec.describe Pocketrb::Tools::Exec do
       end
     end
 
-    context "output truncation" do
+    context "with output truncation" do
       it "truncates very long output" do
         # Generate output larger than MAX_OUTPUT_SIZE
         long_command = "ruby -e 'puts \"x\" * 150_000'"
@@ -100,7 +100,7 @@ RSpec.describe Pocketrb::Tools::Exec do
       end
     end
 
-    context "empty output" do
+    context "with empty output" do
       it "indicates no output" do
         result = tool.execute(command: "true")
 
