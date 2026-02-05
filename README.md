@@ -9,13 +9,15 @@ A pocket-sized Ruby AI agent framework with multi-LLM support and advanced capab
 ## Features
 
 - **Clean async architecture**: MessageBus, proper tool_use API, async processing
-- **Multi-LLM support**: Claude (API + Max/OAuth), OpenRouter, OpenAI-compatible APIs, RubyLLM
+- **Multi-LLM support**: Claude (API + Max/OAuth + Proxy), OpenRouter, OpenAI-compatible APIs, RubyLLM, Claude CLI
 - **Multi-channel**: CLI, Telegram, WhatsApp (via bridge)
 - **Advanced features**: Planning system, context compaction, runtime skills system
 - **Simple memory**: JSON-based memory with keyword matching (no external dependencies)
 - **Media support**: Vision (images) via Claude, document handling
+- **Browser automation**: Headless Chromium with session management and advanced interactions
 - **Scheduling**: Cron jobs for automated tasks
 - **Personas**: Separate memory and identity from workspace for portable agent personalities
+- **Autonomous mode**: Skip permission prompts for sandboxed/container environments
 
 ## Installation
 
@@ -69,6 +71,8 @@ Options:
 - `-u, --allowed-users` - Restrict access to specific usernames/IDs
 - `-w, --workspace` - File access directory
 - `-M, --memory-dir` - Persona/memory directory
+- `--enable-cron` - Enable cron/scheduling service (default: true)
+- `--autonomous` - Skip permission prompts for sandboxed environments
 
 ### WhatsApp Bot
 
@@ -213,6 +217,8 @@ Pocketrb includes several built-in skills:
 - **github** - GitHub CLI operations (`gh pr`, `gh issue`, etc.)
 - **tmux** - Tmux session management for isolated workspaces
 - **weather** - Weather forecasts via wttr.in
+- **proactive** - Proactive task management and suggestions
+- **reflection** - Self-reflection and learning from interactions
 
 ### Listing Skills
 
@@ -244,32 +250,41 @@ Create a skill called "deploy" that guides deployment to production
 | Tool | Description |
 |------|-------------|
 | `exec` | Execute shell commands (auto-backgrounds long commands) |
-| `spawn` | Spawn background subagents for parallel work |
+| `jobs` | Manage background jobs and check their status |
 
-### Web
+### Web & Browser
 
 | Tool | Description |
 |------|-------------|
 | `web_search` | Search the web (requires `BRAVE_API_KEY`) |
 | `web_fetch` | Fetch and extract content from URLs |
+| `browser_advanced` | Advanced browser automation with Chromium (screenshots, interactions, JavaScript) |
 
-### Planning & Memory
+### Memory & Knowledge
 
 | Tool | Description |
 |------|-------------|
 | `think` | Internal reasoning for complex problems |
-| `plan` | Create and manage multi-step execution plans |
-| `memory` | Store and search long-term memory |
+| `memory` | Store and search long-term memory (keyword-based) |
 
 ### Communication
 
 | Tool | Description |
 |------|-------------|
 | `message` | Send messages to channels (Telegram, WhatsApp) |
+| `send_file` | Send files (images, documents) to chat channels |
+
+### Scheduling
+
+| Tool | Description |
+|------|-------------|
+| `cron` | Schedule and manage recurring tasks |
 
 ## Providers
 
 ### Anthropic (default)
+
+Standard Anthropic API:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -278,11 +293,27 @@ pocketrb chat --provider anthropic
 
 ### Claude Max (OAuth)
 
-For Claude Max subscribers:
+For Claude Max subscribers using OAuth token:
 
 ```bash
 export ANTHROPIC_OAUTH_TOKEN=your-oauth-token
 pocketrb chat --provider anthropic
+```
+
+### Claude Max Proxy
+
+Alternative Claude Max access via proxy:
+
+```bash
+pocketrb chat --provider claude_max_proxy
+```
+
+### Claude CLI
+
+Use the official Claude CLI (requires `claude` binary):
+
+```bash
+pocketrb chat --provider claude_cli
 ```
 
 ### OpenRouter
@@ -292,6 +323,14 @@ Access multiple models:
 ```bash
 export OPENROUTER_API_KEY=your-key
 pocketrb chat --provider openrouter --model anthropic/claude-sonnet-4
+```
+
+### RubyLLM
+
+Use Ruby-based LLM implementations:
+
+```bash
+pocketrb chat --provider ruby_llm
 ```
 
 ## Memory System
@@ -353,14 +392,31 @@ pocketrb cron remove job_id
 
 ## Gateway Mode
 
-Run all services together:
+Run all services together with full configuration:
 
 ```bash
 pocketrb gateway \
   --telegram-token "$TELEGRAM_BOT_TOKEN" \
   --telegram-users your_username \
-  --enable-cron
+  --whatsapp-bridge ws://localhost:3001 \
+  --whatsapp-users "+1234567890" \
+  --enable-cron \
+  --enable-heartbeat \
+  --heartbeat-interval 1800 \
+  --autonomous
 ```
+
+Options:
+- `-m, --model` - Model to use
+- `-p, --provider` - LLM provider
+- `--telegram-token` - Telegram bot token
+- `--telegram-users` - Allowed Telegram usernames/IDs
+- `--whatsapp-bridge` - WhatsApp bridge WebSocket URL (default: ws://localhost:3001)
+- `--whatsapp-users` - Allowed WhatsApp phone numbers
+- `--enable-cron` - Enable cron service (default: true)
+- `--enable-heartbeat` - Enable heartbeat service (default: true)
+- `--heartbeat-interval` - Heartbeat interval in seconds (default: 1800)
+- `--autonomous` - Skip permission prompts for sandboxed environments
 
 ## Context Compaction
 
@@ -400,9 +456,11 @@ pocketrb config get model
 | `OPENROUTER_API_KEY` | OpenRouter API key |
 | `BRAVE_API_KEY` | Brave Search API key (for web_search tool) |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token |
-| `POCKETRB_PROVIDER` | Default provider (anthropic, openrouter, ruby_llm, claude_cli) |
+| `POCKETRB_PROVIDER` | Default provider (anthropic, openrouter, ruby_llm, claude_cli, claude_max_proxy) |
 | `POCKETRB_MODEL` | Default model |
 | `POCKETRB_LOG_LEVEL` | Log level (debug, info, warn, error) |
+| `POCKETRB_AUTONOMOUS` | Enable autonomous mode (1, true) - skips permission prompts |
+| `POCKETRB_MAX_ITERATIONS` | Maximum agent loop iterations |
 
 ## Architecture
 
