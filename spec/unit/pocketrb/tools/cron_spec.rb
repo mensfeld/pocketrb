@@ -55,12 +55,13 @@ RSpec.describe Pocketrb::Tools::Cron do
       end
 
       it "creates a one-time job with 'at' schedule" do
+        future_time = (Time.now + 3600).iso8601 # 1 hour from now
         result = tool.execute(
           action: "add",
           name: "Morning reminder",
           message: "Time to start work",
           schedule_type: "at",
-          schedule_value: "2026-02-05T10:00:00"
+          schedule_value: future_time
         )
 
         expect(result).to include("Created job 'Morning reminder'")
