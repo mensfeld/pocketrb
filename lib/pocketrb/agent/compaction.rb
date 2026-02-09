@@ -55,7 +55,6 @@ module Pocketrb
         # Split messages: older ones to summarize, recent ones to keep
         split_point = [messages.size - @keep_recent, 0].max
         to_summarize = messages[0...split_point]
-        to_keep = messages[split_point..]
 
         return messages if to_summarize.empty?
 
