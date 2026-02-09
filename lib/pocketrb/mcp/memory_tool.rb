@@ -11,19 +11,19 @@ module Pocketrb
         @client = context[:mcp_client] || Client.new
       end
 
-# Tool name
+      # Tool name
       # @return [String] Tool identifier
       def name
         "memory"
       end
 
-# Tool description
+      # Tool description
       # @return [String] Human-readable description
       def description
         "Interact with long-term memory. Search for relevant information or store new knowledge for future reference."
       end
 
-# Tool parameters schema
+      # Tool parameters schema
       # @return [Hash] JSON schema
       def parameters
         {
@@ -56,7 +56,7 @@ module Pocketrb
         }
       end
 
-# Check if MCP client is available
+      # Check if MCP client is available
       # @return [Boolean] True if client can connect
       def available?
         @client.connected? || @client.connect

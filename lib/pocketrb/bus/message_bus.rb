@@ -112,7 +112,7 @@ module Pocketrb
         !@inbound.empty?
       end
 
-# Check if there are pending outbound messages
+      # Check if there are pending outbound messages
       # @return [Boolean] True if outbound queue is not empty
       def pending_outbound?
         !@outbound.empty?
@@ -161,7 +161,7 @@ module Pocketrb
           @mutex.synchronize { @data[key] }
         end
 
-# Reset all statistics
+        # Reset all statistics
         # @return [void]
         def reset!
           @mutex.synchronize do
@@ -169,7 +169,7 @@ module Pocketrb
           end
         end
 
-# Convert stats to hash
+        # Convert stats to hash
         # @return [Hash] Stats as hash
         def to_h
           @mutex.synchronize { @data.dup }
