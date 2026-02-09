@@ -40,7 +40,7 @@ SOCKET="$SOCKET_DIR/pocketrb.sock"
 tmux -S "$SOCKET" new-session -d -s mysession
 
 # Create session with initial command
-tmux -S "$SOCKET" new-session -d -s mysession "python3"
+tmux -S "$SOCKET" new-session -d -s mysession "irb"
 
 # List sessions
 tmux -S "$SOCKET" list-sessions
@@ -86,7 +86,7 @@ tmux -S "$SOCKET" capture-pane -p -t mysession > output.txt
 
 ```bash
 # Send command
-tmux -S "$SOCKET" send-keys -t mysession "python3 script.py" Enter
+tmux -S "$SOCKET" send-keys -t mysession "ruby script.rb" Enter
 
 # Wait for completion (simple approach)
 sleep 2
@@ -95,19 +95,19 @@ sleep 2
 tmux -S "$SOCKET" capture-pane -p -J -t mysession -S -50
 ```
 
-### Interactive Python/REPL Session
+### Interactive Ruby/IRB Session
 
 ```bash
-# Start Python session
-tmux -S "$SOCKET" new-session -d -s python "python3"
+# Start IRB session
+tmux -S "$SOCKET" new-session -d -s ruby "irb"
 
-# Send Python commands
-tmux -S "$SOCKET" send-keys -t python "import os" Enter
-tmux -S "$SOCKET" send-keys -t python "print(os.getcwd())" Enter
+# Send Ruby commands
+tmux -S "$SOCKET" send-keys -t ruby "require 'pathname'" Enter
+tmux -S "$SOCKET" send-keys -t ruby "puts Pathname.pwd" Enter
 
 # Get output
 sleep 1
-tmux -S "$SOCKET" capture-pane -p -t python
+tmux -S "$SOCKET" capture-pane -p -t ruby
 ```
 
 ### SSH Session
