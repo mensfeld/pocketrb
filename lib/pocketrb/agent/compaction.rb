@@ -55,9 +55,13 @@ module Pocketrb
         # Split messages: older ones to summarize, recent ones to keep
         split_point = [messages.size - @keep_recent, 0].max
         to_summarize = messages[0...split_point]
-        to_keep = messages[split_point..]
 
         return messages if to_summarize.empty?
+
+        # Adjust split point to keep tool_use/tool_result pairs together
+        split_point = adjust_split_for_tool_pairs(messages, split_point)
+        to_summarize = messages[0...split_point]
+        to_keep = messages[split_point..]
 
         Pocketrb.logger.info("Compacting #{to_summarize.size} messages into summary")
 
@@ -119,6 +123,51 @@ module Pocketrb
       end
 
       private
+
+      # Adjust split point to keep tool_use/tool_result pairs together
+      # If a tool_result is in the kept messages, ensure its corresponding
+      # assistant message with tool_calls is also kept
+      # @param messages [Array<Message>] All messages
+      # @param split_point [Integer] Initial split point
+      # @return [Integer] Adjusted split point
+      def adjust_split_for_tool_pairs(messages, split_point)
+        return split_point if split_point.zero?
+
+        to_keep = messages[split_point..]
+
+        # Find all tool results in the kept messages
+        tool_call_ids = to_keep
+                        .select { |m| m.role == Providers::Role::TOOL }
+                        .filter_map(&:tool_call_id)
+                        .compact
+
+        return split_point if tool_call_ids.empty?
+
+        # Find the earliest assistant message with matching tool_calls that needs to be kept
+        earliest_tool_use_index = nil
+
+        messages[0...split_point].each_with_index do |msg, idx|
+          next unless msg.role == Providers::Role::ASSISTANT && msg.tool_calls
+
+          # Check if any tool_calls match the tool_results we're keeping
+          matching_tools = msg.tool_calls.select { |tc| tool_call_ids.include?(tc.id) }
+          if matching_tools.any?
+            earliest_tool_use_index = idx
+            break
+          end
+        end
+
+        # Adjust split point to include the assistant message with tool_calls
+        if earliest_tool_use_index
+          Pocketrb.logger.debug(
+            "Adjusted split point from #{split_point} to #{earliest_tool_use_index} " \
+            "to keep tool_use/tool_result pairs together"
+          )
+          earliest_tool_use_index
+        else
+          split_point
+        end
+      end
 
       def generate_summary(messages)
         # Format messages for summarization
