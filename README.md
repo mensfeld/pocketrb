@@ -154,7 +154,7 @@ Background knowledge the agent should always have access to.
 
 - **Name**: John
 - **Timezone**: UTC+1
-- **Preferences**: Prefers Python over JavaScript
+- **Preferences**: Prefers Ruby over JavaScript
 
 ## Project Context
 
