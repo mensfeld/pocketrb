@@ -1,17 +1,24 @@
 # frozen_string_literal: true
 
 module Pocketrb
+  # Skills system for reusable prompts and capabilities
   module Skills
     # Tool for creating new skills at runtime
     class CreateTool < Tools::Base
+      # Tool name
+      # @return [String] Tool identifier
       def name
         "skill_create"
       end
 
+      # Tool description
+      # @return [String] Human-readable description
       def description
         "Create a new skill. Skills are reusable prompts/instructions that can be loaded into context. Use this to teach yourself new capabilities."
       end
 
+      # Tool parameters schema
+      # @return [Hash] JSON schema for tool parameters
       def parameters
         {
           type: "object",
@@ -42,6 +49,13 @@ module Pocketrb
         }
       end
 
+      # Execute skill creation
+      # @param skill_name [String] Skill name (lowercase, hyphens allowed)
+      # @param skill_description [String] Brief skill description
+      # @param content [String] Skill content/instructions in markdown
+      # @param triggers [Array<String>, nil] Keywords that trigger this skill
+      # @param always [Boolean] Whether skill should always be loaded (defaults to false)
+      # @return [String] Success or error message
       def execute(skill_name:, skill_description:, content:, triggers: nil, always: false)
         # Validate skill name
         unless valid_skill_name?(skill_name)

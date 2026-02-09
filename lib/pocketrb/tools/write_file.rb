@@ -6,14 +6,20 @@ module Pocketrb
     class WriteFile < Base
       MAX_FILE_SIZE = 10 * 1024 * 1024 # 10MB
 
+      # Tool name
+      # @return [String]
       def name
         "write_file"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "Write content to a file. Creates the file if it doesn't exist, or overwrites if it does. Creates parent directories as needed."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -31,6 +37,10 @@ module Pocketrb
         }
       end
 
+      # Execute file write operation
+      # @param path [String] File path (relative or absolute)
+      # @param content [String] File content (text or binary data) to write to disk
+      # @return [String] Success or error message
       def execute(path:, content:)
         resolved = resolve_path(path)
 

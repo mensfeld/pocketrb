@@ -4,16 +4,22 @@ require "faraday"
 require "json"
 require "securerandom"
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
+  # Model Context Protocol (MCP) integration for memory and tool servers
   module MCP
     # MCP client for connecting to MCP HTTP Bridge
     # Implements JSON-RPC 2.0 protocol for MCP communication
     class Client
+      # Default MCP server endpoint URL
       DEFAULT_ENDPOINT = "http://localhost:7878"
+      # Request timeout in seconds
       TIMEOUT = 30
 
       attr_reader :endpoint, :connected
 
+      # Initialize MCP client
+      # @param endpoint [String, nil] MCP server endpoint URL (defaults to ENV['MCP_ENDPOINT'] or DEFAULT_ENDPOINT)
       def initialize(endpoint: nil)
         @endpoint = endpoint || ENV["MCP_ENDPOINT"] || DEFAULT_ENDPOINT
         @connected = false
@@ -53,6 +59,10 @@ module Pocketrb
       end
 
       # Call a tool on the MCP server
+      # @param name [String] Tool name to invoke
+      # @param arguments [Hash] Tool arguments
+      # @return [String] Tool execution result
+      # @raise [MCPError] if tool call fails
       def call_tool(name:, arguments: {})
         ensure_connected!
 
@@ -67,6 +77,9 @@ module Pocketrb
       end
 
       # Search memory via MCP
+      # @param query [String] Search query string
+      # @param limit [Integer] Maximum number of results to return
+      # @return [String] Search results
       def search(query:, limit: 10)
         # Try MCP tool first
         if tool_available?("memory_search")
@@ -78,6 +91,9 @@ module Pocketrb
       end
 
       # Store to memory via MCP
+      # @param content [String] Content to store in memory
+      # @param metadata [Hash] Additional metadata for the stored content
+      # @return [String] Storage confirmation
       def store(content:, metadata: {})
         # Try MCP tool first
         if tool_available?("memory_store")

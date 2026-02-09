@@ -7,6 +7,10 @@ module Pocketrb
       attr_reader :key, :metadata, :created_at
       attr_accessor :messages
 
+      # Initialize a new session
+      # @param key [String] Unique session identifier
+      # @param messages [Array<Message>] Initial messages (defaults to empty array)
+      # @param metadata [Hash] Session metadata (defaults to empty hash)
       def initialize(key:, messages: [], metadata: {})
         @key = key
         @messages = messages
@@ -16,9 +20,12 @@ module Pocketrb
       end
 
       # Add a message to the session
-      # @param role [String] Message role
-      # @param content [String] Message content
-      # @param kwargs [Hash] Additional message attributes
+      # @param role [String] Message role (user, assistant, tool, system)
+      # @param content [String, Array] Message content (text or content blocks)
+      # @option kwargs [String] :name Message name (for tool messages)
+      # @option kwargs [String] :tool_call_id Tool call identifier (for tool result messages)
+      # @option kwargs [Array<ToolCall>] :tool_calls Tool calls made by assistant
+      # @return [void]
       def add_message(role:, content:, **kwargs)
         @mutex.synchronize do
           message = Providers::Message.new(
@@ -61,6 +68,9 @@ module Pocketrb
       end
 
       # Add an assistant message
+      # @param content [String] Assistant response text
+      # @param tool_calls [Array<ToolCall>, nil] Tool calls made by the assistant
+      # @return [void]
       def add_assistant_message(content, tool_calls: nil)
         # Truncate large tool call arguments to prevent context bloat
         sanitized_calls = sanitize_tool_calls(tool_calls) if tool_calls
@@ -70,6 +80,11 @@ module Pocketrb
       # Add a tool result message
       MAX_TOOL_RESULT_LENGTH = 2000
 
+      # Add a tool execution result
+      # @param tool_call_id [String] Tool call identifier to link result to request
+      # @param name [String] Tool name
+      # @param content [String] Tool execution result or output
+      # @return [void]
       def add_tool_result(tool_call_id:, name:, content:)
         # Truncate large tool results to prevent context bloat
         truncated_content = if content.is_a?(String) && content.length > MAX_TOOL_RESULT_LENGTH
@@ -87,7 +102,7 @@ module Pocketrb
       end
 
       # Get message history (optionally limited)
-      # @param max_messages [Integer|nil] Maximum messages to return
+      # @param max_messages [Integer, nil] Maximum messages to return
       # @return [Array<Message>]
       def get_history(max_messages: nil)
         @mutex.synchronize do
@@ -120,11 +135,16 @@ module Pocketrb
       end
 
       # Set metadata value
+      # @param key [String, Symbol] Metadata key
+      # @param value [Object] Metadata value (any serializable object)
+      # @return [void]
       def set_meta(key, value)
         @mutex.synchronize { @metadata[key] = value }
       end
 
       # Get metadata value
+      # @param key [String, Symbol] Metadata key
+      # @return [Object, nil] Stored value or nil
       def get_meta(key)
         @mutex.synchronize { @metadata[key] }
       end
@@ -142,6 +162,8 @@ module Pocketrb
       end
 
       # Create from hash
+      # @param hash [Hash] Serialized session data
+      # @return [Session] Reconstructed session instance
       def self.from_h(hash)
         messages = (hash[:messages] || hash["messages"] || []).map do |m|
           Providers::Message.new(

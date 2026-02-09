@@ -5,6 +5,9 @@ module Pocketrb
   module Channels
     # Interactive CLI channel
     class CLI < Base
+      # Initialize CLI channel
+      # @param bus [Bus::MessageBus] Message bus for publishing and consuming messages
+      # @param prompt [String] Command prompt string (defaults to "> ")
       def initialize(bus:, prompt: "> ")
         super(bus: bus, name: :cli)
         @prompt = prompt

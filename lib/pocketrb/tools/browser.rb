@@ -6,14 +6,20 @@ module Pocketrb
   module Tools
     # Browser automation tool using Playwright
     class Browser < Base
+      # Tool name
+      # @return [String]
       def name
         "browser"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "Automate browser interactions using headless Chromium. Can navigate to URLs, extract text content, take screenshots, interact with elements, and execute JavaScript. Use this for web scraping, research, testing, or any task requiring web browsing."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -52,6 +58,16 @@ module Pocketrb
         }
       end
 
+      # Execute browser automation action
+      # @param action [String] Action to perform (navigate, extract_text, screenshot, click, type, execute_js)
+      # @param url [String, nil] URL to navigate to
+      # @param selector [String, nil] CSS selector for element targeting
+      # @param text [String, nil] Text to type into an element
+      # @param javascript [String, nil] JavaScript code to execute in browser context
+      # @param screenshot_path [String, nil] File path for saving screenshot
+      # @param wait_time [Integer] Milliseconds to wait after navigation
+      # @option _kwargs [Object] * Additional action-specific options
+      # @return [String] Action result
       def execute(action:, url: nil, selector: nil, text: nil, javascript: nil, screenshot_path: nil, wait_time: 1000,
                   **_kwargs)
         case action

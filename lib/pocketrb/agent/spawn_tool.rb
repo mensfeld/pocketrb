@@ -4,14 +4,20 @@ module Pocketrb
   module Agent
     # Tool for spawning subagents
     class SpawnTool < Tools::Base
+      # Tool name
+      # @return [String] Tool name identifier
       def name
         "spawn"
       end
 
+      # Tool description
+      # @return [String] Human-readable description
       def description
         "Spawn a subagent to work on a specific task in the background. Useful for delegating independent work or parallel processing."
       end
 
+      # Tool parameters schema
+      # @return [Hash] JSON schema for tool parameters
       def parameters
         {
           type: "object",
@@ -38,10 +44,18 @@ module Pocketrb
         }
       end
 
+      # Check if tool is available (requires subagent manager)
+      # @return [Boolean] True if subagent manager is available
       def available?
         @context[:subagent_manager] != nil
       end
 
+      # Execute the spawn tool
+      # @param task [String] Task description for the subagent to complete
+      # @param skills [Array<String>] List of skill names to load for the subagent
+      # @param wait [Boolean] Whether to block until subagent completes
+      # @param timeout [Integer] Maximum wait time in seconds when waiting
+      # @return [String] Success or error message
       def execute(task:, skills: [], wait: false, timeout: 300)
         manager = @context[:subagent_manager]
         return error("Subagent spawning not available") unless manager

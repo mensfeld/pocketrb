@@ -12,6 +12,13 @@ module Pocketrb
       :media,        # Array<Media> - attached media (images, files, etc.)
       :metadata      # Hash - channel-specific metadata
     ) do
+      # Initialize an inbound message
+      # @param channel [Symbol] Channel identifier (e.g., :cli, :telegram, :discord)
+      # @param sender_id [String] User or system identifier that sent this message
+      # @param chat_id [String] Conversation or thread identifier for session tracking
+      # @param content [String] Text content of the message
+      # @param media [Array<Media>] Array of media attachments (defaults to empty)
+      # @param metadata [Hash] Channel-specific metadata (defaults to empty hash)
       def initialize(channel:, sender_id:, chat_id:, content:, media: [], metadata: {})
         super
       end
@@ -36,6 +43,13 @@ module Pocketrb
       :reply_to,     # String|nil - message ID to reply to
       :metadata      # Hash - channel-specific options
     ) do
+      # Initialize an outbound message
+      # @param channel [Symbol] Target channel identifier
+      # @param chat_id [String] Target chat or conversation identifier
+      # @param content [String] Text content to send
+      # @param media [Array<Media>] Array of media to attach (defaults to empty)
+      # @param reply_to [String, nil] Message ID to reply to (optional)
+      # @param metadata [Hash] Channel-specific options (defaults to empty hash)
       def initialize(channel:, chat_id:, content:, media: [], reply_to: nil, metadata: {})
         super
       end
@@ -49,14 +63,24 @@ module Pocketrb
       :filename,     # String|nil - original filename
       :data          # String|nil - base64 encoded data (for inline media)
     ) do
+      # Initialize a media attachment
+      # @param type [Symbol] Media type (:image, :file, :audio, or :video)
+      # @param path [String] File system path or URL to the media
+      # @param mime_type [String] MIME type of the media (e.g., "image/png")
+      # @param filename [String, nil] Original filename (optional)
+      # @param data [String, nil] Base64 encoded data for inline media (optional)
       def initialize(type:, path:, mime_type:, filename: nil, data: nil)
         super
       end
 
+      # Check if media is an image type
+      # @return [Boolean] true if type is :image
       def image?
         type == :image
       end
 
+      # Check if media is a file type
+      # @return [Boolean] true if type is :file
       def file?
         type == :file
       end
@@ -71,14 +95,25 @@ module Pocketrb
       :error,        # String|nil - error message if failed
       :duration_ms   # Integer|nil - execution time in milliseconds
     ) do
+      # Initialize a tool execution event
+      # @param tool_call_id [String] LLM-generated identifier linking this execution to the request
+      # @param name [String] Name of the tool being executed
+      # @param arguments [Hash] Arguments passed to the tool
+      # @param result [String, nil] Execution result if successful (optional)
+      # @param error [String, nil] Error message if execution failed (optional)
+      # @param duration_ms [Integer, nil] Execution duration in milliseconds (optional)
       def initialize(tool_call_id:, name:, arguments:, result: nil, error: nil, duration_ms: nil)
         super
       end
 
+      # Check if tool execution succeeded
+      # @return [Boolean] true if no error occurred
       def success?
         error.nil?
       end
 
+      # Check if tool execution failed
+      # @return [Boolean] true if an error occurred
       def failed?
         !success?
       end
@@ -91,6 +126,11 @@ module Pocketrb
       :to_state,     # Symbol - new state
       :reason        # String|nil - reason for change
     ) do
+      # Initialize a state change event
+      # @param session_key [String] Session identifier for the agent
+      # @param from_state [Symbol] Previous state the agent was in
+      # @param to_state [Symbol] New state the agent is transitioning to
+      # @param reason [String, nil] Optional reason for the state change
       def initialize(session_key:, from_state:, to_state:, reason: nil)
         super
       end

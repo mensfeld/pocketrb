@@ -21,6 +21,9 @@ module Pocketrb
       end
 
       # Publish an inbound message from a channel
+      # @param message [InboundMessage] Message received from a channel
+      # @return [void]
+      # @raise [ArgumentError] if message is not an InboundMessage
       def publish_inbound(message)
         raise ArgumentError, "Expected InboundMessage" unless message.is_a?(InboundMessage)
 
@@ -35,6 +38,9 @@ module Pocketrb
       end
 
       # Publish an outbound message to a channel
+      # @param message [OutboundMessage] Message to send to a channel
+      # @return [void]
+      # @raise [ArgumentError] if message is not an OutboundMessage
       def publish_outbound(message)
         raise ArgumentError, "Expected OutboundMessage" unless message.is_a?(OutboundMessage)
 
@@ -49,6 +55,9 @@ module Pocketrb
       end
 
       # Publish a tool execution event
+      # @param event [ToolExecution] Tool execution event to publish
+      # @return [void]
+      # @raise [ArgumentError] if event is not a ToolExecution
       def publish_tool_event(event)
         raise ArgumentError, "Expected ToolExecution" unless event.is_a?(ToolExecution)
 
@@ -63,6 +72,9 @@ module Pocketrb
       end
 
       # Publish a state change event
+      # @param event [StateChange] State change event to publish
+      # @return [void]
+      # @raise [ArgumentError] if event is not a StateChange
       def publish_state_event(event)
         raise ArgumentError, "Expected StateChange" unless event.is_a?(StateChange)
 
@@ -72,6 +84,11 @@ module Pocketrb
       end
 
       # Subscribe to events
+      # @param type [Symbol] Event type to subscribe to (:inbound, :outbound, :tool, or :state)
+      # @param block [Proc] Block to call when events of this type are published
+      # @yieldparam event [Object] Event object passed to the block
+      # @return [void]
+      # @raise [ArgumentError] if type is not a recognized event type
       def subscribe(type, &block)
         raise ArgumentError, "Unknown event type: #{type}" unless @subscribers.key?(type)
 
@@ -81,6 +98,9 @@ module Pocketrb
       end
 
       # Unsubscribe from events
+      # @param type [Symbol] Event type to unsubscribe from
+      # @param block [Proc] Block to remove from subscribers
+      # @return [void]
       def unsubscribe(type, block)
         @mutex.synchronize do
           @subscribers[type].delete(block)
@@ -92,6 +112,8 @@ module Pocketrb
         !@inbound.empty?
       end
 
+      # Check if there are pending outbound messages
+      # @return [Boolean] True if outbound queue is not empty
       def pending_outbound?
         !@outbound.empty?
       end
@@ -125,20 +147,30 @@ module Pocketrb
           @mutex = Mutex.new
         end
 
+        # Increment a statistic counter
+        # @param key [Symbol] Counter key to increment
+        # @return [void]
         def increment(key)
           @mutex.synchronize { @data[key] += 1 }
         end
 
+        # Retrieve a statistic value
+        # @param key [Symbol] Counter key to retrieve
+        # @return [Integer] Current counter value
         def [](key)
           @mutex.synchronize { @data[key] }
         end
 
+        # Reset all statistics
+        # @return [void]
         def reset!
           @mutex.synchronize do
             @data.transform_values! { 0 }
           end
         end
 
+        # Convert stats to hash
+        # @return [Hash] Stats as hash
         def to_h
           @mutex.synchronize { @data.dup }
         end

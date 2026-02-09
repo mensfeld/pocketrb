@@ -3,11 +3,14 @@
 require "json"
 
 module Pocketrb
+  # Session management for conversation history
   module Session
     # Manages session persistence using JSONL files
     class Manager
       attr_reader :storage_dir
 
+      # Initialize session manager
+      # @param storage_dir [String, Pathname] Directory path for storing session JSONL files
       def initialize(storage_dir:)
         @storage_dir = Pathname.new(storage_dir)
         @sessions = {}
@@ -27,7 +30,7 @@ module Pocketrb
 
       # Get an existing session
       # @param key [String] Session key
-      # @return [Session|nil]
+      # @return [Session, nil]
       def get(key)
         @mutex.synchronize do
           @sessions[key] || load_session(key)

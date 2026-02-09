@@ -4,14 +4,20 @@ module Pocketrb
   module Tools
     # Manage background jobs
     class Jobs < Base
+      # Tool name
+      # @return [String] Tool identifier
       def name
         "jobs"
       end
 
+      # Tool description
+      # @return [String] Human-readable description
       def description
         "Manage background jobs. List running/completed jobs, get output, or kill jobs."
       end
 
+      # Tool parameters schema
+      # @return [Hash] JSON schema for tool parameters
       def parameters
         {
           type: "object",
@@ -34,6 +40,11 @@ module Pocketrb
         }
       end
 
+      # Execute background job operation
+      # @param action [String] Action to perform (list, status, output, kill)
+      # @param job_id [String, nil] Job identifier (for status/output/kill actions)
+      # @param lines [Integer] Number of output lines to show (defaults to 50)
+      # @return [String] JSON result of operation
       def execute(action:, job_id: nil, lines: 50)
         case action
         when "list"

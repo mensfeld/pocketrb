@@ -6,6 +6,7 @@ module Pocketrb
   module Tools
     # Enhanced browser tool with sessions and tabs
     class BrowserAdvanced < Base
+      # Available browser actions
       ACTIONS = %w[
         new_tab close_tab focus_tab list_tabs
         navigate back forward refresh
@@ -17,10 +18,14 @@ module Pocketrb
         press_key
       ].freeze
 
+      # Tool name
+      # @return [String] Tool identifier
       def name
         "browser"
       end
 
+      # Tool description
+      # @return [String] Human-readable description
       def description
         <<~DESC.strip
           Browse the web with a persistent browser session. Supports multiple tabs,
@@ -29,6 +34,8 @@ module Pocketrb
         DESC
       end
 
+      # Tool parameters schema
+      # @return [Hash] JSON schema for tool parameters
       def parameters
         {
           type: "object",
@@ -88,11 +95,23 @@ module Pocketrb
         }
       end
 
+      # Check if Playwright is available
+      # @return [Boolean] True if npx or playwright command is found
       def available?
         # Check if playwright is available
         system("which npx > /dev/null 2>&1") || system("which playwright > /dev/null 2>&1")
       end
 
+      # Execute browser operation
+      # @param action [String] Action to perform (new_tab, close_tab, focus_tab, list_tabs, navigate, etc.)
+      # @option args [String] :url URL for navigation or new tab
+      # @option args [String] :tab_id Tab identifier
+      # @option args [String] :selector CSS/XPath selector
+      # @option args [String] :text Text to type
+      # @option args [String] :key Key to press
+      # @option args [String] :javascript JavaScript code to execute
+      # @option args [Hash] :options Additional action-specific options
+      # @return [String] JSON result of operation
       def execute(action:, **args)
         case action
         # Tab management
@@ -232,6 +251,10 @@ module Pocketrb
 
       # === Navigation ===
 
+      # Navigate to URL
+      # @param url [String] URL to navigate to
+      # @option options [String] :wait_until Wait condition (load, domcontentloaded, networkidle)
+      # @return [String] Success message
       def navigate(url, options)
         return error("URL required") unless url
 
@@ -267,6 +290,10 @@ module Pocketrb
 
       # === Interaction ===
 
+      # Click an element
+      # @param selector [String] CSS or XPath selector
+      # @option options [Integer] :timeout Timeout in milliseconds
+      # @return [String] Success message
       def click_element(selector, options)
         return error("Selector required") unless selector
 
@@ -455,6 +482,11 @@ module Pocketrb
 
       # === Wait ===
 
+      # Wait for selector to appear
+      # @param selector [String] CSS or XPath selector to wait for
+      # @option options [Integer] :timeout Timeout in milliseconds
+      # @option options [String] :state Element state to wait for (visible, hidden, attached, detached)
+      # @return [String] Success message
       def wait_for(selector, options)
         return error("Selector required") unless selector
 

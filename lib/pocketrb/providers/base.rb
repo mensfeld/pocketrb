@@ -6,6 +6,8 @@ module Pocketrb
     class Base
       attr_reader :config
 
+      # Initialize provider
+      # @param config [Hash] Provider configuration options (defaults to empty hash)
       def initialize(config = {})
         @config = config
         validate_config!
@@ -13,8 +15,8 @@ module Pocketrb
 
       # Send a chat completion request
       # @param messages [Array<Message>] Conversation history
-      # @param tools [Array<Hash>|nil] Tool definitions
-      # @param model [String|nil] Model to use (defaults to provider default)
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model to use (defaults to provider default)
       # @param temperature [Float] Sampling temperature
       # @param max_tokens [Integer] Maximum tokens to generate
       # @param thinking [Boolean] Enable extended thinking (Claude only)
@@ -24,8 +26,14 @@ module Pocketrb
       end
 
       # Stream a chat completion request
-      # @yield [String|ToolCall] Chunks of content or tool calls
-      # @return [LLMResponse]
+      # @param messages [Array<Message>] Conversation history
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model to use (defaults to provider default)
+      # @param temperature [Float] Sampling temperature
+      # @param max_tokens [Integer] Maximum tokens to generate
+      # @param block [Proc] Block to receive streaming chunks
+      # @yieldparam chunk [String] Text chunk from streaming response
+      # @return [LLMResponse] Final complete response
       def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &block)
         raise NotImplementedError, "#{self.class}#chat_stream must be implemented"
       end

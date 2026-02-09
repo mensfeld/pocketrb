@@ -6,11 +6,16 @@ module Pocketrb
   module Skills
     # Loads and manages skills from SKILL.md files
     class Loader
+      # Filename for skill definition
       SKILL_FILE = "SKILL.md"
+      # Regex to parse YAML frontmatter in skill files
       FRONTMATTER_REGEX = /\A---\s*\n(.+?)\n---\s*\n/m
 
       attr_reader :workspace, :builtin_dir
 
+      # Initialize skills loader
+      # @param workspace [String, Pathname] Workspace directory containing skills/ folder
+      # @param builtin_dir [String, Pathname, nil] Directory with builtin skills (defaults to gem's builtin dir)
       def initialize(workspace:, builtin_dir: nil)
         @workspace = Pathname.new(workspace)
         @builtin_dir = if builtin_dir
@@ -43,7 +48,7 @@ module Pocketrb
 
       # Load a specific skill by name
       # @param name [String] Skill name
-      # @return [Skill|nil]
+      # @return [Skill, nil]
       def load_skill(name)
         @skills_cache[name] ||= find_and_load_skill(name)
       end

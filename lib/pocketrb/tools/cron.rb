@@ -6,10 +6,14 @@ module Pocketrb
   module Tools
     # Manage scheduled cron jobs - allows agent to be proactive
     class Cron < Base
+      # Tool name
+      # @return [String] Tool identifier
       def name
         "cron"
       end
 
+      # Tool description
+      # @return [String] Human-readable description
       def description
         <<~DESC.strip
           Manage scheduled tasks. Create reminders, follow-ups, or recurring checks.
@@ -17,6 +21,8 @@ module Pocketrb
         DESC
       end
 
+      # Tool parameters schema
+      # @return [Hash] JSON schema for tool parameters
       def parameters
         {
           type: "object",
@@ -56,10 +62,21 @@ module Pocketrb
         }
       end
 
+      # Check if cron service is available
+      # @return [Boolean] True if cron service is configured
       def available?
         !cron_service.nil?
       end
 
+      # Execute cron operation
+      # @param action [String] Action to perform (add, list, remove, enable, disable)
+      # @param name [String, nil] Job name (for add action)
+      # @param message [String, nil] Job message/task (for add action)
+      # @param schedule_type [String, nil] Schedule type: "at", "every", or "cron" (for add action)
+      # @param schedule_value [String, Integer, nil] Schedule value based on type (for add action)
+      # @param job_id [String, nil] Job identifier (for remove/enable/disable actions)
+      # @param deliver [Boolean] Whether to deliver message via channel (defaults to true)
+      # @return [String] JSON result of operation
       def execute(action:, name: nil, message: nil, schedule_type: nil, schedule_value: nil, job_id: nil, deliver: true)
         return error("Cron service not available. Start with --enable-cron flag.") unless cron_service
 

@@ -6,6 +6,7 @@ module Pocketrb
     class Cron < Thor
       desc "list", "List scheduled jobs"
       option :all, type: :boolean, aliases: "-a", desc: "Include disabled jobs"
+      # List all scheduled cron jobs
       def list
         workspace = Pathname.new(options[:workspace] || Dir.pwd).expand_path
         cron_store = workspace.join(".pocketrb", "data", "cron", "jobs.json")
@@ -38,6 +39,7 @@ module Pocketrb
       option :deliver, type: :boolean, default: false, desc: "Deliver to channel instead of processing"
       option :channel, type: :string, desc: "Target channel for delivery"
       option :to, type: :string, desc: "Target chat ID for delivery"
+      # Add a new scheduled cron job
       def add
         workspace = Pathname.new(options[:workspace] || Dir.pwd).expand_path
         cron_store = workspace.join(".pocketrb", "data", "cron", "jobs.json")
@@ -84,6 +86,7 @@ module Pocketrb
       end
 
       desc "remove JOB_ID", "Remove a scheduled job"
+      # @param job_id [String] Job identifier to remove
       def remove(job_id)
         workspace = Pathname.new(options[:workspace] || Dir.pwd).expand_path
         cron_store = workspace.join(".pocketrb", "data", "cron", "jobs.json")
@@ -101,6 +104,7 @@ module Pocketrb
       end
 
       desc "enable JOB_ID", "Enable a scheduled job"
+      # @param job_id [String] Job identifier to enable
       def enable(job_id)
         workspace = Pathname.new(options[:workspace] || Dir.pwd).expand_path
         cron_store = workspace.join(".pocketrb", "data", "cron", "jobs.json")
@@ -118,6 +122,7 @@ module Pocketrb
       end
 
       desc "disable JOB_ID", "Disable a scheduled job"
+      # @param job_id [String] Job identifier to disable
       def disable(job_id)
         workspace = Pathname.new(options[:workspace] || Dir.pwd).expand_path
         cron_store = workspace.join(".pocketrb", "data", "cron", "jobs.json")
@@ -135,6 +140,7 @@ module Pocketrb
       end
 
       desc "trigger JOB_ID", "Trigger a job manually"
+      # @param _job_id [String] Job identifier to trigger (unused in current implementation)
       def trigger(_job_id)
         say "Manual job execution requires running gateway", :yellow
         say "Use 'pocketrb gateway' and the job will be executed", :yellow

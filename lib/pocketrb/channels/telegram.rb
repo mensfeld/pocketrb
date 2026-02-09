@@ -7,6 +7,7 @@ module Pocketrb
     # Telegram channel using long polling
     # Simple and reliable - no webhook/public IP needed
     class Telegram < Base
+      # Markdown to HTML conversion patterns for Telegram formatting
       MARKDOWN_TO_HTML = {
         # Bold **text** or __text__
         /\*\*(.+?)\*\*/ => '<b>\1</b>',
@@ -19,6 +20,7 @@ module Pocketrb
         /`([^`]+)`/ => '<code>\1</code>'
       }.freeze
 
+      # Telegram file download URL template
       TELEGRAM_FILE_URL = "https://api.telegram.org/file/bot%<token>s/%<path>s"
 
       # Special commands that bypass the agent
@@ -26,6 +28,11 @@ module Pocketrb
 
       attr_accessor :status_context
 
+      # Initialize Telegram channel
+      # @param bus [Bus::MessageBus] Message bus for publishing and consuming messages
+      # @param token [String] Telegram bot API token
+      # @param allowed_users [Array<String, Integer>, nil] Allowed usernames or user IDs (nil = allow all)
+      # @param download_media [Boolean] Whether to download and process media attachments (defaults to true)
       def initialize(bus:, token:, allowed_users: nil, download_media: true)
         super(bus: bus, name: :telegram)
         @token = token

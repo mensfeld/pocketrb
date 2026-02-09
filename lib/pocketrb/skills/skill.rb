@@ -6,6 +6,12 @@ module Pocketrb
     class Skill
       attr_reader :name, :description, :content, :path, :metadata
 
+      # Initialize skill
+      # @param name [String] Skill name
+      # @param description [String] Skill description
+      # @param content [String] Skill markdown content
+      # @param path [Pathname] Path to skill file
+      # @param metadata [Hash] Skill metadata (triggers, always, requires, etc.) (defaults to empty hash)
       def initialize(name:, description:, content:, path:, metadata: {})
         @name = name
         @description = description
@@ -34,6 +40,8 @@ module Pocketrb
       end
 
       # Check if a message should trigger this skill
+      # @param text [String] Message text to check against triggers
+      # @return [Boolean] True if any trigger matches
       def matches?(text)
         return false if triggers.empty?
 

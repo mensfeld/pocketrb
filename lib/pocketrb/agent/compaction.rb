@@ -23,6 +23,12 @@ module Pocketrb
       attr_reader :provider, :model
       attr_accessor :message_threshold, :token_threshold, :keep_recent
 
+      # Initialize a new compaction instance
+      # @param provider [Object] LLM provider instance for generating summaries
+      # @param model [String, nil] Model name to use for summarization (defaults to provider default)
+      # @param message_threshold [Integer, nil] Maximum messages before compaction (defaults to DEFAULT_MESSAGE_THRESHOLD)
+      # @param token_threshold [Integer, nil] Maximum estimated tokens before compaction (defaults to DEFAULT_TOKEN_THRESHOLD)
+      # @param keep_recent [Integer, nil] Number of recent messages to keep uncompacted (defaults to DEFAULT_KEEP_RECENT)
       def initialize(provider:, model: nil, message_threshold: nil, token_threshold: nil, keep_recent: nil)
         @provider = provider
         @model = model || provider.default_model
@@ -67,7 +73,7 @@ module Pocketrb
       end
 
       # Compact a session's messages in place
-      # @param session [Session::Session] Session to compact
+      # @param session [Session::Session] Session object containing messages to be compacted
       # @return [Boolean] Whether compaction occurred
       def compact_session!(session)
         messages = session.messages.dup
@@ -88,7 +94,7 @@ module Pocketrb
       end
 
       # Estimate token count for messages
-      # @param messages [Array<Message>] Messages to count
+      # @param messages [Array<Message>] Array of messages to analyze for token count estimation
       # @return [Integer] Estimated tokens
       def estimate_tokens(messages)
         total_chars = messages.sum do |msg|

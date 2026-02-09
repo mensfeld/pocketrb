@@ -8,6 +8,8 @@ module Pocketrb
     class SubagentManager
       attr_reader :active_agents
 
+      # Initialize the subagent manager
+      # @param parent_loop [Loop] Parent agent loop instance that spawns subagents
       def initialize(parent_loop:)
         @parent_loop = parent_loop
         @active_agents = {}
@@ -51,7 +53,7 @@ module Pocketrb
 
       # Get status of a subagent
       # @param agent_id [String]
-      # @return [Hash|nil]
+      # @return [Hash, nil]
       def get_status(agent_id)
         @mutex.synchronize { @active_agents[agent_id]&.dup }
       end
@@ -75,7 +77,7 @@ module Pocketrb
       # Wait for a subagent to complete
       # @param agent_id [String]
       # @param timeout [Integer] Timeout in seconds
-      # @return [String|nil] Result
+      # @return [String, nil] Result
       def wait_for(agent_id, timeout: 300)
         deadline = Time.now + timeout
 

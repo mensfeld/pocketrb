@@ -4,14 +4,20 @@ module Pocketrb
   module Tools
     # List directory contents
     class ListDir < Base
+      # Tool name
+      # @return [String]
       def name
         "list_dir"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "List the contents of a directory. Shows files and subdirectories with basic metadata."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -37,6 +43,12 @@ module Pocketrb
         }
       end
 
+      # Execute directory listing
+      # @param path [String, nil] Directory path to list (defaults to workspace root)
+      # @param pattern [String, nil] Glob pattern to filter results
+      # @param recursive [Boolean] Whether to list subdirectories recursively
+      # @param include_hidden [Boolean] Whether to include hidden files
+      # @return [String] Formatted directory listing
       def execute(path: nil, pattern: nil, recursive: false, include_hidden: false)
         resolved = path ? validate_path!(path) : workspace
 

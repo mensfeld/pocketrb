@@ -4,19 +4,27 @@ module Pocketrb
   module MCP
     # Tool for interacting with memory via MCP
     class MemoryTool < Tools::Base
+      # Initialize memory tool
+      # @param context [Hash] Context hash containing :mcp_client (defaults to empty hash)
       def initialize(context = {})
         super
         @client = context[:mcp_client] || Client.new
       end
 
+      # Tool name
+      # @return [String] Tool identifier
       def name
         "memory"
       end
 
+      # Tool description
+      # @return [String] Human-readable description
       def description
         "Interact with long-term memory. Search for relevant information or store new knowledge for future reference."
       end
 
+      # Tool parameters schema
+      # @return [Hash] JSON schema
       def parameters
         {
           type: "object",
@@ -48,12 +56,21 @@ module Pocketrb
         }
       end
 
+      # Check if MCP client is available
+      # @return [Boolean] True if client can connect
       def available?
         @client.connected? || @client.connect
       rescue StandardError
         false
       end
 
+      # Execute memory operation
+      # @param action [String] Action to perform ("search" or "store")
+      # @param query [String, nil] Search query (for search action)
+      # @param content [String, nil] Content to store (for store action)
+      # @param tags [Array<String>, nil] Tags to associate with content (for store action)
+      # @param limit [Integer] Maximum search results (defaults to 5)
+      # @return [String] JSON result of operation
       def execute(action:, query: nil, content: nil, tags: nil, limit: 5)
         case action
         when "search"

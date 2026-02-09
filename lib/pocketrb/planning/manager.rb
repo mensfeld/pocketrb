@@ -3,11 +3,14 @@
 require "json"
 
 module Pocketrb
+  # Planning system with step-by-step execution plans
   module Planning
     # Manages plans persistence and lifecycle
     class Manager
       attr_reader :workspace
 
+      # Initialize planning manager
+      # @param workspace [String, Pathname] Workspace directory path for storing plans
       def initialize(workspace:)
         @workspace = Pathname.new(workspace)
         @plans_dir = @workspace.join(".pocketrb", "plans")
@@ -36,7 +39,7 @@ module Pocketrb
 
       # Get a plan by name
       # @param name [String] Plan name
-      # @return [Plan|nil]
+      # @return [Plan, nil]
       def get_plan(name)
         @plans_cache[name] ||= load_plan(name)
       end
@@ -62,6 +65,10 @@ module Pocketrb
       end
 
       # Fail a step in a plan
+      # @param name [String] Plan name
+      # @param step_index [Integer] Index of step to mark as failed
+      # @param notes [String, nil] Optional failure notes
+      # @return [Plan] Updated plan
       def fail_step(name:, step_index:, notes: nil)
         plan = get_plan(name)
         raise Error, "Plan '#{name}' not found" unless plan
@@ -72,6 +79,8 @@ module Pocketrb
       end
 
       # Activate a plan
+      # @param name [String] Plan name to activate
+      # @return [Plan] Activated plan
       def activate_plan(name)
         plan = get_plan(name)
         raise Error, "Plan '#{name}' not found" unless plan
@@ -82,6 +91,8 @@ module Pocketrb
       end
 
       # Mark a plan as complete
+      # @param name [String] Plan name to mark complete
+      # @return [Plan] Completed plan
       def mark_complete(name)
         plan = get_plan(name)
         raise Error, "Plan '#{name}' not found" unless plan
@@ -92,6 +103,8 @@ module Pocketrb
       end
 
       # Cancel a plan
+      # @param name [String] Plan name to cancel
+      # @return [Plan] Cancelled plan
       def cancel_plan(name)
         plan = get_plan(name)
         raise Error, "Plan '#{name}' not found" unless plan
@@ -102,6 +115,8 @@ module Pocketrb
       end
 
       # Delete a plan
+      # @param name [String] Plan name to delete
+      # @return [void]
       def delete_plan(name)
         file = plan_file(name)
         File.delete(file) if file.exist?
@@ -124,6 +139,8 @@ module Pocketrb
       end
 
       # Check if a plan exists
+      # @param name [String] Plan name to check
+      # @return [Boolean] true if plan exists
       def exists?(name)
         plan_file(name).exist?
       end

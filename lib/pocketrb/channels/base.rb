@@ -6,6 +6,9 @@ module Pocketrb
     class Base
       attr_reader :bus, :name
 
+      # Initialize channel adapter
+      # @param bus [Bus::MessageBus] Message bus for publishing and consuming messages
+      # @param name [Symbol, nil] Channel name (defaults to class name)
       def initialize(bus:, name: nil)
         @bus = bus
         @name = name || self.class.name.split("::").last.downcase.to_sym

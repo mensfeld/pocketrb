@@ -4,14 +4,20 @@ module Pocketrb
   module Tools
     # Tool for sending messages to chat channels programmatically
     class Message < Base
+      # Tool name
+      # @return [String]
       def name
         "message"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "Send a message to a chat channel. Use this to proactively communicate with users, send notifications, or respond on specific channels."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -33,6 +39,11 @@ module Pocketrb
         }
       end
 
+      # Execute message sending
+      # @param content [String] Message text to send
+      # @param channel [String, nil] Target channel name
+      # @param chat_id [String, nil] Target chat identifier
+      # @return [String] Success or error message
       def execute(content:, channel: nil, chat_id: nil)
         # Use defaults from context if not provided
         channel = (channel || @context[:default_channel])&.to_sym
@@ -56,6 +67,8 @@ module Pocketrb
         success("Message sent to #{channel}:#{chat_id}")
       end
 
+      # Check if message bus is available
+      # @return [Boolean] True if bus is configured
       def available?
         !bus.nil?
       end

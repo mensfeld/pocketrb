@@ -6,3 +6,27 @@ rules:
   UndocumentedClass:
     enabled: true
     severity: error
+  UndocumentedMethodArgument:
+    enabled: true
+    severity: error
+  UndocumentedObject:
+    enabled: true
+    severity: error
+  UndocumentedOptions:
+    enabled: true
+    severity: error
+  MissingOptionTags:
+    enabled: true
+    severity: error
+  InvalidTagOrder:
+    enabled: true
+    severity: error
+  RedundantParamDescription:
+    enabled: true
+    severity: error
+  UnknownParameterName:
+    enabled: true
+    severity: error
+  BlankLineBeforeDefinition:
+    enabled: true
+    severity: error

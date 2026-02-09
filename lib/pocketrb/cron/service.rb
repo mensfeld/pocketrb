@@ -11,6 +11,9 @@ module Pocketrb
     class Service
       attr_reader :jobs
 
+      # Initialize the cron service
+      # @param store_path [String, Pathname] Directory path for persisting job state
+      # @param on_job [Proc] Callback invoked when a job executes, receives the job object
       def initialize(store_path:, on_job:)
         @store_path = Pathname.new(store_path)
         @on_job = on_job
@@ -57,8 +60,8 @@ module Pocketrb
       # Add a new job
       # @param name [String] Job name
       # @param schedule [Schedule] Schedule configuration
-      # @param message [String] Message to process
-      # @param deliver [Boolean] Deliver to channel vs process as agent task
+      # @param message [String] Content to send or task description when job executes
+      # @param deliver [Boolean] Whether to send directly to channel (true) or process as agent task (false)
       # @param channel [String, nil] Target channel
       # @param to [String, nil] Target chat ID
       # @return [Job] Created job
@@ -96,8 +99,8 @@ module Pocketrb
       # Add a job with interval schedule
       # @param name [String] Job name
       # @param every [Integer] Interval in seconds
-      # @param message [String] Message to process
-      # @param deliver [Boolean] Deliver to channel
+      # @param message [String] Content to send or task description when job executes
+      # @param deliver [Boolean] Whether to send directly to channel (true) or process as agent task (false)
       # @param channel [String, nil] Target channel
       # @param to [String, nil] Target chat ID
       # @return [Job]
@@ -109,9 +112,9 @@ module Pocketrb
       # Add a job with cron expression
       # @param name [String] Job name
       # @param cron [String] Cron expression
-      # @param message [String] Message to process
+      # @param message [String] Content to send or task description when job executes
       # @param tz [String, nil] Timezone
-      # @param deliver [Boolean] Deliver to channel
+      # @param deliver [Boolean] Whether to send directly to channel (true) or process as agent task (false)
       # @param channel [String, nil] Target channel
       # @param to [String, nil] Target chat ID
       # @return [Job]
@@ -123,8 +126,8 @@ module Pocketrb
       # Add a one-time job
       # @param name [String] Job name
       # @param at [Time, Integer] Execution time (Time or Unix timestamp)
-      # @param message [String] Message to process
-      # @param deliver [Boolean] Deliver to channel
+      # @param message [String] Content to send or task description when job executes
+      # @param deliver [Boolean] Whether to send directly to channel (true) or process as agent task (false)
       # @param channel [String, nil] Target channel
       # @param to [String, nil] Target chat ID
       # @return [Job]

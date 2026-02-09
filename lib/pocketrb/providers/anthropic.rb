@@ -8,27 +8,44 @@ module Pocketrb
     # Direct Anthropic Claude API provider
     # Supports extended thinking and all Claude-specific features
     class Anthropic < Base
+      # Anthropic API base URL
       API_URL = "https://api.anthropic.com/v1"
+      # Anthropic API version header value
       API_VERSION = "2023-06-01"
 
+      # Supported Claude models with context and output token limits
       MODELS = {
         "claude-opus-4-20250514" => { context: 200_000, output: 32_000 },
         "claude-sonnet-4-20250514" => { context: 200_000, output: 64_000 },
         "claude-3-5-haiku-20241022" => { context: 200_000, output: 8192 }
       }.freeze
 
+      # Provider name
+      # @return [Symbol]
       def name
         :anthropic
       end
 
+      # Default model to use
+      # @return [String]
       def default_model
         "claude-sonnet-4-20250514"
       end
 
+      # List of available models
+      # @return [Array<String>]
       def available_models
         MODELS.keys
       end
 
+      # Send chat completion request
+      # @param messages [Array<Message>] Conversation messages
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model name (defaults to default_model)
+      # @param temperature [Float] Sampling temperature (0.0-1.0)
+      # @param max_tokens [Integer] Maximum tokens to generate
+      # @param thinking [Boolean] Whether to enable extended thinking mode
+      # @return [LLMResponse] Parsed response with content and tool calls
       def chat(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, thinking: false)
         model ||= default_model
         body = build_request_body(messages, tools, model, temperature, max_tokens, thinking)
@@ -40,6 +57,15 @@ module Pocketrb
         handle_response(response)
       end
 
+      # Send streaming chat completion request
+      # @param messages [Array<Message>] Conversation messages
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model name (defaults to default_model)
+      # @param temperature [Float] Sampling temperature (0.0-1.0)
+      # @param max_tokens [Integer] Maximum tokens to generate
+      # @param block [Proc] Block to receive streaming chunks
+      # @yieldparam chunk [Hash] Streamed response chunk
+      # @return [LLMResponse] Final response with accumulated content
       def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &block)
         model ||= default_model
         body = build_request_body(messages, tools, model, temperature, max_tokens, false)

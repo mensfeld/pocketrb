@@ -9,39 +9,64 @@ module Pocketrb
 
       # Step statuses
       module StepStatus
+        # Step is waiting to be started
         PENDING = "pending"
+        # Step is currently being executed
         IN_PROGRESS = "in_progress"
+        # Step was completed successfully
         COMPLETED = "completed"
+        # Step execution failed
         FAILED = "failed"
+        # Step was skipped
         SKIPPED = "skipped"
       end
 
       # Plan statuses
       module PlanStatus
+        # Plan is being drafted
         DRAFT = "draft"
+        # Plan is actively being executed
         ACTIVE = "active"
+        # Plan completed successfully
         COMPLETED = "completed"
+        # Plan execution failed
         FAILED = "failed"
+        # Plan was cancelled
         CANCELLED = "cancelled"
       end
 
+      # Plan step data structure
       Step = Data.define(:index, :description, :status, :notes, :completed_at) do
+        # Initialize plan step
+        # @param index [Integer] Step position in the plan (zero-based)
+        # @param description [String] Step description or task to complete
+        # @param status [String] Step status (defaults to PENDING)
+        # @param notes [String, nil] Additional notes or execution details
+        # @param completed_at [Time, nil] Timestamp when step was completed
         def initialize(index:, description:, status: StepStatus::PENDING, notes: nil, completed_at: nil)
           super
         end
 
+        # Check if step is pending
+        # @return [Boolean] True if status is PENDING
         def pending?
           status == StepStatus::PENDING
         end
 
+        # Check if step is completed
+        # @return [Boolean] True if status is COMPLETED
         def completed?
           status == StepStatus::COMPLETED
         end
 
+        # Check if step failed
+        # @return [Boolean] True if status is FAILED
         def failed?
           status == StepStatus::FAILED
         end
 
+        # Convert step to hash
+        # @return [Hash] Step data as hash
         def to_h
           {
             index: index,
@@ -53,6 +78,12 @@ module Pocketrb
         end
       end
 
+      # Initialize plan
+      # @param name [String] Plan name
+      # @param description [String, nil] Plan description or goal
+      # @param steps [Array<Step, String>] Array of steps (Step objects or strings)
+      # @param status [String] Plan status (defaults to DRAFT)
+      # @param metadata [Hash] Additional metadata (defaults to empty hash)
       def initialize(name:, description: nil, steps: [], status: PlanStatus::DRAFT, metadata: {})
         @name = name
         @description = description
@@ -65,6 +96,8 @@ module Pocketrb
       end
 
       # Add a step to the plan
+      # @param description [String] Step description
+      # @return [Step] New step instance
       def add_step(description)
         step = Step.new(index: @steps.length, description: description)
         @steps << step
@@ -72,11 +105,17 @@ module Pocketrb
       end
 
       # Add multiple steps
+      # @param descriptions [Array<String>] Array of step descriptions
+      # @return [void]
       def add_steps(descriptions)
         descriptions.each { |d| add_step(d) }
       end
 
       # Update a step's status
+      # @param index [Integer] Step index
+      # @param status [String] New status value
+      # @param notes [String, nil] Optional notes to add
+      # @return [Step, nil] Updated step or nil if index invalid
       def update_step(index, status:, notes: nil)
         return nil unless @steps[index]
 
@@ -94,16 +133,25 @@ module Pocketrb
       end
 
       # Mark a step as completed
+      # @param index [Integer] Step index
+      # @param notes [String, nil] Optional completion notes
+      # @return [Step, nil] Updated step or nil if index invalid
       def complete_step(index, notes: nil)
         update_step(index, status: StepStatus::COMPLETED, notes: notes)
       end
 
       # Mark a step as failed
+      # @param index [Integer] Step index
+      # @param notes [String, nil] Optional failure notes
+      # @return [Step, nil] Updated step or nil if index invalid
       def fail_step(index, notes: nil)
         update_step(index, status: StepStatus::FAILED, notes: notes)
       end
 
       # Skip a step
+      # @param index [Integer] Step index
+      # @param notes [String, nil] Optional skip reason notes
+      # @return [Step, nil] Updated step or nil if index invalid
       def skip_step(index, notes: nil)
         update_step(index, status: StepStatus::SKIPPED, notes: notes)
       end
@@ -193,6 +241,8 @@ module Pocketrb
       end
 
       # Create from hash
+      # @param hash [Hash] Hash containing plan data
+      # @return [Plan] New plan instance
       def self.from_h(hash)
         steps = (hash[:steps] || hash["steps"] || []).map do |s|
           Step.new(

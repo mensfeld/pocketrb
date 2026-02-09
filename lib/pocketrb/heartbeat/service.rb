@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 module Pocketrb
+  # Heartbeat system for periodic agent check-ins
   module Heartbeat
     # Periodic wake-up service that checks HEARTBEAT.md for pending tasks
     class Service
       DEFAULT_INTERVAL = 30 * 60 # 30 minutes
+      # Filename for heartbeat tasks
       HEARTBEAT_FILE = "HEARTBEAT.md"
 
+      # Prompt sent to agent on each heartbeat
       HEARTBEAT_PROMPT = <<~PROMPT
         Read HEARTBEAT.md in your workspace. Follow any instructions or tasks listed there.
         If nothing needs attention, reply with: HEARTBEAT_OK
@@ -20,6 +23,11 @@ module Pocketrb
 
       attr_reader :interval, :enabled, :last_run_at
 
+      # Initialize heartbeat service
+      # @param workspace [String, Pathname] Workspace directory containing HEARTBEAT.md
+      # @param on_heartbeat [Proc] Callback to invoke on each heartbeat with message content
+      # @param interval [Integer] Heartbeat interval in seconds (defaults to 3600)
+      # @param enabled [Boolean] Whether heartbeat is enabled (defaults to true)
       def initialize(workspace:, on_heartbeat:, interval: DEFAULT_INTERVAL, enabled: true)
         @workspace = Pathname.new(workspace)
         @on_heartbeat = on_heartbeat
