@@ -4,14 +4,20 @@ module Pocketrb
   module Planning
     # Tool for creating and managing execution plans
     class Tool < Tools::Base
+# Tool name
+      # @return [String] Tool identifier
       def name
         "plan"
       end
 
+# Tool description
+      # @return [String] Human-readable description
       def description
         "Create and manage execution plans for complex tasks. Plans help organize multi-step work and track progress."
       end
 
+# Tool parameters schema
+      # @return [Hash] JSON schema
       def parameters
         {
           type: "object",
@@ -47,6 +53,14 @@ module Pocketrb
         }
       end
 
+      # Execute planning operation
+      # @param action [String] Action to perform (create, update, complete, fail, list, show)
+      # @param plan_name [String, nil] Plan name
+      # @param plan_description [String, nil] Plan description (for create action)
+      # @param steps [Array<String>, nil] Step descriptions (for create/update actions)
+      # @param step_index [Integer, nil] Step index (for complete/fail actions)
+      # @param notes [String, nil] Notes for step completion/failure
+      # @return [String] JSON result of operation
       def execute(
         action:,
         plan_name: nil,

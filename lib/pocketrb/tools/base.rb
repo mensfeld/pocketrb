@@ -6,6 +6,8 @@ module Pocketrb
     class Base
       attr_reader :context
 
+      # Initialize tool instance
+      # @param context [Hash] Shared context hash containing workspace, bus, and other runtime dependencies
       def initialize(context = {})
         @context = context
       end
@@ -29,8 +31,9 @@ module Pocketrb
       end
 
       # Execute the tool
-      # @param kwargs [Hash] Tool arguments
+      # @option kwargs [Object] * Tool-specific arguments as defined in the parameters schema
       # @return [String] Result
+      # @note Subclasses should override this method and define specific parameters matching their schema
       def execute(**kwargs)
         raise NotImplementedError, "#{self.class}#execute must be implemented"
       end

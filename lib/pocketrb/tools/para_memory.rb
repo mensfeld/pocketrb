@@ -1,13 +1,19 @@
 # frozen_string_literal: true
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
+  # Tool implementations for agent capabilities
   module Tools
     # PARA-based memory tool for structured knowledge management
     class ParaMemory < Base
+      # Tool name
+      # @return [String]
       def name
         "para_memory"
       end
 
+      # Tool description
+      # @return [String]
       def description
         <<~DESC.strip
           Structured memory using PARA method. Store and retrieve facts about people, projects,
@@ -16,6 +22,8 @@ module Pocketrb
         DESC
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -74,10 +82,24 @@ module Pocketrb
         }
       end
 
+      # Check if tool is available
+      # @return [Boolean] true if PARA manager is configured
       def available?
         !para_manager.nil?
       end
 
+      # Execute memory action
+      # @param action [String] Action to perform (store, search, entity_info, create_entity, list_entities, context, preferences, learn_preference)
+      # @option args [String] :content Fact content to store
+      # @option args [String] :category Fact category (relationship, milestone, status, preference, context)
+      # @option args [String] :entity_type PARA entity type (projects, areas, resources, archives)
+      # @option args [String] :entity_name Entity name
+      # @option args [String] :query Search query
+      # @option args [String] :entity_subtype Entity subtype for creation (project, person, company, topic)
+      # @option args [String] :preference_category Preference category
+      # @option args [String] :preference_key Preference key
+      # @option args [String] :preference_value Preference value
+      # @return [String] Action result or error message
       def execute(action:, **args)
         return error("PARA memory not available. Configure memory_dir in agent settings.") unless para_manager
 

@@ -4,14 +4,20 @@ module Pocketrb
   module Skills
     # Tool for modifying existing skills
     class ModifyTool < Tools::Base
+      # Tool name
+      # @return [String] Tool identifier
       def name
         "skill_modify"
       end
 
+      # Tool description
+      # @return [String] Human-readable description
       def description
         "Modify an existing skill. Can update the content, description, triggers, or other properties."
       end
 
+      # Tool parameters schema
+      # @return [Hash] JSON schema for tool parameters
       def parameters
         {
           type: "object",
@@ -51,6 +57,15 @@ module Pocketrb
         }
       end
 
+      # Execute skill modification
+      # @param skill_name [String] Name of skill to modify
+      # @param new_content [String, nil] Replace entire skill content
+      # @param append_content [String, nil] Append to existing content
+      # @param new_description [String, nil] Update skill description
+      # @param add_triggers [Array<String>, nil] Add trigger keywords
+      # @param remove_triggers [Array<String>, nil] Remove trigger keywords
+      # @param set_always [Boolean, nil] Set always-load flag
+      # @return [String] Success or error message
       def execute(
         skill_name:,
         new_content: nil,

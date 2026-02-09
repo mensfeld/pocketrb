@@ -11,14 +11,20 @@ module Pocketrb
       MAX_CONTENT_SIZE = 500_000 # characters
       TIMEOUT = 30 # seconds
 
+      # Tool name
+      # @return [String]
       def name
         "web_fetch"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "Fetch content from a URL. Returns the text content of the page. Use for reading documentation, articles, or other web content."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -36,6 +42,10 @@ module Pocketrb
         }
       end
 
+      # Execute web content fetching
+      # @param url [String] URL to fetch content from
+      # @param selector [String, nil] CSS selector for extracting specific content
+      # @return [String] Extracted text content or error message
       def execute(url:, selector: nil)
         # Validate URL
         uri = parse_url(url)

@@ -3,21 +3,29 @@
 require "json"
 require "open3"
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
+  # LLM provider implementations
   module Providers
     # Claude CLI provider - uses the `claude` command as a subprocess
     # This allows using Claude Max/Pro subscription authentication
     class ClaudeCLI < Base
+      # Supported model aliases mapped to full model names
       MODELS = {
         "opus" => "claude-opus-4-20250514",
         "sonnet" => "claude-sonnet-4-20250514",
         "haiku" => "claude-3-5-haiku-20241022"
       }.freeze
 
+      # Default model to use when none specified
       DEFAULT_MODEL = "sonnet"
+      # Read timeout for CLI responses in seconds
       READ_TIMEOUT = 60
+      # Total timeout for CLI operations in seconds
       TOTAL_TIMEOUT = 300
 
+      # Initialize Claude CLI provider
+      # @param config [Hash] Configuration options
       def initialize(config = {})
         @config = config
         @stdin = nil
@@ -29,18 +37,32 @@ module Pocketrb
         validate_config!
       end
 
+      # Provider name
+      # @return [Symbol]
       def name
         :claude_cli
       end
 
+      # Default model
+      # @return [String]
       def default_model
         DEFAULT_MODEL
       end
 
+      # Available models
+      # @return [Array<String>]
       def available_models
         MODELS.keys
       end
 
+      # Send chat completion request
+      # @param messages [Array<Message>] Conversation messages
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model alias (opus, sonnet, haiku)
+      # @param temperature [Float] Sampling temperature
+      # @param max_tokens [Integer] Maximum tokens to generate
+      # @param thinking [Boolean] Enable extended thinking (not supported in CLI)
+      # @return [LLMResponse] Parsed response
       def chat(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, thinking: false)
         model ||= default_model
 
@@ -58,6 +80,15 @@ module Pocketrb
         raise ProviderError, "Claude CLI error: #{e.message}"
       end
 
+      # Send streaming chat completion request
+      # @param messages [Array<Message>] Conversation messages
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model alias
+      # @param temperature [Float] Sampling temperature
+      # @param max_tokens [Integer] Maximum tokens to generate
+      # @param block [Proc] Block to receive streaming chunks
+      # @yieldparam chunk [String] Streamed text chunk
+      # @return [LLMResponse] Final response
       def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &block)
         model ||= default_model
 
@@ -75,6 +106,8 @@ module Pocketrb
         raise ProviderError, "Claude CLI error: #{e.message}"
       end
 
+      # Start the Claude CLI subprocess
+      # @return [void]
       def start!
         return if running?
 
@@ -115,6 +148,8 @@ module Pocketrb
         end
       end
 
+      # Check if autonomous mode is enabled
+      # @return [Boolean] True if autonomous mode is enabled via config or env
       def autonomous_mode?
         @config[:autonomous] ||
           @config[:dangerously_skip_permissions] ||
@@ -122,6 +157,8 @@ module Pocketrb
           ENV["POCKETRB_AUTONOMOUS"] == "true"
       end
 
+      # Stop the Claude CLI subprocess
+      # @return [void]
       def stop!
         @stdin&.close
         @stdout&.close
@@ -131,6 +168,8 @@ module Pocketrb
         @stdin = @stdout = @stderr = @wait_thread = @stderr_thread = nil
       end
 
+      # Check if CLI subprocess is running
+      # @return [Boolean] True if subprocess is alive
       def running?
         @wait_thread&.alive? || false
       end

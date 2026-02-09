@@ -6,7 +6,9 @@ module Pocketrb
   module Tools
     # Manages background jobs for long-running commands
     class BackgroundJobManager
+      # Maximum number of concurrent background jobs
       MAX_JOBS = 50
+      # Maximum number of completed job records to retain
       MAX_COMPLETED_JOBS = 20
       MAX_JOB_AGE = 24 * 60 * 60 # 24 hours
 
@@ -32,6 +34,8 @@ module Pocketrb
 
       attr_reader :jobs_dir
 
+      # Initialize background job manager
+      # @param workspace [String, Pathname] Workspace directory path for storing job state
       def initialize(workspace:)
         @workspace = Pathname.new(workspace)
         @jobs_dir = resolve_jobs_dir
@@ -66,6 +70,8 @@ module Pocketrb
       public
 
       # Check if command should auto-run in background
+      # @param command [String] Shell command to analyze
+      # @return [Boolean] true if command matches long-running patterns
       def long_running?(command)
         return false if command.nil? || command.empty?
 
@@ -73,6 +79,10 @@ module Pocketrb
       end
 
       # Start a background job
+      # @param command [String] Shell command to execute in background
+      # @param working_dir [String, nil] Working directory for command execution
+      # @param name [String, nil] Human-readable job name
+      # @return [Hash] Job metadata including ID and status
       def start(command:, working_dir: nil, name: nil)
         cleanup_stale_jobs
 
@@ -138,6 +148,8 @@ module Pocketrb
       end
 
       # Get job status and output
+      # @param job_id [String] Job identifier
+      # @return [Hash, nil] Job metadata with status, output, and command info
       def status(job_id)
         job_dir = @jobs_dir.join(job_id)
         return nil unless job_dir.exist?
@@ -164,6 +176,9 @@ module Pocketrb
       end
 
       # Get job output (tail)
+      # @param job_id [String] Job identifier
+      # @param lines [Integer] Number of recent output lines to retrieve
+      # @return [String, nil] Recent output lines or nil if job not found
       def output(job_id, lines: 50)
         log_file = @jobs_dir.join(job_id, "output.log")
         return nil unless log_file.exist?
@@ -172,6 +187,8 @@ module Pocketrb
       end
 
       # Kill a job
+      # @param job_id [String] Job identifier
+      # @return [Boolean] true if job was killed successfully
       def kill(job_id)
         pid_file = @jobs_dir.join(job_id, "pid")
         return false unless pid_file.exist?

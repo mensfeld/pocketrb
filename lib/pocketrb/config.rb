@@ -5,9 +5,12 @@ require "yaml"
 module Pocketrb
   # Configuration management
   class Config
+    # Default configuration filename
     CONFIG_FILE = "config.yml"
+    # Configuration directory name
     CONFIG_DIR = ".pocketrb"
 
+    # Default configuration values
     DEFAULTS = {
       provider: "anthropic",
       model: "claude-sonnet-4-20250514",
@@ -21,6 +24,8 @@ module Pocketrb
 
     attr_reader :workspace, :data
 
+    # Initialize configuration
+    # @param workspace [String, Pathname, nil] Workspace directory path for loading workspace-specific config
     def initialize(workspace: nil)
       @workspace = workspace ? Pathname.new(workspace) : nil
       @data = DEFAULTS.dup
@@ -28,27 +33,40 @@ module Pocketrb
     end
 
     # Get a config value
+    # @param key [String, Symbol] Configuration key to retrieve
+    # @return [Object, nil] Configuration value or nil if not found
     def [](key)
       @data[key.to_sym] || @data[key.to_s]
     end
 
     # Set a config value
+    # @param key [String, Symbol] Configuration key to set
+    # @param value [Object] Configuration value (string, number, boolean, hash, etc.)
+    # @return [Object] The stored value
     def []=(key, value)
       @data[key.to_sym] = value
     end
 
     # Get with default
+    # @param key [String, Symbol] Configuration key to retrieve
+    # @param default [Object, nil] Default value if key not found
+    # @return [Object] Configuration value or default
     def get(key, default = nil)
       self[key] || default
     end
 
     # Set a value and save
+    # @param key [String, Symbol] Configuration key to set
+    # @param value [Object] Configuration value to persist to disk
+    # @return [void]
     def set(key, value)
       self[key] = value
       save!
     end
 
     # Check if key exists
+    # @param key [String, Symbol] Configuration key to check
+    # @return [Boolean] true if key exists in configuration
     def key?(key)
       @data.key?(key.to_sym) || @data.key?(key.to_s)
     end
@@ -94,6 +112,8 @@ module Pocketrb
     end
 
     # Merge configuration
+    # @param hash [Hash] Hash of configuration values to merge
+    # @return [void]
     def merge!(hash)
       hash.each do |key, value|
         @data[key.to_sym] = value
@@ -106,6 +126,8 @@ module Pocketrb
     end
 
     # Class method to load config
+    # @param workspace [String, Pathname] Workspace directory path
+    # @return [Config] New configuration instance
     def self.load(workspace)
       new(workspace: workspace)
     end

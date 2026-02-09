@@ -3,13 +3,17 @@
 require "faraday"
 require "json"
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
+  # LLM provider implementations
   module Providers
     # OpenRouter API provider for multi-model access
     # Supports Claude, GPT-4, Llama, and many other models
     class OpenRouter < Base
+      # OpenRouter API base URL
       API_URL = "https://openrouter.ai/api/v1"
 
+      # Popular models available through OpenRouter
       POPULAR_MODELS = %w[
         anthropic/claude-sonnet-4
         anthropic/claude-3.5-haiku
@@ -20,19 +24,33 @@ module Pocketrb
         mistralai/mistral-large
       ].freeze
 
+      # Provider name
+      # @return [Symbol]
       def name
         :openrouter
       end
 
+      # Default model
+      # @return [String]
       def default_model
         "anthropic/claude-sonnet-4"
       end
 
+      # Available models
+      # @return [Array<String>]
       def available_models
         # Could fetch from API, but use popular models for now
         POPULAR_MODELS
       end
 
+      # Send chat completion request
+      # @param messages [Array<Message>] Conversation messages
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model name (e.g., "anthropic/claude-sonnet-4")
+      # @param temperature [Float] Sampling temperature
+      # @param max_tokens [Integer] Maximum tokens to generate
+      # @param thinking [Boolean] Enable extended thinking (model-dependent)
+      # @return [LLMResponse] Parsed response
       def chat(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, thinking: false)
         model ||= default_model
         body = build_request_body(messages, tools, model, temperature, max_tokens)
@@ -44,6 +62,15 @@ module Pocketrb
         handle_response(response)
       end
 
+      # Send streaming chat completion request
+      # @param messages [Array<Message>] Conversation messages
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model name
+      # @param temperature [Float] Sampling temperature
+      # @param max_tokens [Integer] Maximum tokens to generate
+      # @param block [Proc] Block to receive streaming chunks
+      # @yieldparam chunk [String] Streamed text chunk
+      # @return [LLMResponse] Final response
       def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &block)
         model ||= default_model
         body = build_request_body(messages, tools, model, temperature, max_tokens)

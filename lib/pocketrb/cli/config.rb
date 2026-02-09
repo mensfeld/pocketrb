@@ -5,6 +5,7 @@ module Pocketrb
     # Config command - manages configuration
     class Config < Thor
       desc "show", "Show current configuration"
+      # Display current configuration values
       def show
         workspace = options[:workspace] || Dir.pwd
         config = Pocketrb::Config.load(workspace)
@@ -18,6 +19,8 @@ module Pocketrb
       end
 
       desc "set KEY VALUE", "Set a configuration value"
+      # @param key [String] Configuration key to set
+      # @param value [String] Value to assign (will be auto-converted to int, float, or boolean if applicable)
       def set(key, value)
         workspace = options[:workspace] || Dir.pwd
         config = Pocketrb::Config.load(workspace)
@@ -36,6 +39,7 @@ module Pocketrb
       end
 
       desc "get KEY", "Get a configuration value"
+      # @param key [String] Configuration key to retrieve
       def get(key)
         workspace = options[:workspace] || Dir.pwd
         config = Pocketrb::Config.load(workspace)

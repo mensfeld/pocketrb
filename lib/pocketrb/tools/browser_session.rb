@@ -21,6 +21,8 @@ module Pocketrb
         @started = false
       end
 
+      # Start the browser session
+      # @return [void]
       def start!
         return if @started
 
@@ -42,6 +44,8 @@ module Pocketrb
         end
       end
 
+      # Stop the browser session and cleanup
+      # @return [void]
       def stop!
         @mutex.synchronize do
           @tabs.each_value do |tab|
@@ -62,11 +66,15 @@ module Pocketrb
         end
       end
 
+      # Check if browser session is running
+      # @return [Boolean] True if browser is started
       def started?
         @started
       end
 
       # Create a new tab
+      # @param url [String, nil] Initial URL to navigate to
+      # @return [String] Tab identifier
       def new_tab(url: nil)
         start! unless started?
 
@@ -90,6 +98,8 @@ module Pocketrb
       end
 
       # Close a tab
+      # @param tab_id [String] Tab identifier to close
+      # @return [Boolean] True if tab was closed successfully
       def close_tab(tab_id)
         @mutex.synchronize do
           tab = @tabs.delete(tab_id)
@@ -102,6 +112,8 @@ module Pocketrb
       end
 
       # Focus a tab
+      # @param tab_id [String] Tab identifier to focus
+      # @return [Boolean] True if tab was focused successfully
       def focus_tab(tab_id)
         @mutex.synchronize do
           return false unless @tabs.key?(tab_id)
@@ -120,6 +132,8 @@ module Pocketrb
       end
 
       # Get tab info
+      # @param tab_id [String] Tab identifier
+      # @return [Hash, nil] Tab information hash or nil if not found
       def tab_info(tab_id)
         tab = @tabs[tab_id]
         return nil unless tab
@@ -145,6 +159,8 @@ module Pocketrb
       end
 
       # Update tab metadata
+      # @param tab_id [String] Tab identifier
+      # @return [void]
       def update_tab_info(tab_id)
         tab = @tabs[tab_id]
         return unless tab

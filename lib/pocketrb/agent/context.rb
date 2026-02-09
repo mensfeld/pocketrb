@@ -4,6 +4,7 @@ module Pocketrb
   module Agent
     # Builds context for LLM requests
     class Context
+      # Tool usage guidelines for LLM system prompts
       TOOL_GUIDELINES = <<~PROMPT
         ## Tool Usage Guidelines
 
@@ -18,12 +19,17 @@ module Pocketrb
         - Search memory when the user asks about something you may have learned before
       PROMPT
 
+      # Default agent identity for system prompts
       DEFAULT_IDENTITY = <<~PROMPT
         You are Pocketrb, an AI assistant with access to tools for interacting with files, executing commands, and searching the web.
       PROMPT
 
       attr_reader :system_prompt, :workspace, :skills_summary
 
+      # Initialize a new context builder
+      # @param workspace [Pathname, nil] Path to workspace directory for loading context files
+      # @param system_prompt [String, nil] Custom system prompt (defaults to generated base prompt)
+      # @param skills_summary [String, nil] Summary of available skills to include in prompts
       def initialize(workspace: nil, system_prompt: nil, skills_summary: nil)
         @workspace = workspace
         @skills_summary = skills_summary
@@ -68,7 +74,7 @@ module Pocketrb
       # @param history [Array<Message>] Conversation history
       # @param current [String] Current user message
       # @param media [Array<Bus::Media>] Media attachments
-      # @param memory_context [String|nil] Memory context from Memory system
+      # @param memory_context [String, nil] Memory context from Memory system
       # @return [Array<Message>]
       def build_messages(history:, current:, media: nil, memory_context: nil)
         messages = []
@@ -87,6 +93,7 @@ module Pocketrb
 
       # Build messages for continuing after tool execution
       # @param history [Array<Message>] Full history including tool results
+      # @param memory_context [String, nil] Memory context from Memory system
       # @return [Array<Message>]
       def build_continuation(history:, memory_context: nil)
         messages = []
@@ -96,16 +103,22 @@ module Pocketrb
       end
 
       # Update system prompt
+      # @param prompt [String] New system prompt to use
+      # @return [void]
       def update_system_prompt(prompt)
         @system_prompt = prompt
       end
 
       # Add to system prompt
+      # @param content [String] Additional content to append to system prompt
+      # @return [void]
       def append_to_system_prompt(content)
         @system_prompt = "#{@system_prompt}\n\n#{content}"
       end
 
       # Update skills summary
+      # @param summary [String] New skills summary describing available tools/capabilities
+      # @return [void]
       def update_skills_summary(summary)
         @skills_summary = summary
       end

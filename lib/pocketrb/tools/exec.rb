@@ -3,7 +3,9 @@
 require "open3"
 require "timeout"
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
+  # Tool implementations for agent capabilities
   module Tools
     # Execute shell commands with smart timeout and background job support
     class Exec < Base
@@ -14,7 +16,9 @@ module Pocketrb
         complex: 300    # Builds, installs
       }.freeze
 
+      # Default timeout for standard commands in seconds
       DEFAULT_TIMEOUT = TIMEOUTS[:standard]
+      # Maximum output size to capture in bytes
       MAX_OUTPUT_SIZE = 100_000
 
       # Quick commands that should finish fast
@@ -29,14 +33,20 @@ module Pocketrb
         /^\[/ # test bracket syntax
       ].freeze
 
+      # Tool name
+      # @return [String]
       def name
         "exec"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "Execute a shell command. Long-running commands (apt install, npm install, etc.) auto-run in background. Use for git, npm, make, and other development tools."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -62,6 +72,12 @@ module Pocketrb
         }
       end
 
+      # Execute shell command
+      # @param command [String] Shell command to execute
+      # @param timeout [Integer, nil] Execution timeout in seconds
+      # @param working_dir [String, nil] Working directory for command
+      # @param background [Boolean, nil] Force background execution
+      # @return [String] Command output or job information
       def execute(command:, timeout: nil, working_dir: nil, background: nil)
         work_dir = resolve_working_dir(working_dir)
         return work_dir if work_dir.is_a?(String) && work_dir.start_with?("Error:")

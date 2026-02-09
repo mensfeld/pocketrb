@@ -14,9 +14,16 @@ module Pocketrb
     # - Status: {type: "status", status: "connected"}
     # - QR: {type: "qr", qr: "data:image/png;base64,..."}
     class WhatsApp < Base
+      # Delay in seconds before reconnecting after disconnect
       RECONNECT_DELAY = 5
+      # Default WebSocket bridge URL
       DEFAULT_BRIDGE_URL = "ws://localhost:3001"
 
+      # Initialize WhatsApp channel
+      # @param bus [Bus::MessageBus] Message bus for publishing and consuming messages
+      # @param bridge_url [String] WebSocket bridge URL (defaults to ws://localhost:3001)
+      # @param allowed_users [Array<String>, nil] Allowed phone numbers (nil = allow all)
+      # @param download_media [Boolean] Whether to download and process media attachments (defaults to true)
       def initialize(bus:, bridge_url: DEFAULT_BRIDGE_URL, allowed_users: nil, download_media: true)
         super(bus: bus, name: :whatsapp)
         @bridge_url = bridge_url

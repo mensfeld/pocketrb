@@ -4,14 +4,20 @@ module Pocketrb
   module Tools
     # Edit a file with search/replace
     class EditFile < Base
+      # Tool name
+      # @return [String]
       def name
         "edit_file"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "Edit a file by replacing specific text. The old_string must match exactly (including whitespace and indentation). Use for precise edits rather than rewriting entire files."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -37,6 +43,12 @@ module Pocketrb
         }
       end
 
+      # Execute file edit operation
+      # @param path [String] File path to edit
+      # @param old_string [String] Exact text to find
+      # @param new_string [String] Replacement text
+      # @param replace_all [Boolean] Whether to replace all occurrences
+      # @return [String] Success or error message
       def execute(path:, old_string:, new_string:, replace_all: false)
         resolved = validate_path!(path)
 

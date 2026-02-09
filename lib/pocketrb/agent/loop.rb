@@ -10,6 +10,17 @@ module Pocketrb
       attr_reader :bus, :provider, :tools, :sessions, :context, :model, :max_iterations, :workspace, :memory_dir,
                   :memory, :compaction
 
+      # Initialize the agent loop
+      # @param bus [Bus::MessageBus] Message bus for communication
+      # @param provider [Object] LLM provider instance
+      # @param workspace [String, Pathname] Working directory path
+      # @param memory_dir [String, Pathname, nil] Directory for memory and session storage (defaults to workspace)
+      # @param model [String, nil] Model name to use (defaults to provider default)
+      # @param max_iterations [Integer] Maximum tool execution iterations per message
+      # @param system_prompt [String, nil] Custom system prompt (defaults to auto-generated)
+      # @param mcp_endpoint [String, nil] MCP server endpoint URL (currently unused)
+      # @param enable_compaction [Boolean] Whether to enable context compaction
+      # @param compaction_threshold [Integer, nil] Message count threshold for compaction
       def initialize(
         bus:,
         provider:,
@@ -88,7 +99,7 @@ module Pocketrb
 
       # Process a single message (synchronous, for direct use)
       # @param msg [Bus::InboundMessage]
-      # @return [Bus::OutboundMessage|nil]
+      # @return [Bus::OutboundMessage, nil]
       def process_message(msg)
         # Update tools context with current channel info for message/send_file tools
         @tools.update_context(
@@ -165,11 +176,15 @@ module Pocketrb
       end
 
       # Register an additional tool
+      # @param tool [Tools::Base] Tool instance to add to the registry
+      # @return [void]
       def register_tool(tool)
         @tools.register(tool)
       end
 
       # Update the system prompt
+      # @param prompt [String] New system prompt to use for subsequent messages
+      # @return [void]
       def update_system_prompt(prompt)
         @context.update_system_prompt(prompt)
       end

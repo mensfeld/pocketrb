@@ -1,16 +1,24 @@
 # frozen_string_literal: true
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
+  # Tool implementations for agent capabilities
   module Tools
     # Simple memory tool - store and recall facts
     class Memory < Base
+      # Available memory actions
       ACTIONS = %w[store recall search recent stats].freeze
+      # Memory categories for organization
       CATEGORIES = %w[learned user preference context].freeze
 
+      # Tool name
+      # @return [String]
       def name
         "memory"
       end
 
+      # Tool description
+      # @return [String]
       def description
         <<~DESC.strip
           Store and recall memories. Use this to remember important facts, preferences, and learnings.
@@ -24,6 +32,8 @@ module Pocketrb
         DESC
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -55,10 +65,19 @@ module Pocketrb
         }
       end
 
+      # Check if tool is available
+      # @return [Boolean] true if memory system is initialized
       def available?
         !memory_instance.nil?
       end
 
+      # Execute memory action
+      # @param action [String] Action to perform (store, recall, search, recent, stats)
+      # @param category [String, nil] Category for storing memories
+      # @param key [String, nil] Memory key or topic
+      # @param value [String, nil] Memory content to store
+      # @param query [String, nil] Search query for recall/search
+      # @return [String] Action result or error message
       def execute(action:, category: nil, key: nil, value: nil, query: nil, **)
         return error("Memory not initialized") unless memory_instance
 

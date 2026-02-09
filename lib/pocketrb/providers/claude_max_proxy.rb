@@ -11,33 +11,52 @@ module Pocketrb
     # Install: npm install -g claude-max-api-proxy
     # Start: claude-max-api (runs on localhost:3456)
     class ClaudeMaxProxy < Base
+      # Available model aliases mapped to full model names
       MODELS = {
         "opus" => "claude-opus-4",
         "sonnet" => "claude-sonnet-4",
         "haiku" => "claude-haiku-4"
       }.freeze
 
+      # Default model alias
       DEFAULT_MODEL = "sonnet"
+      # Default base URL for claude-max-api proxy
       DEFAULT_BASE_URL = "http://localhost:3456/v1"
 
+      # Initialize Claude Max Proxy provider
+      # @param config [Hash] Configuration options (base_url, etc.)
       def initialize(config = {})
         @config = config
         @base_url = config[:base_url] || ENV["CLAUDE_MAX_PROXY_URL"] || DEFAULT_BASE_URL
         validate_config!
       end
 
+      # Provider name
+      # @return [Symbol] Provider identifier
       def name
         :claude_max_proxy
       end
 
+      # Default model for this provider
+      # @return [String] Default model alias
       def default_model
         DEFAULT_MODEL
       end
 
+      # List of available model aliases
+      # @return [Array<String>] Model alias names
       def available_models
         MODELS.keys
       end
 
+      # Send a chat request
+      # @param messages [Array<Message>] Conversation history
+      # @param tools [Array<Hash>, nil] Available tools for the model to use
+      # @param model [String, nil] Model name (defaults to DEFAULT_MODEL)
+      # @param temperature [Float] Temperature for response randomness (0.0-1.0)
+      # @param max_tokens [Integer] Maximum tokens in response
+      # @param thinking [Boolean] Enable extended thinking mode (not used for this provider)
+      # @return [LLMResponse] Model response
       def chat(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, thinking: false)
         model ||= default_model
         model_id = MODELS[model] || model
@@ -55,6 +74,14 @@ module Pocketrb
         parse_response(response, model_id)
       end
 
+      # Send a streaming chat request
+      # @param messages [Array<Message>] Conversation history
+      # @param tools [Array<Hash>, nil] Available tools for the model to use
+      # @param model [String, nil] Model name (defaults to DEFAULT_MODEL)
+      # @param temperature [Float] Temperature for response randomness (0.0-1.0)
+      # @param max_tokens [Integer] Maximum tokens in response
+      # @yieldparam chunk [String] Text chunk from streaming response
+      # @return [LLMResponse] Final complete response
       def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &)
         model ||= default_model
         model_id = MODELS[model] || model

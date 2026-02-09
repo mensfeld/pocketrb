@@ -4,6 +4,7 @@ module Pocketrb
   module Tools
     # Tool for sending files/images to chat channels
     class SendFile < Base
+      # Allowed file extensions for sending
       ALLOWED_EXTENSIONS = %w[
         .jpg .jpeg .png .gif .webp .bmp
         .pdf .txt .md .json .csv .xml
@@ -12,14 +13,20 @@ module Pocketrb
         .zip .tar .gz
       ].freeze
 
+      # Tool name
+      # @return [String]
       def name
         "send_file"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "Send a file (image, document, audio, video) to the user via chat. Use this to share generated content, screenshots, reports, or any files."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -45,6 +52,12 @@ module Pocketrb
         }
       end
 
+      # Execute file sending
+      # @param path [String] File path to send
+      # @param caption [String, nil] Optional caption text
+      # @param channel [String, nil] Target channel name
+      # @param chat_id [String, nil] Target chat identifier
+      # @return [String] Success or error message
       def execute(path:, caption: nil, channel: nil, chat_id: nil)
         # Resolve path
         file_path = resolve_path(path)
@@ -84,6 +97,8 @@ module Pocketrb
         success("Sent #{File.basename(file_path)} to #{channel}")
       end
 
+      # Check if tool is available
+      # @return [Boolean] true if message bus is available
       def available?
         !bus.nil?
       end

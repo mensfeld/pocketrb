@@ -6,6 +6,8 @@ module Pocketrb
     class Registry
       attr_reader :context
 
+      # Initialize tools registry
+      # @param context [Hash] Context to pass to tool instances (defaults to empty hash)
       def initialize(context = {})
         @tools = {}
         @context = context
@@ -35,7 +37,7 @@ module Pocketrb
 
       # Get a tool by name
       # @param name [String] Tool name
-      # @return [Base|nil]
+      # @return [Base, nil]
       def get(name)
         @tools[name]
       end
@@ -62,7 +64,8 @@ module Pocketrb
       end
 
       # Get Anthropic-format definitions
-      # @return [Array<Hash>]
+      # @param filter_unavailable [Boolean] Exclude unavailable tools (defaults to true)
+      # @return [Array<Hash>] Tool definitions in Anthropic format
       def anthropic_definitions(filter_unavailable: true)
         tools = filter_unavailable ? available_tools : @tools.values
         tools.map(&:to_anthropic_definition)
@@ -113,6 +116,8 @@ module Pocketrb
       end
 
       # Update context for all tools
+      # @param new_context [Hash] New context values to merge
+      # @return [void]
       def update_context(new_context)
         @context = @context.merge(new_context)
         @tools.each_value { |tool| tool.instance_variable_set(:@context, @context) }

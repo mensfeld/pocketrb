@@ -1,24 +1,40 @@
 # frozen_string_literal: true
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
+  # LLM provider implementations
   module Providers
     # Provider using the RubyLLM gem for multi-model support
     # This is an alternative to direct API calls
     class RubyLLMProvider < Base
+      # Provider name
+      # @return [Symbol]
       def name
         :ruby_llm
       end
 
+      # Default model
+      # @return [String]
       def default_model
         "claude-sonnet-4-20250514"
       end
 
+      # Available models
+      # @return [Array<String>]
       def available_models
         return [] unless ruby_llm_available?
 
         RubyLLM.models.map(&:id)
       end
 
+      # Send chat completion request
+      # @param messages [Array<Message>] Conversation messages
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model name
+      # @param temperature [Float] Sampling temperature
+      # @param max_tokens [Integer] Maximum tokens to generate
+      # @param thinking [Boolean] Enable extended thinking
+      # @return [LLMResponse] Parsed response
       def chat(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, thinking: false)
         ensure_ruby_llm!
 
@@ -38,6 +54,16 @@ module Pocketrb
         parse_ruby_llm_response(response, model)
       end
 
+      # Send streaming chat completion request
+      # Send streaming chat completion request
+      # @param messages [Array<Message>] Conversation messages
+      # @param tools [Array<Hash>, nil] Tool definitions
+      # @param model [String, nil] Model name
+      # @param temperature [Float] Sampling temperature
+      # @param max_tokens [Integer] Maximum tokens to generate
+      # @param block [Proc] Block to receive streaming chunks
+      # @yieldparam chunk [String] Streamed text chunk
+      # @return [LLMResponse] Final response
       def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &block)
         ensure_ruby_llm!
 

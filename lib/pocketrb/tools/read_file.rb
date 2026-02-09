@@ -4,14 +4,20 @@ module Pocketrb
   module Tools
     # Read file contents
     class ReadFile < Base
+      # Tool name
+      # @return [String]
       def name
         "read_file"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "Read the contents of a file. Returns the file content as text."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -33,6 +39,11 @@ module Pocketrb
         }
       end
 
+      # Execute file read operation
+      # @param path [String] File path (relative or absolute)
+      # @param offset [Integer, nil] Starting line number (1-indexed)
+      # @param limit [Integer, nil] Maximum lines to read
+      # @return [String] File content or error message
       def execute(path:, offset: nil, limit: nil)
         resolved = validate_path!(path)
 

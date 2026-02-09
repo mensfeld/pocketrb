@@ -5,6 +5,7 @@ require "fileutils"
 require "tmpdir"
 
 module Pocketrb
+  # Media processing for images, files, and attachments
   module Media
     # Handles media processing: downloading, encoding, type detection
     class Processor
@@ -31,13 +32,15 @@ module Pocketrb
 
       attr_reader :cache_dir
 
+      # Initialize media processor
+      # @param cache_dir [String, Pathname, nil] Directory path for caching downloaded media (defaults to system temp dir)
       def initialize(cache_dir: nil)
         @cache_dir = cache_dir || default_cache_dir
         ensure_cache_dir!
       end
 
       # Download media from URL and return Media object
-      # @param url [String] URL to download
+      # @param url [String] HTTP/HTTPS URL pointing to the media resource to fetch
       # @param filename [String, nil] Original filename
       # @param mime_type [String, nil] Known MIME type
       # @return [Bus::Media]
@@ -229,6 +232,7 @@ module Pocketrb
         EXTENSIONS[mime_type] || "bin"
       end
 
+      # Mapping of file extensions to MIME types
       MIME_TYPES = {
         ".jpg" => "image/jpeg",
         ".jpeg" => "image/jpeg",
@@ -246,6 +250,7 @@ module Pocketrb
         ".json" => "application/json"
       }.freeze
 
+      # Mapping of MIME types to file extensions
       EXTENSIONS = MIME_TYPES.invert.merge(
         "image/jpeg" => "jpg",
         "audio/mpeg" => "mp3",
@@ -253,6 +258,7 @@ module Pocketrb
       ).freeze
     end
 
+    # Error raised when media processing fails
     class MediaError < Pocketrb::Error; end
   end
 end

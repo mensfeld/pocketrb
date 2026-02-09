@@ -7,16 +7,23 @@ module Pocketrb
   module Tools
     # Search the web using Brave Search API
     class WebSearch < Base
+      # Brave Search API endpoint URL
       BRAVE_API_URL = "https://api.search.brave.com/res/v1/web/search"
 
+      # Tool name
+      # @return [String]
       def name
         "web_search"
       end
 
+      # Tool description
+      # @return [String]
       def description
         "Search the web for information. Returns relevant search results with titles, URLs, and descriptions."
       end
 
+      # Parameter schema
+      # @return [Hash]
       def parameters
         {
           type: "object",
@@ -34,10 +41,16 @@ module Pocketrb
         }
       end
 
+      # Check if tool is available
+      # @return [Boolean] true if Brave API key is configured
       def available?
         api_key && !api_key.empty?
       end
 
+      # Execute web search
+      # @param query [String] Search query string
+      # @param count [Integer] Number of results to return (1-20)
+      # @return [String] Formatted search results
       def execute(query:, count: 5)
         return error("Web search requires BRAVE_API_KEY environment variable") unless api_key
 
