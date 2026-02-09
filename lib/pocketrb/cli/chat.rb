@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "tty-spinner"
+
 module Pocketrb
   class CLI
     # Chat command - interactive chat mode
@@ -53,7 +55,12 @@ module Pocketrb
               content: input
             )
 
+            spinner = TTY::Spinner.new("[:spinner] Thinking...", format: :dots)
+            spinner.auto_spin
+
             response = agent_loop.process_message(msg)
+
+            spinner.stop
             puts "\n#{response.content}" if response
           end
         end

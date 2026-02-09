@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "thor", "~> 1.3"
   spec.add_dependency "tty-markdown", "~> 0.7"
   spec.add_dependency "tty-prompt", "~> 0.23"
+  spec.add_dependency "tty-spinner", "~> 0.9"
   spec.add_dependency "yaml", "~> 0.3"
   spec.add_dependency "zeitwerk", "~> 2.6"
 
