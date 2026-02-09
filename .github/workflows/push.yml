@@ -19,12 +19,12 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
         with:
           bundler-cache: false
           ruby-version: '4.0.1'
@@ -33,4 +33,4 @@ jobs:
         run: |
           bundle install --jobs 4 --retry 3
 
-      - uses: rubygems/release-gem@v1
+      - uses: rubygems/release-gem@dac86d0d2ec88bea08b5d9041e5e8115851b4a9c # v1.11.0
