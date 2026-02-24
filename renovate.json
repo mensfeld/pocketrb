@@ -8,7 +8,8 @@
     "Gemfile",
     "Gemfile.lint",
     "pocketrb.gemspec",
-    ".github/workflows/**"
+    ".github/workflows/**",
+    "package.json"
   ],
   "packageRules": [
     {
