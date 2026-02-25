@@ -33,5 +33,8 @@
       "groupName": "ruby setup"
     }
   ],
+  "labels": [
+    "dependencies"
+  ],
   "minimumReleaseAge": "7 days"
 }
