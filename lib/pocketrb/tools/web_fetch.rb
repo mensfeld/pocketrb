@@ -130,11 +130,14 @@ module Pocketrb
                .gsub("&lt;", "<")
                .gsub("&gt;", ">")
                .gsub("&quot;", '"')
-               .gsub(/&#\d+;/) do |m|
-                 [m[2..].to_i].pack("U")
+
+        text = text.gsub(/&#\d+;/) do |m|
+          [m[2..].to_i].pack("U")
         rescue StandardError
           m
         end
+
+        text = text
                .gsub(/\n{3,}/, "\n\n")
                .strip
 
