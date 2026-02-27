@@ -75,8 +75,7 @@ module Pocketrb
 
         output = ["Background Jobs:\n"]
 
-        running = jobs.select { |j| j[:running] }
-        completed = jobs.reject { |j| j[:running] }
+        running, completed = jobs.partition { |j| j[:running] }
 
         if running.any?
           output << "RUNNING:"

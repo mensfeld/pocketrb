@@ -401,8 +401,7 @@ module Pocketrb
 
         lines = ["<b>📋 Background Jobs</b>", ""]
 
-        running = jobs_info[:all].select { |j| j[:running] }
-        completed = jobs_info[:all].reject { |j| j[:running] }
+        running, completed = jobs_info[:all].partition { |j| j[:running] }
 
         if running.any?
           lines << "<b>Running:</b>"
