@@ -27,7 +27,7 @@ jobs:
         uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
         with:
           bundler-cache: false
-          ruby-version: '4.0.1'
+          ruby-version: '4.0.2'
 
       - name: Bundle install
         run: |
