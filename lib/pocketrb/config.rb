@@ -14,6 +14,8 @@ module Pocketrb
     DEFAULTS = {
       provider: "anthropic",
       model: "claude-sonnet-4-20250514",
+      compaction_model: nil,
+      compaction_pressure: nil,
       max_iterations: 50,
       heartbeat_interval: 1800, # 30 minutes (1800s)
       mcp_endpoint: "http://localhost:7878",
@@ -181,6 +183,16 @@ module Pocketrb
 
       warn_env_deprecated("MCP_ENDPOINT", "mcp_endpoint") if ENV["MCP_ENDPOINT"]
       @data[:mcp_endpoint] = ENV["MCP_ENDPOINT"] if ENV["MCP_ENDPOINT"]
+
+      if ENV["POCKETRB_COMPACTION_MODEL"]
+        warn_env_deprecated("POCKETRB_COMPACTION_MODEL", "compaction_model")
+        @data[:compaction_model] = ENV["POCKETRB_COMPACTION_MODEL"]
+      end
+
+      if ENV["POCKETRB_COMPACTION_PRESSURE"]
+        warn_env_deprecated("POCKETRB_COMPACTION_PRESSURE", "compaction_pressure")
+        @data[:compaction_pressure] = ENV["POCKETRB_COMPACTION_PRESSURE"].to_f
+      end
 
       # Autonomous mode (for sandboxed environments)
       if %w[1 true].include?(ENV["POCKETRB_AUTONOMOUS"])

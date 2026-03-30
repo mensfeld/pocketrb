@@ -8,6 +8,7 @@ module Pocketrb
       DEFAULT_MESSAGE_THRESHOLD = 40      # Compact when exceeding this many messages
       DEFAULT_TOKEN_THRESHOLD = 50_000    # Compact when exceeding this many estimated tokens
       DEFAULT_KEEP_RECENT = 15            # Keep this many recent messages uncompacted
+      DEFAULT_CONTEXT_PRESSURE = 0.7      # Compact when estimated tokens exceed this fraction of context window
       CHARS_PER_TOKEN = 4                 # Rough estimate for token counting
 
       COMPACTION_PROMPT = <<~PROMPT
@@ -17,10 +18,13 @@ module Pocketrb
         - Current task/goal if any
         - Any pending items or context needed for continuation
 
+        If a prior conversation summary is provided, incorporate its key points into your new summary
+        so that important context is preserved across compaction cycles.
+
         Keep the summary under 500 words. Focus on information the assistant needs to continue effectively.
       PROMPT
 
-      attr_reader :provider, :model
+      attr_reader :provider, :model, :context_window, :context_pressure, :on_compact
       attr_accessor :message_threshold, :token_threshold, :keep_recent
 
       # Initialize a new compaction instance
@@ -29,12 +33,29 @@ module Pocketrb
       # @param message_threshold [Integer, nil] Maximum messages before compaction (defaults to DEFAULT_MESSAGE_THRESHOLD)
       # @param token_threshold [Integer, nil] Maximum estimated tokens before compaction (defaults to DEFAULT_TOKEN_THRESHOLD)
       # @param keep_recent [Integer, nil] Number of recent messages to keep uncompacted (defaults to DEFAULT_KEEP_RECENT)
-      def initialize(provider:, model: nil, message_threshold: nil, token_threshold: nil, keep_recent: nil)
+      # @param context_window [Integer, nil] Model context window size in tokens (defaults to provider value)
+      # @param context_pressure [Float, nil] Fraction of context window that triggers compaction (defaults to DEFAULT_CONTEXT_PRESSURE)
+      # @param on_compact [Proc, nil] Callback called after compaction with (summary, compacted_count)
+      def initialize(
+        provider:,
+        model: nil,
+        message_threshold: nil,
+        token_threshold: nil,
+        keep_recent: nil,
+        context_window: nil,
+        context_pressure: nil,
+        on_compact: nil
+      )
         @provider = provider
         @model = model || provider.default_model
         @message_threshold = message_threshold || DEFAULT_MESSAGE_THRESHOLD
         @token_threshold = token_threshold || DEFAULT_TOKEN_THRESHOLD
         @keep_recent = keep_recent || DEFAULT_KEEP_RECENT
+        @context_window = context_window || provider.context_window(model: @model)
+        @context_pressure = context_pressure || DEFAULT_CONTEXT_PRESSURE
+        @on_compact = on_compact
+        @compact_mutex = Mutex.new
+        @compacting = false
       end
 
       # Check if compaction is needed for messages
@@ -43,7 +64,12 @@ module Pocketrb
       def needs_compaction?(messages)
         return false if messages.size <= @keep_recent
 
-        messages.size > @message_threshold || estimate_tokens(messages) > @token_threshold
+        return true if messages.size > @message_threshold
+        return true if estimate_tokens(messages) > @token_threshold
+
+        # Pressure-based: trigger when estimated tokens exceed configured fraction of context window
+        estimated = estimate_tokens(messages)
+        estimated > @context_window * @context_pressure
       end
 
       # Compact messages by summarizing older ones
@@ -63,38 +89,74 @@ module Pocketrb
         to_summarize = messages[0...split_point]
         to_keep = messages[split_point..]
 
+        # Extract prior summary for rolling context preservation
+        prior_summary = extract_prior_summary(to_summarize)
+
         Pocketrb.logger.info("Compacting #{to_summarize.size} messages into summary")
 
-        # Generate summary
-        summary = generate_summary(to_summarize)
+        # Generate summary (incorporating prior summary if present)
+        summary = generate_summary(to_summarize, prior_summary: prior_summary)
+        compacted_count = to_summarize.size
 
         # Build compacted message list
         compacted = []
         compacted << build_summary_message(summary)
         compacted.concat(to_keep)
 
+        @on_compact&.call(summary, compacted_count)
+
         compacted
       end
 
-      # Compact a session's messages in place
+      # Compact a session's messages in place (synchronous)
       # @param session [Session::Session] Session object containing messages to be compacted
       # @return [Boolean] Whether compaction occurred
       def compact_session!(session)
+        @compact_mutex.synchronize do
+          perform_session_compaction(session)
+        end
+      end
+
+      # Schedule asynchronous compaction in a background thread
+      # @param session [Session::Session] Session object containing messages to be compacted
+      # @return [Thread, nil] Background thread or nil if compaction not needed or already running
+      def schedule_compaction(session)
+        return nil if @compacting
+
         messages = session.messages.dup
-        return false unless needs_compaction?(messages)
+        return nil unless needs_compaction?(messages)
 
-        # Filter out system messages for compaction
-        user_assistant_messages = messages.reject { |m| m.role == Providers::Role::SYSTEM }
-        return false if user_assistant_messages.size <= @keep_recent
+        @compacting = true
 
-        compacted = compact(user_assistant_messages)
+        @compact_thread = Thread.new do
+          @compact_mutex.synchronize do
+            perform_session_compaction(session)
+          ensure
+            @compacting = false
+          end
+        end
 
-        # Update session
-        session.messages.clear
-        compacted.each { |m| session.messages << m }
+        @compact_thread
+      end
 
-        Pocketrb.logger.info("Session compacted: #{messages.size} -> #{compacted.size} messages")
-        true
+      # Whether background compaction is currently running
+      # @return [Boolean]
+      def compacting?
+        @compacting
+      end
+
+      # Wait for any in-progress background compaction to finish
+      # @param timeout [Integer, nil] Maximum seconds to wait (nil = wait forever)
+      # @return [Boolean] true if compaction finished, false if timed out
+      def wait_for_compaction(timeout: nil)
+        return true unless @compact_thread&.alive?
+
+        if timeout
+          @compact_thread.join(timeout) ? true : false
+        else
+          @compact_thread.join
+          true
+        end
       end
 
       # Estimate token count for messages
@@ -123,6 +185,27 @@ module Pocketrb
       end
 
       private
+
+      # Perform the actual session compaction (must be called under mutex)
+      # @param session [Session::Session] Session to compact
+      # @return [Boolean] Whether compaction occurred
+      def perform_session_compaction(session)
+        messages = session.messages.dup
+        return false unless needs_compaction?(messages)
+
+        # Filter out system messages for compaction
+        user_assistant_messages = messages.reject { |m| m.role == Providers::Role::SYSTEM }
+        return false if user_assistant_messages.size <= @keep_recent
+
+        compacted = compact(user_assistant_messages)
+
+        # Update session
+        session.messages.clear
+        compacted.each { |m| session.messages << m }
+
+        Pocketrb.logger.info("Session compacted: #{messages.size} -> #{compacted.size} messages")
+        true
+      end
 
       # Adjust split point to keep tool_use/tool_result pairs together
       # If a tool_result is in the kept messages, ensure its corresponding
@@ -169,13 +252,35 @@ module Pocketrb
         end
       end
 
-      def generate_summary(messages)
+      # Extract prior summary text from messages if the first message is a summary
+      # @param messages [Array<Message>] Messages to check
+      # @return [String, nil] Prior summary text or nil
+      def extract_prior_summary(messages)
+        return nil if messages.empty?
+
+        first = messages[0]
+        content = first.content.to_s
+
+        return nil unless content.include?("[Previous conversation summary]")
+
+        # Extract the summary text between markers
+        match = content.match(/\[Previous conversation summary\]\n(.*?)\n\[End of summary/m)
+        match ? match[1] : nil
+      end
+
+      def generate_summary(messages, prior_summary: nil)
         # Format messages for summarization
         formatted = format_for_summary(messages)
 
+        user_content = "Conversation history to summarize:\n\n#{formatted}"
+
+        if prior_summary
+          user_content = "Prior summary from earlier conversation:\n#{prior_summary}\n\n#{user_content}"
+        end
+
         summary_request = [
           Providers::Message.system(COMPACTION_PROMPT),
-          Providers::Message.user("Conversation history to summarize:\n\n#{formatted}")
+          Providers::Message.user(user_content)
         ]
 
         response = @provider.chat(

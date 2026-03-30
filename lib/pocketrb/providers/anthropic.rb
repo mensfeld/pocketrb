@@ -26,6 +26,14 @@ module Pocketrb
         :anthropic
       end
 
+      # Get the context window size for a model
+      # @param model [String, nil] Model name (defaults to default_model)
+      # @return [Integer] Context window size in tokens
+      def context_window(model: nil)
+        model ||= default_model
+        MODELS.dig(model, :context) || super
+      end
+
       # Default model to use
       # @return [String]
       def default_model
