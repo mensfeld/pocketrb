@@ -5,8 +5,7 @@ RSpec.describe Pocketrb::Agent::Compaction do
   let(:compaction) { described_class.new(provider: provider) }
 
   before do
-    allow(provider).to receive(:default_model).and_return("test-model")
-    allow(provider).to receive(:context_window).and_return(200_000)
+    allow(provider).to receive_messages(default_model: "test-model", context_window: 200_000)
   end
 
   describe "#initialize" do
