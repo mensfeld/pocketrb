@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-03-30
+
+### Added
+
+- Rolling summaries in context compaction — prior summary is preserved and incorporated into new summaries across compaction cycles, preventing progressive context loss
+- Pressure-based compaction thresholds — compaction triggers when estimated tokens exceed a configurable percentage of the model's context window (`context_pressure`, default 70%)
+- Background (non-blocking) compaction via `schedule_compaction` with mutex-based thread safety and `wait_for_compaction` for clean shutdown
+- Compaction callbacks (`on_compact`) — fires after successful compaction with summary text and compacted message count
+- Separate compaction model configuration (`compaction_model` config key, `POCKETRB_COMPACTION_MODEL` env var) to use a cheaper/faster model for summaries
+- `context_pressure` configuration (`compaction_pressure` config key, `POCKETRB_COMPACTION_PRESSURE` env var)
+- `Providers::Base#context_window` method (default 200K); `Providers::Anthropic` overrides using MODELS hash
+
 ## [0.1.0] - 2026-02-04
 
 ### Added

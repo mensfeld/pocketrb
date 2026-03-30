@@ -18,6 +18,7 @@ RSpec.describe Pocketrb::Agent::Compaction do
     )
     allow(provider).to receive_messages(
       default_model: "test-model",
+      context_window: 200_000,
       chat: response
     )
     allow(Pocketrb.logger).to receive(:info)

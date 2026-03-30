@@ -21,6 +21,8 @@ module Pocketrb
       # @param mcp_endpoint [String, nil] MCP server endpoint URL (currently unused)
       # @param enable_compaction [Boolean] Whether to enable context compaction
       # @param compaction_threshold [Integer, nil] Message count threshold for compaction
+      # @param compaction_model [String, nil] Model to use for compaction summaries (defaults to main model)
+      # @param compaction_pressure [Float, nil] Context pressure threshold for compaction (0.0-1.0)
       def initialize(
         bus:,
         provider:,
@@ -31,7 +33,9 @@ module Pocketrb
         system_prompt: nil,
         mcp_endpoint: nil,
         enable_compaction: true,
-        compaction_threshold: nil
+        compaction_threshold: nil,
+        compaction_model: nil,
+        compaction_pressure: nil
       )
         @bus = bus
         @provider = provider
@@ -64,8 +68,10 @@ module Pocketrb
         @compaction = if enable_compaction
                         Compaction.new(
                           provider: @provider,
-                          model: @model,
-                          message_threshold: compaction_threshold
+                          model: compaction_model || @model,
+                          message_threshold: compaction_threshold,
+                          context_window: @provider.context_window(model: @model),
+                          context_pressure: compaction_pressure
                         )
                       end
 
@@ -94,6 +100,7 @@ module Pocketrb
       # Stop the agent loop
       def stop
         @running = false
+        @compaction&.wait_for_compaction(timeout: 10)
         Pocketrb.logger.info("Agent loop stopping")
       end
 
@@ -114,7 +121,14 @@ module Pocketrb
 
         # Compact session history if needed (before building messages)
         if @compaction&.needs_compaction?(session.messages)
-          @compaction.compact_session!(session)
+          @compaction.schedule_compaction(session)
+
+          # Wait for compaction to finish; fall back to synchronous if timeout
+          unless @compaction.wait_for_compaction(timeout: 30)
+            Pocketrb.logger.warn("Background compaction timed out, falling back to synchronous")
+            @compaction.compact_session!(session)
+          end
+
           @sessions.save(session)
         end
 

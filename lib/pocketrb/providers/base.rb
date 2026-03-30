@@ -56,6 +56,13 @@ module Pocketrb
         raise NotImplementedError, "#{self.class}#name must be implemented"
       end
 
+      # Get the context window size for a model
+      # @param model [String, nil] Model name (defaults to default_model)
+      # @return [Integer] Context window size in tokens
+      def context_window(model: nil)
+        200_000
+      end
+
       # Check if provider supports a feature
       # @param feature [Symbol] :tools, :streaming, :thinking, :vision
       # @return [Boolean]
