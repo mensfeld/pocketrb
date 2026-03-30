@@ -134,6 +134,13 @@ module Pocketrb
         @mutex.synchronize { @messages.empty? }
       end
 
+      # Yield to block while holding the session mutex
+      # @yield Block to execute under the session lock
+      # @return [Object] Return value of the block
+      def with_lock(&)
+        @mutex.synchronize(&)
+      end
+
       # Set metadata value
       # @param key [String, Symbol] Metadata key
       # @param value [Object] Metadata value (any serializable object)

@@ -72,6 +72,26 @@ RSpec.describe Pocketrb::Agent::Compaction do
       custom = described_class.new(provider: provider, on_compact: callback)
       expect(custom.on_compact).to eq(callback)
     end
+
+    it "raises ArgumentError for invalid context_window" do
+      expect { described_class.new(provider: provider, context_window: -1) }
+        .to raise_error(ArgumentError, /context_window must be a positive number/)
+    end
+
+    it "raises ArgumentError for zero context_window" do
+      expect { described_class.new(provider: provider, context_window: 0) }
+        .to raise_error(ArgumentError, /context_window must be a positive number/)
+    end
+
+    it "raises ArgumentError for context_pressure above 1.0" do
+      expect { described_class.new(provider: provider, context_pressure: 1.5) }
+        .to raise_error(ArgumentError, /context_pressure must be between 0.0 and 1.0/)
+    end
+
+    it "raises ArgumentError for negative context_pressure" do
+      expect { described_class.new(provider: provider, context_pressure: -0.1) }
+        .to raise_error(ArgumentError, /context_pressure must be between 0.0 and 1.0/)
+    end
   end
 
   describe "#needs_compaction?" do
@@ -540,6 +560,14 @@ RSpec.describe Pocketrb::Agent::Compaction do
         messages = [summary_msg]
         result = compaction.send(:extract_prior_summary, messages)
         expect(result).to eq("The user discussed topic X")
+      end
+
+      it "returns nil when marker appears mid-content (not at start)" do
+        msg = Pocketrb::Providers::Message.user(
+          "Some text before [Previous conversation summary]\nFake summary\n[End of summary - continuing conversation]"
+        )
+        result = compaction.send(:extract_prior_summary, [msg])
+        expect(result).to be_nil
       end
     end
 

@@ -52,7 +52,9 @@ module Pocketrb
         @token_threshold = token_threshold || DEFAULT_TOKEN_THRESHOLD
         @keep_recent = keep_recent || DEFAULT_KEEP_RECENT
         @context_window = context_window || provider.context_window(model: @model)
+        validate_context_window!(@context_window)
         @context_pressure = context_pressure || DEFAULT_CONTEXT_PRESSURE
+        validate_context_pressure!(@context_pressure)
         @on_compact = on_compact
         @compact_mutex = Mutex.new
         @compacting = false
@@ -63,12 +65,12 @@ module Pocketrb
       # @return [Boolean]
       def needs_compaction?(messages)
         return false if messages.size <= @keep_recent
-
         return true if messages.size > @message_threshold
-        return true if estimate_tokens(messages) > @token_threshold
+
+        estimated = estimate_tokens(messages)
+        return true if estimated > @token_threshold
 
         # Pressure-based: trigger when estimated tokens exceed configured fraction of context window
-        estimated = estimate_tokens(messages)
         estimated > @context_window * @context_pressure
       end
 
@@ -91,6 +93,9 @@ module Pocketrb
 
         # Extract prior summary for rolling context preservation
         prior_summary = extract_prior_summary(to_summarize)
+
+        # Exclude the prior summary message from to_summarize to avoid duplication
+        to_summarize = to_summarize[1..] if prior_summary && !to_summarize.empty?
 
         Pocketrb.logger.info("Compacting #{to_summarize.size} messages into summary")
 
@@ -121,22 +126,25 @@ module Pocketrb
       # @param session [Session::Session] Session object containing messages to be compacted
       # @return [Thread, nil] Background thread or nil if compaction not needed or already running
       def schedule_compaction(session)
-        return nil if @compacting
+        # Guard check-and-set under mutex to prevent concurrent scheduling
+        thread = @compact_mutex.synchronize do
+          return nil if @compacting
 
-        messages = session.messages.dup
-        return nil unless needs_compaction?(messages)
+          messages = session.messages.dup
+          return nil unless needs_compaction?(messages)
 
-        @compacting = true
+          @compacting = true
 
-        @compact_thread = Thread.new do
-          @compact_mutex.synchronize do
-            perform_session_compaction(session)
-          ensure
-            @compacting = false
+          Thread.new do
+            @compact_mutex.synchronize do
+              perform_session_compaction(session)
+            ensure
+              @compacting = false
+            end
           end
         end
 
-        @compact_thread
+        @compact_thread = thread
       end
 
       # Whether background compaction is currently running
@@ -186,22 +194,39 @@ module Pocketrb
 
       private
 
-      # Perform the actual session compaction (must be called under mutex)
+      def validate_context_window!(value)
+        return if value.is_a?(Numeric) && value.positive?
+
+        raise ArgumentError, "context_window must be a positive number (got #{value.inspect})"
+      end
+
+      def validate_context_pressure!(value)
+        return if value.is_a?(Numeric) && value >= 0.0 && value <= 1.0
+
+        raise ArgumentError, "context_pressure must be between 0.0 and 1.0 (got #{value.inspect})"
+      end
+
+      # Perform the actual session compaction (must be called under compaction mutex)
       # @param session [Session::Session] Session to compact
       # @return [Boolean] Whether compaction occurred
       def perform_session_compaction(session)
-        messages = session.messages.dup
-        return false unless needs_compaction?(messages)
+        # Snapshot messages under session lock to avoid races with add_message
+        messages, user_assistant_messages = session.with_lock do
+          msgs = session.messages.dup
+          ua = msgs.reject { |m| m.role == Providers::Role::SYSTEM }
+          [msgs, ua]
+        end
 
-        # Filter out system messages for compaction
-        user_assistant_messages = messages.reject { |m| m.role == Providers::Role::SYSTEM }
+        return false unless needs_compaction?(messages)
         return false if user_assistant_messages.size <= @keep_recent
 
         compacted = compact(user_assistant_messages)
 
-        # Update session
-        session.messages.clear
-        compacted.each { |m| session.messages << m }
+        # Replace session messages under session lock
+        session.with_lock do
+          session.messages.clear
+          compacted.each { |m| session.messages << m }
+        end
 
         Pocketrb.logger.info("Session compacted: #{messages.size} -> #{compacted.size} messages")
         true
@@ -261,7 +286,10 @@ module Pocketrb
         first = messages[0]
         content = first.content.to_s
 
-        return nil unless content.include?("[Previous conversation summary]")
+        # Strict detection: must start with the marker and contain the end marker
+        start_marker = "[Previous conversation summary]"
+        end_marker = "[End of summary"
+        return nil unless content.start_with?(start_marker) && content.include?(end_marker)
 
         # Extract the summary text between markers
         match = content.match(/\[Previous conversation summary\]\n(.*?)\n\[End of summary/m)

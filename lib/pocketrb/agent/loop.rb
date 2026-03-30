@@ -122,8 +122,13 @@ module Pocketrb
         # Compact session history if needed (before building messages)
         if @compaction&.needs_compaction?(session.messages)
           @compaction.schedule_compaction(session)
-          # Wait briefly for compaction to finish so we use compacted context
-          @compaction.wait_for_compaction(timeout: 30)
+
+          # Wait for compaction to finish; fall back to synchronous if timeout
+          unless @compaction.wait_for_compaction(timeout: 30)
+            Pocketrb.logger.warn("Background compaction timed out, falling back to synchronous")
+            @compaction.compact_session!(session)
+          end
+
           @sessions.save(session)
         end
 
