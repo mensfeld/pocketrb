@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
   # Bus module provides the message bus architecture for multi-channel communication
   module Bus

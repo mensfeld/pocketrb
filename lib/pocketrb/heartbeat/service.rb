@@ -40,6 +40,7 @@ module Pocketrb
       end
 
       # Start the heartbeat service
+      # @return [void]
       def start
         return unless @enabled
         return if @running
@@ -51,6 +52,7 @@ module Pocketrb
       end
 
       # Stop the heartbeat service
+      # @return [void]
       def stop
         @running = false
         @timer_thread&.kill
@@ -125,6 +127,8 @@ module Pocketrb
 
       private
 
+      # Arm the periodic timer thread
+      # @return [void]
       def arm_timer!
         return unless @running && @enabled
 
@@ -139,10 +143,14 @@ module Pocketrb
         end
       end
 
+      # Path to the HEARTBEAT.md file in the workspace
+      # @return [Pathname] heartbeat file path
       def heartbeat_file
         @workspace.join(HEARTBEAT_FILE)
       end
 
+      # Read heartbeat file contents
+      # @return [String, nil] file contents or nil if not found
       def read_heartbeat_file
         return nil unless heartbeat_file.exist?
 
@@ -152,6 +160,9 @@ module Pocketrb
         nil
       end
 
+      # Check if heartbeat content has no actionable items
+      # @param content [String, nil] heartbeat file content
+      # @return [Boolean] true if content is empty or has no tasks
       def empty_heartbeat?(content)
         return true if content.nil? || content.strip.empty?
 
@@ -171,6 +182,8 @@ module Pocketrb
         end
       end
 
+      # Seconds remaining until next heartbeat
+      # @return [Integer, nil] seconds until next run or nil
       def next_run_in
         return nil unless @running && @enabled && @last_run_at
 

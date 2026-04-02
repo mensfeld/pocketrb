@@ -129,6 +129,10 @@ module Pocketrb
 
       private
 
+      # Notify all subscribers of a given event type
+      # @param type [Symbol] event type (:inbound, :outbound, :tool, :state)
+      # @param event [Object] event object to broadcast
+      # @return [void]
       def notify_subscribers(type, event)
         subscribers = @mutex.synchronize { @subscribers[type].dup }
         subscribers.each do |handler|

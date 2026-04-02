@@ -79,7 +79,8 @@ module Pocketrb
         end
       end
 
-      # Clear all sessions
+      # Clear all sessions from memory and disk
+      # @return [void]
       def clear_all!
         @mutex.synchronize do
           @sessions.clear
@@ -89,20 +90,31 @@ module Pocketrb
 
       private
 
+      # Ensure the storage directory exists
+      # @return [void]
       def ensure_storage_dir!
         FileUtils.mkdir_p(@storage_dir) unless @storage_dir.exist?
       end
 
+      # Build the JSONL file path for a session key
+      # @param key [String] session key
+      # @return [Pathname] sanitized session file path
       def session_file(key)
         # Sanitize key for filename
         safe_key = key.gsub(/[^a-zA-Z0-9_-]/, "_")
         @storage_dir.join("#{safe_key}.jsonl")
       end
 
+      # Load an existing session or create a new one
+      # @param key [String] session key
+      # @return [Session] loaded or newly created session
       def load_or_create(key)
         load_session(key) || Session.new(key: key)
       end
 
+      # Load a session from its JSONL file
+      # @param key [String] session key
+      # @return [Session, nil] loaded session or nil if file does not exist
       def load_session(key)
         file = session_file(key)
         return nil unless file.exist?
@@ -127,6 +139,9 @@ module Pocketrb
         Session.new(key: key)
       end
 
+      # Parse raw tool call hashes into ToolCall objects
+      # @param tool_calls [Array<Hash>, nil] raw tool call data
+      # @return [Array<Providers::ToolCall>, nil] parsed tool calls or nil
       def parse_tool_calls(tool_calls)
         return nil unless tool_calls
 
@@ -139,6 +154,9 @@ module Pocketrb
         end
       end
 
+      # Write all session messages to a JSONL file
+      # @param session [Session] conversation session whose messages will be written to JSONL
+      # @return [void]
       def persist_session(session)
         file = session_file(session.key)
         File.open(file, "w") do |f|
@@ -148,6 +166,9 @@ module Pocketrb
         end
       end
 
+      # Serialize a message to a JSON string
+      # @param message [Providers::Message] conversation turn to convert into a compact JSON line
+      # @return [String] JSON string
       def message_to_json(message)
         {
           role: message.role,
@@ -161,6 +182,8 @@ module Pocketrb
       end
 
       # Sanitize content to ensure valid UTF-8 for JSON encoding
+      # @param content [String, Array, nil] message content to sanitize
+      # @return [String, Array, nil] sanitized content
       def sanitize_content(content)
         return nil if content.nil?
 
@@ -174,6 +197,9 @@ module Pocketrb
         end
       end
 
+      # Sanitize a single content block's string values to valid UTF-8
+      # @param block [Hash] content block hash
+      # @return [Hash] sanitized content block
       def sanitize_content_block(block)
         return block unless block.is_a?(Hash)
 
@@ -186,6 +212,9 @@ module Pocketrb
         end
       end
 
+      # Delete the JSONL file for a session
+      # @param key [String] session key
+      # @return [void]
       def delete_session_file(key)
         file = session_file(key)
         File.delete(file) if file.exist?

@@ -87,6 +87,10 @@ module Pocketrb
 
       private
 
+      # Suggest similar content when old_string is not found
+      # @param content [String] full file content
+      # @param old_string [String] text that was not found
+      # @return [String] suggestion message with closest matches
       def suggest_match(content, old_string)
         # Try to find similar content
         lines = content.lines

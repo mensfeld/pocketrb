@@ -34,6 +34,7 @@ module Pocketrb
         end
       end
 
+      # Initialize registry with default providers
       def initialize
         @providers = {}
         register_defaults
@@ -60,12 +61,15 @@ module Pocketrb
       end
 
       # List available provider names
+      # @return [Array<Symbol>]
       def available
         @providers.keys
       end
 
       private
 
+      # Register all built-in provider classes
+      # @return [void]
       def register_defaults
         register(:anthropic, Anthropic)
         register(:openrouter, OpenRouter)

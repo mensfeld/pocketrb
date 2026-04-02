@@ -47,6 +47,7 @@ module Pocketrb
 
       protected
 
+      # Start the Telegram bot listener thread using long polling
       def run_inbound_loop
         Pocketrb.logger.info("Starting Telegram bot (polling mode)...")
 
@@ -80,6 +81,8 @@ module Pocketrb
         raise
       end
 
+      # Send an outbound message via the Telegram API, with HTML formatting
+      # @param message [Bus::OutboundMessage] outbound message to deliver
       def send_message(message)
         return unless @bot
 
@@ -114,6 +117,9 @@ module Pocketrb
         end
       end
 
+      # Dispatch a media item to the appropriate Telegram send method
+      # @param chat_id [Integer] Telegram chat identifier
+      # @param media [Media::Item] media attachment to send
       def send_media(chat_id, media)
         case media.type
         when :image
@@ -129,21 +135,33 @@ module Pocketrb
         Pocketrb.logger.error("Error sending media: #{e.message}")
       end
 
+      # Upload and send a photo via the Telegram API
+      # @param chat_id [Integer] Telegram chat identifier
+      # @param media [Media::Item] image media item
       def send_photo(chat_id, media)
         file = Faraday::Multipart::FilePart.new(media.path, media.mime_type, media.filename)
         @bot.api.send_photo(chat_id: chat_id, photo: file)
       end
 
+      # Upload and send an audio file via the Telegram API
+      # @param chat_id [Integer] Telegram chat identifier
+      # @param media [Media::Item] audio media item
       def send_audio(chat_id, media)
         file = Faraday::Multipart::FilePart.new(media.path, media.mime_type, media.filename)
         @bot.api.send_audio(chat_id: chat_id, audio: file)
       end
 
+      # Upload and send a video file via the Telegram API
+      # @param chat_id [Integer] Telegram chat identifier
+      # @param media [Media::Item] video media item
       def send_video(chat_id, media)
         file = Faraday::Multipart::FilePart.new(media.path, media.mime_type, media.filename)
         @bot.api.send_video(chat_id: chat_id, video: file)
       end
 
+      # Upload and send a document file via the Telegram API
+      # @param chat_id [Integer] Telegram chat identifier
+      # @param media [Media::Item] document media item
       def send_document(chat_id, media)
         file = Faraday::Multipart::FilePart.new(media.path, media.mime_type, media.filename)
         @bot.api.send_document(chat_id: chat_id, document: file)
@@ -151,6 +169,8 @@ module Pocketrb
 
       private
 
+      # Process an incoming Telegram message: check allowlist, extract content, publish inbound
+      # @param message [Telegram::Bot::Types::Message] raw Telegram message object
       def handle_telegram_message(message)
         return unless message.is_a?(::Telegram::Bot::Types::Message)
         unless message.text || message.caption || message.photo || message.voice || message.document || message.audio || message.video
@@ -199,6 +219,9 @@ module Pocketrb
         @bus.publish_inbound(inbound)
       end
 
+      # Build a sender identifier string from a Telegram user
+      # @param user [Telegram::Bot::Types::User] Telegram user object
+      # @return [String] sender identifier combining user ID and username
       def build_sender_id(user)
         if user.username
           "#{user.id}|#{user.username}"
@@ -207,6 +230,9 @@ module Pocketrb
         end
       end
 
+      # Extract text content and media descriptions from a Telegram message
+      # @param message [Telegram::Bot::Types::Message] raw Telegram message object
+      # @return [String] combined text content
       def build_content(message)
         parts = []
         parts << message.text if message.text
@@ -226,6 +252,9 @@ module Pocketrb
         parts.empty? ? "[empty message]" : parts.join("\n")
       end
 
+      # Download all media attachments from a Telegram message
+      # @param message [Telegram::Bot::Types::Message] raw Telegram message object
+      # @return [Array<Media::Item>] downloaded media items
       def download_media(message)
         return [] unless @download_media
 
@@ -284,6 +313,12 @@ module Pocketrb
         media
       end
 
+      # Download a file from Telegram servers by file ID
+      # @param file_id [String] Telegram file identifier
+      # @param _type [Symbol] media type (unused, kept for interface consistency)
+      # @param mime_type [String] MIME type of the file
+      # @param filename [String, nil] optional filename override
+      # @return [Media::Item, nil] downloaded media item or nil on failure
       def download_telegram_file(file_id, _type, mime_type, filename = nil)
         # Get file path from Telegram
         result = @bot.api.get_file(file_id: file_id)
@@ -307,6 +342,9 @@ module Pocketrb
         nil
       end
 
+      # Check if a Telegram user is in the allowlist
+      # @param user [Telegram::Bot::Types::User] Telegram user to check
+      # @return [Boolean] true if user is allowed or no allowlist is configured
       def allowed_user?(user)
         return true if @allowed_users.nil? || @allowed_users.empty?
 
@@ -317,6 +355,9 @@ module Pocketrb
       end
 
       # Handle special commands that bypass the agent
+      # @param text [String] message text to check for commands
+      # @param chat_id [Integer] Telegram chat identifier for the reply
+      # @return [Boolean] true if a special command was handled
       def handle_special_command(text, chat_id)
         cmd = text.strip.split.first&.downcase
         return false unless SPECIAL_COMMANDS.include?(cmd)
@@ -341,6 +382,8 @@ module Pocketrb
         true
       end
 
+      # Build an HTML-formatted status overview for the /status command
+      # @return [String] HTML-formatted status text
       def build_status_response
         lines = []
         lines << "━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -395,6 +438,8 @@ module Pocketrb
         lines.join("\n")
       end
 
+      # Build an HTML-formatted list of background jobs for the /jobs command
+      # @return [String] HTML-formatted jobs text
       def build_jobs_response
         jobs_info = get_jobs_summary
         return "No background jobs." if jobs_info[:jobs].empty?
@@ -421,6 +466,8 @@ module Pocketrb
         lines.join("\n")
       end
 
+      # Build an HTML-formatted list of cron jobs for the /cron command
+      # @return [String] HTML-formatted cron jobs text
       def build_cron_response
         cron_info = get_cron_summary
         return "No scheduled jobs." if cron_info[:all].empty?
@@ -443,6 +490,8 @@ module Pocketrb
         lines.join("\n")
       end
 
+      # Build an HTML-formatted help text for the /help command
+      # @return [String] HTML-formatted help text
       def build_help_response
         <<~HELP
           <b>🤖 Pocketrb Commands</b>
@@ -461,6 +510,8 @@ module Pocketrb
         HELP
       end
 
+      # Detect running Claude CLI processes and return their status
+      # @return [Array<String>, nil] status lines or nil if no processes found
       def get_claude_cli_status
         # Check if claude processes are running
         claude_pids = `pgrep -f "claude" 2>/dev/null`.strip.split("\n")
@@ -498,6 +549,8 @@ module Pocketrb
         lines.empty? ? nil : lines.first(8)
       end
 
+      # Collect background job counts and descriptions
+      # @return [Hash] summary with :summary, :jobs, and :all keys
       def get_jobs_summary
         job_manager = @status_context[:job_manager]
 
@@ -523,6 +576,8 @@ module Pocketrb
         }
       end
 
+      # Collect cron job counts and descriptions
+      # @return [Hash] summary with :summary, :jobs, and :all keys
       def get_cron_summary
         cron_service = @status_context[:cron_service]
         return { summary: "N/A", jobs: [], all: [] } unless cron_service
@@ -537,6 +592,9 @@ module Pocketrb
         }
       end
 
+      # Format a duration in seconds as a human-readable uptime string
+      # @param seconds [Numeric] elapsed seconds
+      # @return [String] formatted uptime (e.g. "2h 30m")
       def format_uptime(seconds)
         seconds = seconds.to_i
         if seconds < 60
@@ -550,6 +608,9 @@ module Pocketrb
         end
       end
 
+      # Convert Markdown text to Telegram-compatible HTML
+      # @param text [String, nil] Markdown-formatted text
+      # @return [String] HTML-formatted text safe for Telegram
       def markdown_to_telegram_html(text)
         return "" if text.nil? || text.empty?
 

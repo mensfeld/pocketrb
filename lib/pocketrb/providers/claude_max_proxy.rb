@@ -99,6 +99,7 @@ module Pocketrb
       end
 
       # Check if proxy is running
+      # @return [Boolean] true if the proxy health endpoint responds
       def available?
         uri = URI.parse("#{@base_url.sub("/v1", "")}/health")
         http = Net::HTTP.new(uri.host, uri.port)
@@ -112,10 +113,14 @@ module Pocketrb
 
       protected
 
+      # Supported provider features
+      # @return [Array<Symbol>]
       def supported_features
         %i[tools streaming]
       end
 
+      # Validate provider configuration (no API key needed for proxy)
+      # @return [void]
       def validate_config!
         # No API key needed - proxy uses CLI auth
         Pocketrb.logger.debug("Claude Max Proxy: #{@base_url}")
@@ -123,6 +128,14 @@ module Pocketrb
 
       private
 
+      # Build the OpenAI-compatible request body
+      # @param messages [Array<Message>] conversation messages
+      # @param model [String] model identifier
+      # @param tools [Array<Hash>, nil] tool definitions
+      # @param temperature [Float] sampling temperature
+      # @param max_tokens [Integer] maximum tokens to generate
+      # @param stream [Boolean] whether to enable streaming
+      # @return [Hash] request body
       def build_request_body(messages:, model:, tools:, temperature:, max_tokens:, stream:)
         body = {
           model: model,
@@ -140,6 +153,9 @@ module Pocketrb
         body
       end
 
+      # Format messages for the OpenAI-compatible proxy API
+      # @param messages [Array<Message>] conversation messages
+      # @return [Array<Hash>] formatted messages with role, content, and tool data
       def format_messages(messages)
         messages.map do |msg|
           formatted = { role: msg.role.to_s }
@@ -183,6 +199,9 @@ module Pocketrb
         end
       end
 
+      # Format a media object as an OpenAI image_url content block
+      # @param media [Media] image attachment to encode as a data URI or text fallback
+      # @return [Hash] image_url or text fallback content block
       def format_image_content(media)
         if media.data
           {
@@ -205,6 +224,9 @@ module Pocketrb
         end
       end
 
+      # Convert tool definitions to OpenAI function-calling format
+      # @param tools [Array<Hash>] tool definitions
+      # @return [Array<Hash>] OpenAI-formatted tool definitions
       def format_tools(tools)
         tools.map do |tool|
           func = tool[:function] || tool
@@ -219,6 +241,11 @@ module Pocketrb
         end
       end
 
+      # Make an HTTP POST request to the proxy
+      # @param endpoint [String] API endpoint path
+      # @param body [Hash] request body
+      # @return [Hash] parsed JSON response
+      # @raise [ProviderError] on non-200 response
       def make_request(endpoint, body)
         uri = URI.parse("#{@base_url}#{endpoint}")
         http = Net::HTTP.new(uri.host, uri.port)
@@ -245,6 +272,12 @@ module Pocketrb
         JSON.parse(response.body)
       end
 
+      # Make a streaming HTTP POST request, yielding text chunks
+      # @param endpoint [String] API endpoint path
+      # @param body [Hash] request body
+      # @param block [Proc] block to receive text chunks
+      # @return [LLMResponse] final accumulated response
+      # @raise [ProviderError] on non-200 response
       def stream_request(endpoint, body, &block)
         uri = URI.parse("#{@base_url}#{endpoint}")
         http = Net::HTTP.new(uri.host, uri.port)
@@ -324,6 +357,10 @@ module Pocketrb
         )
       end
 
+      # Parse the OpenAI-compatible response into an LLMResponse
+      # @param response [Hash] parsed JSON response
+      # @param model [String] model identifier used
+      # @return [LLMResponse] structured response
       def parse_response(response, model)
         choice = response.dig("choices", 0)
         message = choice&.dig("message") || {}
@@ -353,6 +390,9 @@ module Pocketrb
         )
       end
 
+      # Parse OpenAI-format tool calls into ToolCall objects
+      # @param tool_calls [Array<Hash>, nil] raw tool call data
+      # @return [Array<ToolCall>] parsed tool calls
       def parse_tool_calls(tool_calls)
         return [] unless tool_calls
 

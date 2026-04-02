@@ -127,10 +127,15 @@ module Pocketrb
 
       private
 
+      # Access the PARA manager from context
+      # @return [Object, nil]
       def para_manager
         @context[:para_manager]
       end
 
+      # Store a fact in the knowledge graph
+      # @param args [Hash] options including :content, :category, :entity_type, :entity_name
+      # @return [String] confirmation or error message
       def store_fact(args)
         content = args[:content]
         return error("Content required") if content.nil? || content.empty?
@@ -153,6 +158,9 @@ module Pocketrb
         end
       end
 
+      # Search across knowledge graph, daily notes, and preferences
+      # @param query [String] search query
+      # @return [String] formatted search results
       def search_memory(query)
         return error("Query required") if query.nil? || query.empty?
 
@@ -188,6 +196,10 @@ module Pocketrb
         lines.join("\n")
       end
 
+      # Get summary information for an entity
+      # @param entity_type [String] PARA type (projects, areas, resources, archives)
+      # @param entity_name [String] entity name
+      # @return [String] entity summary or error message
       def get_entity_info(entity_type, entity_name)
         return error("Entity type and name required") unless entity_type && entity_name
 
@@ -197,6 +209,9 @@ module Pocketrb
         summary
       end
 
+      # Create a new entity in the knowledge graph
+      # @param args [Hash] options including :entity_subtype, :entity_name, :content
+      # @return [String] confirmation or error message
       def create_entity(args)
         subtype = args[:entity_subtype]
         name = args[:entity_name]
@@ -226,6 +241,9 @@ module Pocketrb
         end
       end
 
+      # List entities, optionally filtered by type
+      # @param entity_type [String, nil] PARA type to filter by, or nil for all
+      # @return [String] formatted entity list
       def list_entities(entity_type)
         if entity_type
           entities = para_manager.knowledge_graph.list_entities(entity_type.to_sym)
@@ -242,6 +260,9 @@ module Pocketrb
         end
       end
 
+      # Get relevant context for a query or full summary
+      # @param query [String, nil] context query, or nil for full summary
+      # @return [String] relevant context
       def get_context(query)
         if query && !query.empty?
           para_manager.relevant_context(query)
@@ -250,6 +271,8 @@ module Pocketrb
         end
       end
 
+      # Get all learned user preferences
+      # @return [String] formatted preference list
       def get_preferences
         prefs = para_manager.get_preferences
         return "No learned preferences yet." if prefs.empty?
@@ -265,6 +288,9 @@ module Pocketrb
         lines.join("\n")
       end
 
+      # Store a learned user preference
+      # @param args [Hash] options including :preference_category, :preference_key, :preference_value
+      # @return [String] confirmation or error message
       def learn_preference(args)
         category = args[:preference_category]
         key = args[:preference_key]

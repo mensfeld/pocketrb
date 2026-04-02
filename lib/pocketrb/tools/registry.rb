@@ -145,8 +145,11 @@ module Pocketrb
 
       private
 
-      # Filter arguments to only include those defined in tool's parameter schema
-      # This prevents LLM from passing unexpected arguments like 'description'
+      # Filter arguments to only include those defined in tool's parameter schema.
+      # This prevents LLM from passing unexpected arguments like 'description'.
+      # @param tool [Base] tool instance with parameter schema
+      # @param args [Hash] raw arguments from LLM
+      # @return [Hash] filtered arguments matching the schema
       def filter_arguments(tool, args)
         schema = tool.parameters
         return args unless schema.is_a?(Hash) && schema[:properties]

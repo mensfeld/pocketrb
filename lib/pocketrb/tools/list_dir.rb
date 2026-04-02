@@ -85,6 +85,10 @@ module Pocketrb
 
       private
 
+      # Format a directory entry for display
+      # @param path [Pathname] absolute path to the entry
+      # @param relative [Pathname] path relative to workspace
+      # @return [String] formatted entry with metadata
       def format_entry(path, relative)
         if path.directory?
           "#{relative}/"
@@ -97,6 +101,9 @@ module Pocketrb
         relative.to_s
       end
 
+      # Format byte size into human-readable units
+      # @param bytes [Integer] size in bytes
+      # @return [String] formatted size string (e.g. "1.5KB")
       def format_size(bytes)
         units = %w[B KB MB GB]
         unit_index = 0

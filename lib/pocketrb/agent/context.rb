@@ -38,6 +38,8 @@ module Pocketrb
 
       private
 
+      # Assemble the base system prompt from identity, tool guidelines, and memory files
+      # @return [String] combined system prompt text
       def build_base_prompt
         parts = []
 
@@ -55,6 +57,9 @@ module Pocketrb
         parts.join("\n\n")
       end
 
+      # Read a file from the workspace directory, returning nil if missing or empty
+      # @param filename [String] name of the file relative to workspace root
+      # @return [String, nil] file contents or nil when unavailable
       def load_workspace_file(filename)
         return nil unless @workspace
 
@@ -125,8 +130,10 @@ module Pocketrb
 
       private
 
-      # Strip media from history messages to prevent context bloat
-      # Only the current message should include images
+      # Strip media from history messages to prevent context bloat.
+      # Only the current message should include images.
+      # @param history [Array<Message>] past conversation messages potentially containing media blocks
+      # @return [Array<Message>] new messages with media replaced by text placeholders
       def strip_media_from_history(history)
         history.map do |msg|
           content = msg.content
@@ -162,6 +169,9 @@ module Pocketrb
         end
       end
 
+      # Construct the system message combining prompt, workspace info, skills, and memory
+      # @param memory_context [String, nil] retrieved memory facts to inject into the system message
+      # @return [Message] system-role message for LLM requests
       def build_system_message(memory_context = nil)
         parts = [@system_prompt]
 

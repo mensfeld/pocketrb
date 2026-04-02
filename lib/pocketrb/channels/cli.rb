@@ -16,6 +16,7 @@ module Pocketrb
 
       protected
 
+      # Read user input from stdin and publish inbound messages
       def run_inbound_loop
         Async do
           while @running
@@ -40,6 +41,8 @@ module Pocketrb
         end
       end
 
+      # Print the outbound message content to stdout
+      # @param message [Bus::OutboundMessage] outbound message to display
       def send_message(message)
         @output_mutex.synchronize do
           puts "\n#{format_output(message.content)}\n"
@@ -48,6 +51,8 @@ module Pocketrb
 
       private
 
+      # Read a single line from stdin, returning nil on EOF or interrupt
+      # @return [String, nil]
       def read_input
         line = $stdin.gets
         return nil if line.nil?
@@ -57,6 +62,9 @@ module Pocketrb
         nil
       end
 
+      # Process built-in CLI commands (exit, help, clear, stats)
+      # @param input [String] raw user input to check for commands
+      # @return [Boolean] true if input was a recognized command
       def handle_command(input)
         case input.downcase
         when "exit", "quit", "/exit", "/quit"
@@ -77,6 +85,7 @@ module Pocketrb
         end
       end
 
+      # Display available CLI commands
       def print_help
         puts <<~HELP
 
@@ -89,6 +98,7 @@ module Pocketrb
         HELP
       end
 
+      # Display message bus statistics
       def print_stats
         stats = @bus.stats.to_h
         puts <<~STATS
@@ -101,6 +111,9 @@ module Pocketrb
         STATS
       end
 
+      # Format message content for terminal display
+      # @param content [String, nil] raw message content
+      # @return [String] formatted output string
       def format_output(content)
         return "" if content.nil? || content.empty?
 

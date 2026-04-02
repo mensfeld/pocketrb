@@ -27,6 +27,7 @@ module Pocketrb
       end
 
       # Initialize the MCP connection
+      # @return [Boolean] true if connection succeeded
       def connect
         response = rpc_call("initialize", {
                               protocolVersion: "2024-11-05",
@@ -51,6 +52,7 @@ module Pocketrb
       end
 
       # List available tools from MCP server
+      # @return [Array<Hash>] list of tool definitions
       def list_tools
         ensure_connected!
 
@@ -105,17 +107,22 @@ module Pocketrb
       end
 
       # Check if connected
+      # @return [Boolean] true if connected to MCP server
       def connected?
         @connected
       end
 
       # Disconnect from server
+      # @return [void]
       def disconnect
         @connected = false
       end
 
       private
 
+      # Ensure MCP connection is established, connecting if needed
+      # @return [void]
+      # @raise [MCPError] if connection cannot be established
       def ensure_connected!
         return if @connected
 
@@ -123,6 +130,11 @@ module Pocketrb
         raise MCPError, "Not connected to MCP server" unless @connected
       end
 
+      # Execute a JSON-RPC 2.0 call to the MCP server
+      # @param method [String] RPC method name
+      # @param params [Hash] RPC parameters
+      # @return [Hash] parsed JSON response
+      # @raise [MCPError] on connection or HTTP errors
       def rpc_call(method, params)
         @request_id += 1
 
@@ -144,6 +156,8 @@ module Pocketrb
         raise MCPError, "RPC connection error: #{e.message}"
       end
 
+      # Faraday HTTP client instance
+      # @return [Faraday::Connection] configured HTTP client
       def client
         @client ||= Faraday.new(url: @endpoint) do |f|
           f.headers["Content-Type"] = "application/json"
@@ -152,6 +166,9 @@ module Pocketrb
         end
       end
 
+      # Check if a tool is available on the MCP server
+      # @param name [String] tool name to check
+      # @return [Boolean] true if tool is available
       def tool_available?(name)
         @tools ||= list_tools
         @tools.any? { |t| t["name"] == name }
@@ -159,7 +176,10 @@ module Pocketrb
         false
       end
 
-      # Direct HTTP endpoints (fallback when not using MCP tools)
+      # Search via direct HTTP endpoint (fallback when MCP tools unavailable)
+      # @param query [String] search query
+      # @param limit [Integer] maximum results
+      # @return [Hash, nil] parsed search results or nil on failure
       def http_search(query, limit)
         response = client.post("/search") do |req|
           req.body = { query: query, limit: limit }.to_json
@@ -172,6 +192,10 @@ module Pocketrb
         nil
       end
 
+      # Store via direct HTTP endpoint (fallback when MCP tools unavailable)
+      # @param content [String] text or fact to persist in the memory backend
+      # @param metadata [Hash] metadata to associate with content
+      # @return [Boolean] true if stored successfully
       def http_store(content, metadata)
         response = client.post("/store") do |req|
           req.body = { content: content, metadata: metadata }.to_json

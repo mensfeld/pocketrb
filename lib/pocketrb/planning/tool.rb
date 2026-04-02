@@ -91,10 +91,17 @@ module Pocketrb
 
       private
 
+      # Planning manager instance
+      # @return [Manager] lazily initialized manager
       def manager
         @manager ||= Manager.new(workspace: workspace)
       end
 
+      # Create and activate a new plan
+      # @param name [String] plan name
+      # @param description [String, nil] plan description
+      # @param steps [Array<String>] step descriptions
+      # @return [String] success or error message
       def create_plan(name, description, steps)
         return error("Plan name is required") unless name
         return error("At least one step is required") if steps.nil? || steps.empty?
@@ -108,6 +115,12 @@ module Pocketrb
         error(e.message)
       end
 
+      # Update an existing plan with new steps or step completion
+      # @param name [String] plan name
+      # @param new_steps [Array<String>, nil] steps to add
+      # @param step_index [Integer, nil] step index to mark complete
+      # @param notes [String, nil] notes for step completion
+      # @return [String] success or error message
       def update_plan(name, new_steps, step_index, notes)
         return error("Plan name is required") unless name
 
@@ -123,6 +136,11 @@ module Pocketrb
         error(e.message)
       end
 
+      # Mark a step as complete in a plan
+      # @param name [String] plan name
+      # @param step_index [Integer] step index to complete
+      # @param notes [String, nil] completion notes
+      # @return [String] success or error message
       def complete_step(name, step_index, notes)
         return error("Plan name is required") unless name
         return error("Step index is required") if step_index.nil?
@@ -139,6 +157,11 @@ module Pocketrb
         error(e.message)
       end
 
+      # Mark a step as failed in a plan
+      # @param name [String] plan name
+      # @param step_index [Integer] step index to fail
+      # @param notes [String, nil] failure notes
+      # @return [String] success or error message
       def fail_step(name, step_index, notes)
         return error("Plan name is required") unless name
         return error("Step index is required") if step_index.nil?
@@ -149,6 +172,8 @@ module Pocketrb
         error(e.message)
       end
 
+      # List all plans with their status
+      # @return [String] formatted plan listing
       def list_plans
         plans = manager.list_plans
 
@@ -170,6 +195,9 @@ module Pocketrb
         output.join("\n")
       end
 
+      # Show a plan's details in markdown format
+      # @param name [String] plan name
+      # @return [String] plan markdown or error message
       def show_plan(name)
         return error("Plan name is required") unless name
 
@@ -179,6 +207,9 @@ module Pocketrb
         plan.to_markdown
       end
 
+      # Delete a plan by name
+      # @param name [String] plan name
+      # @return [String] success or error message
       def delete_plan(name)
         return error("Plan name is required") unless name
 

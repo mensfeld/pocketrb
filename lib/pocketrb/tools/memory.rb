@@ -101,10 +101,17 @@ module Pocketrb
 
       private
 
+      # Access the memory system from context
+      # @return [Object, nil]
       def memory_instance
         @context[:memory]
       end
 
+      # Store a fact in the specified category
+      # @param category [String] memory category (learned, user, preference, context)
+      # @param key [String] memory key or topic
+      # @param value [String] content to store
+      # @return [String] confirmation or error message
       def store_memory(category, key, value)
         return error("Category, key, and value required") unless category && key && value
 
@@ -124,6 +131,9 @@ module Pocketrb
         success(result)
       end
 
+      # Recall relevant memories matching a query
+      # @param query [String] search query
+      # @return [String] matching memories or not-found message
       def recall_memory(query)
         return error("Query required") unless query
 
@@ -136,6 +146,9 @@ module Pocketrb
         end
       end
 
+      # Deep search across all memory categories
+      # @param query [String] search query
+      # @return [String] search results or not-found message
       def search_memory(query)
         return error("Query required") unless query
 
@@ -153,6 +166,8 @@ module Pocketrb
         lines.join("\n")
       end
 
+      # Show recent events from memory
+      # @return [String] formatted list of recent events
       def show_recent
         events = memory_instance.recent_events(10)
 
@@ -167,6 +182,8 @@ module Pocketrb
         lines.join("\n")
       end
 
+      # Show memory system statistics
+      # @return [String] formatted memory statistics
       def show_stats
         stats = memory_instance.stats
 

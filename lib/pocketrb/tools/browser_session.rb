@@ -171,6 +171,8 @@ module Pocketrb
 
       private
 
+      # Locate the Playwright CLI executable
+      # @return [String] path or command to run Playwright
       def find_playwright_cli
         # Try common locations
         ["npx playwright", "playwright", "node_modules/.bin/playwright"].each do |cmd|

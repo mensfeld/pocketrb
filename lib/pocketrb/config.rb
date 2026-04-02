@@ -73,7 +73,8 @@ module Pocketrb
       @data.key?(key.to_sym) || @data.key?(key.to_s)
     end
 
-    # Get provider configuration
+    # Get provider configuration with API keys and model settings
+    # @return [Hash] provider configuration hash
     def provider_config
       # Warn about deprecated API key environment variables
       warn_env_deprecated("ANTHROPIC_API_KEY", "anthropic_api_key") if ENV["ANTHROPIC_API_KEY"]
@@ -94,7 +95,8 @@ module Pocketrb
       }.compact
     end
 
-    # Save configuration
+    # Save configuration to workspace config file
+    # @return [void]
     def save!
       return unless @workspace
 
@@ -107,7 +109,8 @@ module Pocketrb
       Pocketrb.logger.debug("Saved config to #{config_file}")
     end
 
-    # Reload configuration
+    # Reload configuration from defaults, workspace, global, and env
+    # @return [void]
     def reload!
       @data = DEFAULTS.dup
       load_config!
@@ -122,7 +125,8 @@ module Pocketrb
       end
     end
 
-    # Convert to hash
+    # Convert configuration to hash
+    # @return [Hash] copy of configuration data
     def to_h
       @data.dup
     end
@@ -134,19 +138,24 @@ module Pocketrb
       new(workspace: workspace)
     end
 
-    # Global default config
+    # Global default config without workspace
+    # @return [Config] default configuration instance
     def self.default
       @default ||= new
     end
 
     private
 
+    # Load all configuration sources in priority order
+    # @return [void]
     def load_config!
       load_workspace_config if @workspace
       load_global_config
       load_env_overrides
     end
 
+    # Load workspace-specific configuration from .pocketrb/config.yml
+    # @return [void]
     def load_workspace_config
       config_file = @workspace.join(CONFIG_DIR, CONFIG_FILE)
       return unless config_file.exist?
@@ -157,6 +166,8 @@ module Pocketrb
       Pocketrb.logger.warn("Failed to load workspace config: #{e.message}")
     end
 
+    # Load global configuration from ~/.pocketrb/config.yml
+    # @return [void]
     def load_global_config
       global_config = Pathname.new(Dir.home).join(".pocketrb", CONFIG_FILE)
       return unless global_config.exist?
@@ -168,6 +179,8 @@ module Pocketrb
       Pocketrb.logger.warn("Failed to load global config: #{e.message}")
     end
 
+    # Apply environment variable overrides to configuration
+    # @return [void]
     def load_env_overrides
       # Environment variables override config file
       warn_env_deprecated("POCKETRB_PROVIDER", "provider") if ENV["POCKETRB_PROVIDER"]

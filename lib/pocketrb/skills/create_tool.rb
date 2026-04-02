@@ -84,10 +84,20 @@ module Pocketrb
 
       private
 
+      # Validate skill name format (lowercase alphanumeric with hyphens)
+      # @param name [String] skill name to validate
+      # @return [Boolean] true if name is valid
       def valid_skill_name?(name)
         name.match?(/\A[a-z][a-z0-9-]*\z/)
       end
 
+      # Build SKILL.md content with YAML frontmatter
+      # @param name [String] skill name
+      # @param description [String] skill description
+      # @param content [String] skill body content
+      # @param triggers [Array<String>, nil] trigger keywords
+      # @param always [Boolean] whether to always load the skill
+      # @return [String] complete SKILL.md file content
       def build_skill_file(name, description, content, triggers, always)
         metadata = {
           "name" => name,
@@ -104,6 +114,10 @@ module Pocketrb
         MD
       end
 
+      # Append skill entry to TOOLS.md if it exists
+      # @param skill_name [String] skill name to add
+      # @param description [String] skill description
+      # @return [void]
       def update_tools_documentation(skill_name, description)
         tools_file = workspace.join("TOOLS.md")
         return unless tools_file.exist?

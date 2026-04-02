@@ -84,6 +84,10 @@ module Pocketrb
 
       private
 
+      # Execute a memory search operation
+      # @param query [String] search query
+      # @param limit [Integer] maximum number of results
+      # @return [String] formatted search results or error message
       def execute_search(query, limit)
         return error("Query is required for search") if query.nil? || query.empty?
 
@@ -96,6 +100,10 @@ module Pocketrb
         error("Memory search failed: #{e.message}")
       end
 
+      # Execute a memory store operation
+      # @param content [String] text or fact to persist in the memory backend
+      # @param tags [Array<String>, nil] tags to associate with content
+      # @return [String] success or error message
       def execute_store(content, tags)
         return error("Content is required for store") if content.nil? || content.empty?
 
@@ -115,6 +123,10 @@ module Pocketrb
         error("Memory store failed: #{e.message}")
       end
 
+      # Format search results into a readable string
+      # @param results [String, Array, Hash] raw search results from MCP
+      # @param query [String] original search query
+      # @return [String] formatted results
       def format_search_results(results, query)
         output = ["Memory search results for: #{query}\n"]
 
@@ -134,6 +146,10 @@ module Pocketrb
         output.join("\n")
       end
 
+      # Format a single search result entry
+      # @param result [Hash] result hash with content, score, and tags
+      # @param index [Integer] display index (1-based)
+      # @return [String] formatted result line
       def format_result(result, index)
         content = result["content"] || result["text"] || result.to_s
         score = result["score"]

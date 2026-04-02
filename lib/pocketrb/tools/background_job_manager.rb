@@ -50,6 +50,8 @@ module Pocketrb
 
       private
 
+      # Determine the directory for storing job state files
+      # @return [Pathname]
       def resolve_jobs_dir
         # Don't create .pocketrb in root filesystem
         if @workspace.to_s == "/" || !@workspace.writable?
@@ -59,6 +61,8 @@ module Pocketrb
         end
       end
 
+      # Create the jobs directory if it does not exist
+      # @return [Boolean] true if directory is accessible
       def setup_jobs_dir!
         FileUtils.mkdir_p(@jobs_dir)
         true
@@ -261,6 +265,9 @@ module Pocketrb
 
       private
 
+      # Check if a process is still running
+      # @param pid [Integer] process ID to check
+      # @return [Boolean] true if process exists and is running
       def process_running?(pid)
         Process.kill(0, pid)
         true
@@ -268,6 +275,10 @@ module Pocketrb
         false
       end
 
+      # Truncate output that exceeds the maximum size
+      # @param output [String] output text to truncate
+      # @param max_size [Integer] maximum allowed character count
+      # @return [String] truncated or original output
       def truncate_output(output, max_size: 100_000)
         return output if output.length <= max_size
 
