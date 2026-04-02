@@ -114,6 +114,9 @@ module Pocketrb
 
       private
 
+      # Parse YAML frontmatter from skill file content
+      # @param content [String] raw file content with optional frontmatter
+      # @return [Array] two-element array of metadata Hash and body String
       def parse_frontmatter(content)
         if content.match?(/\A---\s*\n(.+?)\n---\s*\n/m)
           match = content.match(/\A---\s*\n(.+?)\n---\s*\n/m)
@@ -125,6 +128,10 @@ module Pocketrb
         end
       end
 
+      # Build SKILL.md content from metadata and body
+      # @param metadata [Hash] YAML frontmatter data
+      # @param body [String] markdown body content
+      # @return [String] complete SKILL.md file content
       def build_skill_file(metadata, body)
         <<~MD
           ---

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
   module Agent
     # Context compaction to summarize long conversations and save tokens
@@ -194,12 +195,18 @@ module Pocketrb
 
       private
 
+      # Validate that the context window size is a positive number
+      # @param value [Numeric] context window size in tokens to validate
+      # @return [void]
       def validate_context_window!(value)
         return if value.is_a?(Numeric) && value.positive?
 
         raise ArgumentError, "context_window must be a positive number (got #{value.inspect})"
       end
 
+      # Validate that context pressure is a float between 0.0 and 1.0
+      # @param value [Numeric] context pressure ratio to validate
+      # @return [void]
       def validate_context_pressure!(value)
         return if value.is_a?(Numeric) && value >= 0.0 && value <= 1.0
 
@@ -207,7 +214,7 @@ module Pocketrb
       end
 
       # Perform the actual session compaction (must be called under compaction mutex)
-      # @param session [Session::Session] Session to compact
+      # @param session [Session::Session] whose messages will be summarized and replaced with compacted history
       # @return [Boolean] Whether compaction occurred
       def perform_session_compaction(session)
         # Snapshot messages under session lock to avoid races with add_message
@@ -235,7 +242,7 @@ module Pocketrb
       # Adjust split point to keep tool_use/tool_result pairs together
       # If a tool_result is in the kept messages, ensure its corresponding
       # assistant message with tool_calls is also kept
-      # @param messages [Array<Message>] All messages
+      # @param messages [Array<Message>] full conversation history including tool use/result pairs
       # @param split_point [Integer] Initial split point
       # @return [Integer] Adjusted split point
       def adjust_split_for_tool_pairs(messages, split_point)
@@ -278,7 +285,7 @@ module Pocketrb
       end
 
       # Extract prior summary text from messages if the first message is a summary
-      # @param messages [Array<Message>] Messages to check
+      # @param messages [Array<Message>] conversation history where the first entry may contain a prior summary marker
       # @return [String, nil] Prior summary text or nil
       def extract_prior_summary(messages)
         return nil if messages.empty?
@@ -296,6 +303,10 @@ module Pocketrb
         match ? match[1] : nil
       end
 
+      # Use the LLM provider to produce a concise summary of the given messages
+      # @param messages [Array<Message>] older messages to be summarized
+      # @param prior_summary [String, nil] existing summary from a previous compaction cycle to incorporate
+      # @return [String] generated summary text
       def generate_summary(messages, prior_summary: nil)
         # Format messages for summarization
         formatted = format_for_summary(messages)
@@ -324,6 +335,9 @@ module Pocketrb
         basic_summary(messages)
       end
 
+      # Format messages as role-prefixed text for the summarization prompt
+      # @param messages [Array<Message>] conversation messages to format
+      # @return [String] newline-separated formatted message text
       def format_for_summary(messages)
         messages.map do |msg|
           role = msg.role.capitalize
@@ -332,6 +346,9 @@ module Pocketrb
         end.join("\n\n")
       end
 
+      # Extract plain text from message content that may be a String or Array of content blocks
+      # @param content [String, Array<Hash, String>] raw message content to extract text from
+      # @return [String] concatenated text content
       def extract_text_content(content)
         if content.is_a?(Array)
           content.filter_map do |block|
@@ -346,12 +363,18 @@ module Pocketrb
         end
       end
 
+      # Wrap a summary string in a user message with conversation summary markers
+      # @param summary [String] compacted summary text to embed
+      # @return [Message] user message containing the bracketed summary
       def build_summary_message(summary)
         Providers::Message.user(
           "[Previous conversation summary]\n#{summary}\n[End of summary - continuing conversation]"
         )
       end
 
+      # Build a simple statistical summary without calling the LLM (fallback)
+      # @param messages [Array<Message>] conversation messages to summarize by counting roles and extracting topics
+      # @return [String] basic text summary with message counts and recent topics
       def basic_summary(messages)
         # Create a very basic summary without LLM
         user_count = messages.count { |m| m.role == Providers::Role::USER }

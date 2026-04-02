@@ -44,6 +44,7 @@ module Pocketrb
 
       protected
 
+      # Connect to the WhatsApp bridge and listen for inbound messages
       def run_inbound_loop
         require "websocket-client-simple"
 
@@ -68,6 +69,8 @@ module Pocketrb
         raise
       end
 
+      # Send an outbound message via the WhatsApp WebSocket bridge
+      # @param message [Bus::OutboundMessage] outbound message to deliver
       def send_message(message)
         return unless @ws && @connected
 
@@ -86,6 +89,7 @@ module Pocketrb
 
       private
 
+      # Establish WebSocket connection and register event handlers
       def connect_and_listen
         channel = self
 
@@ -113,6 +117,8 @@ module Pocketrb
         sleep 0.5 while @ws.open? && @running
       end
 
+      # Route an incoming bridge WebSocket message by type
+      # @param data [String] raw JSON string from the bridge
       def handle_bridge_message(data)
         message = JSON.parse(data)
 
@@ -136,6 +142,8 @@ module Pocketrb
         Pocketrb.logger.warn("WhatsApp: invalid JSON: #{e.message}")
       end
 
+      # Process an incoming WhatsApp message and publish it to the bus
+      # @param message [Hash] parsed bridge message payload
       def handle_incoming_message(message)
         sender = extract_phone(message["sender"] || message["from"])
         return unless allowed_user?(sender)
@@ -178,6 +186,9 @@ module Pocketrb
         @bus.publish_inbound(inbound)
       end
 
+      # Download or decode media attached to a WhatsApp message
+      # @param message [Hash] parsed bridge message with media data
+      # @return [Media::Item, nil] processed media item or nil on failure
       def process_whatsapp_media(message)
         return nil unless message["mediaData"] || message["mediaUrl"]
 
@@ -198,6 +209,9 @@ module Pocketrb
         nil
       end
 
+      # Map a MIME type to a file extension
+      # @param mime_type [String] MIME type string
+      # @return [String] file extension without dot
       def extension_for_mime(mime_type)
         case mime_type
         when %r{^image/jpeg} then "jpg"
@@ -211,6 +225,8 @@ module Pocketrb
         end
       end
 
+      # Log a received QR code event from the bridge
+      # @param message [Hash] bridge message containing QR data
       def handle_qr(message)
         return unless message["qr"]
 
@@ -218,6 +234,9 @@ module Pocketrb
         # Could save to file or display in terminal if needed
       end
 
+      # Check if a phone number is in the allowlist
+      # @param phone [String] phone number to check
+      # @return [Boolean] true if allowed or no allowlist is configured
       def allowed_user?(phone)
         return true if @allowed_users.nil? || @allowed_users.empty?
 
@@ -225,6 +244,9 @@ module Pocketrb
         @allowed_users.any? { |allowed| normalize_phone(allowed) == normalized }
       end
 
+      # Convert a phone number to a WhatsApp JID
+      # @param phone [String] phone number or existing JID
+      # @return [String] WhatsApp JID (e.g. "1234@s.whatsapp.net")
       def to_jid(phone)
         return phone if phone.include?("@")
 
@@ -233,12 +255,18 @@ module Pocketrb
         "#{clean}@s.whatsapp.net"
       end
 
+      # Extract the phone number portion from a WhatsApp JID
+      # @param jid [String, nil] WhatsApp JID string
+      # @return [String, nil] phone number or original value
       def extract_phone(jid)
         return jid unless jid
 
         jid.split("@").first
       end
 
+      # Strip non-digit characters from a phone number for comparison
+      # @param phone [String, nil] phone number to normalize
+      # @return [String, nil] digits-only phone number or nil
       def normalize_phone(phone)
         return nil unless phone
 

@@ -112,24 +112,28 @@ module Pocketrb
         end
       end
 
-      # Clear all messages
+      # Clear all messages from session
+      # @return [void]
       def clear
         @mutex.synchronize do
           @messages.clear
         end
       end
 
-      # Get the last message
+      # Get the last message in the session
+      # @return [Providers::Message, nil] last message or nil
       def last_message
         @mutex.synchronize { @messages.last }
       end
 
-      # Number of messages
+      # Number of messages in session
+      # @return [Integer] message count
       def message_count
         @mutex.synchronize { @messages.size }
       end
 
-      # Check if session is empty
+      # Check if session has no messages
+      # @return [Boolean] true if no messages
       def empty?
         @mutex.synchronize { @messages.empty? }
       end
@@ -156,7 +160,8 @@ module Pocketrb
         @mutex.synchronize { @metadata[key] }
       end
 
-      # Convert to hash for serialization
+      # Convert session to hash for serialization
+      # @return [Hash] serialized session data
       def to_h
         @mutex.synchronize do
           {
@@ -203,6 +208,9 @@ module Pocketrb
       # Large content (scripts, files) shouldn't be stored in session history
       MAX_ARG_LENGTH = 500
 
+      # Truncate large arguments in tool calls to prevent context bloat
+      # @param tool_calls [Array<Providers::ToolCall>, nil] tool calls to sanitize
+      # @return [Array<Providers::ToolCall>, nil] sanitized tool calls
       def sanitize_tool_calls(tool_calls)
         return nil if tool_calls.nil?
 
@@ -224,6 +232,9 @@ module Pocketrb
         end
       end
 
+      # Hook for real-time logging of messages
+      # @param message [Providers::Message] newly appended conversation turn for real-time logging
+      # @return [void]
       def save_to_log(message)
         # Session manager handles persistence via JSONL
         # This is a hook for real-time logging if needed

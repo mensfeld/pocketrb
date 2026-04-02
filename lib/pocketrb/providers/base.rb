@@ -72,39 +72,59 @@ module Pocketrb
 
       protected
 
+      # Supported provider features
+      # @return [Array<Symbol>]
       def supported_features
         %i[tools streaming]
       end
 
+      # Validate provider configuration
+      # @return [void]
       def validate_config!
         # Override in subclasses to validate required config
       end
 
+      # Raise error if API key is missing from config and environment
+      # @param key_name [Symbol] configuration key name
+      # @return [void]
+      # @raise [ConfigurationError] if API key is not found
       def require_api_key!(key_name)
         return if @config[key_name] || ENV[key_name.to_s.upcase]
 
         raise ConfigurationError, "#{key_name} is required for #{self.class.name}"
       end
 
+      # Fetch API key from config or environment
+      # @param key_name [Symbol] configuration key name
+      # @return [String, nil] API key value
       def api_key(key_name)
         @config[key_name] || ENV.fetch(key_name.to_s.upcase, nil)
       end
 
       # Convert internal message format to provider-specific format
+      # @param messages [Array<Message>] conversation history to convert for the provider API
+      # @return [Array<Hash>] provider-formatted messages
       def format_messages(messages)
         messages.map { |msg| format_message(msg) }
       end
 
+      # Format a single message for the provider
+      # @param message [Message] conversation message with role, content, and optional tool data
+      # @return [Hash] provider-formatted message
       def format_message(message)
         raise NotImplementedError
       end
 
       # Convert provider response to internal format
+      # @param response [Hash] raw provider response
+      # @return [LLMResponse] parsed response
       def parse_response(response)
         raise NotImplementedError
       end
 
       # Convert tool definitions to provider-specific format
+      # @param tools [Array<Hash>] tool definitions
+      # @return [Array<Hash>] provider-formatted tools
       def format_tools(tools)
         tools
       end

@@ -98,18 +98,31 @@ module Pocketrb
 
       private
 
+      # Access cron service from context
+      # @return [Object, nil]
       def cron_service
         @context[:cron_service]
       end
 
+      # Get the default output channel
+      # @return [Symbol]
       def current_channel
         @context[:default_channel] || @context[:channel] || :telegram
       end
 
+      # Get the default chat identifier
+      # @return [String, nil]
       def current_chat_id
         @context[:default_chat_id] || @context[:chat_id]
       end
 
+      # Add a new scheduled job
+      # @param name [String] job name
+      # @param message [String] message to deliver when job runs
+      # @param schedule_type [String] schedule kind: at, every, or cron
+      # @param schedule_value [String] schedule value matching the type
+      # @param deliver [Boolean] whether to deliver message to channel
+      # @return [String] confirmation or error message
       def add_job(name, message, schedule_type, schedule_value, deliver)
         return error("Name required") unless name && !name.empty?
         return error("Message required") unless message && !message.empty?
@@ -133,6 +146,10 @@ module Pocketrb
         success("Created job '#{name}' (ID: #{job.id}). Next run: #{next_run_time || "pending"}")
       end
 
+      # Build a Schedule object from type and value
+      # @param type [String] schedule kind: at, every, or cron
+      # @param value [String, nil] schedule value for the given type
+      # @return [Pocketrb::Cron::Schedule, String] schedule object or error string
       def build_schedule(type, value)
         case type
         when "at"
@@ -168,6 +185,8 @@ module Pocketrb
         end
       end
 
+      # List all scheduled jobs with status and next run time
+      # @return [String] formatted list of jobs
       def list_jobs
         jobs = cron_service.list_jobs(include_disabled: true)
 
@@ -194,6 +213,9 @@ module Pocketrb
         lines.join("\n")
       end
 
+      # Format a schedule object into a human-readable string
+      # @param schedule [Pocketrb::Cron::Schedule] schedule object containing kind and timing details
+      # @return [String] human-readable schedule description
       def format_schedule(schedule)
         case schedule.kind
         when :at
@@ -215,6 +237,9 @@ module Pocketrb
         end
       end
 
+      # Remove a scheduled job
+      # @param job_id [String] job identifier
+      # @return [String] confirmation or error message
       def remove_job(job_id)
         return error("Job ID required") unless job_id
 
@@ -225,6 +250,10 @@ module Pocketrb
         end
       end
 
+      # Enable or disable a scheduled job
+      # @param job_id [String] job identifier
+      # @param enabled [Boolean] true to enable, false to disable
+      # @return [String] confirmation or error message
       def toggle_job(job_id, enabled)
         return error("Job ID required") unless job_id
 

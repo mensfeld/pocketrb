@@ -176,10 +176,15 @@ module Pocketrb
 
       protected
 
+      # Supported provider features
+      # @return [Array<Symbol>]
       def supported_features
         %i[tools streaming thinking]
       end
 
+      # Validate that the claude CLI binary is available
+      # @return [void]
+      # @raise [ConfigurationError] if claude CLI is not found
       def validate_config!
         # Check if claude CLI is available
         return if system("which claude > /dev/null 2>&1")
@@ -189,6 +194,10 @@ module Pocketrb
 
       private
 
+      # Build a prompt string or content blocks from messages and tools
+      # @param messages [Array<Message>] conversation messages
+      # @param tools [Array<Hash>, nil] tool definitions
+      # @return [String, Array<Hash>] prompt text or content blocks with images
       def build_prompt(messages, tools)
         # Build content blocks from messages, preserving images
         content_blocks = []
@@ -254,6 +263,9 @@ module Pocketrb
         end
       end
 
+      # Format a media object as a base64 image block for the CLI
+      # @param media [Media] image attachment to encode as base64 for the CLI protocol
+      # @return [Hash, nil] image content block or nil if unavailable
       def format_image_for_cli(media)
         return nil unless media&.image?
 
@@ -277,6 +289,9 @@ module Pocketrb
         }
       end
 
+      # Send a message to the CLI subprocess via stdin
+      # @param content [String, Array<Hash>] message content to send
+      # @return [void]
       def send_message(content)
         message = {
           type: "user",
@@ -286,6 +301,8 @@ module Pocketrb
         @stdin.flush
       end
 
+      # Read a complete response from the CLI subprocess
+      # @return [Hash] response with :content and :usage keys
       def read_response
         result_text = ""
         usage_data = {}
@@ -327,6 +344,9 @@ module Pocketrb
         { content: result_text, usage: usage_data }
       end
 
+      # Read response from CLI subprocess, yielding chunks as they arrive
+      # @param block [Proc] block to receive text chunks
+      # @return [Hash] response with :content and :usage keys
       def read_response_streaming(&block)
         result_text = ""
         usage_data = {}
@@ -358,12 +378,17 @@ module Pocketrb
         { content: result_text, usage: usage_data }
       end
 
+      # Read a single line from stdout with a timeout
+      # @return [String, nil] line read or nil on timeout
       def read_line_with_timeout
         Timeout.timeout(READ_TIMEOUT) { @stdout.gets }
       rescue Timeout::Error
         nil
       end
 
+      # Parse a JSON event line from the CLI output
+      # @param line [String, nil] raw JSON line
+      # @return [Hash, nil] parsed event or nil on parse failure
       def parse_event(line)
         return nil if line.nil? || line.strip.empty?
 
@@ -372,6 +397,9 @@ module Pocketrb
         nil
       end
 
+      # Extract text content from a CLI assistant event
+      # @param event [Hash] parsed CLI event
+      # @return [String] extracted text content
       def extract_text_from_event(event)
         text = ""
         if event.dig("message", "content")
@@ -382,6 +410,10 @@ module Pocketrb
         text
       end
 
+      # Parse the CLI response hash into an LLMResponse
+      # @param response [Hash] raw response with :content and :usage
+      # @param model [String] model alias used for the request
+      # @return [LLMResponse] structured response
       def parse_cli_response(response, model)
         content = response[:content]
         usage_data = response[:usage] || {}
@@ -409,6 +441,9 @@ module Pocketrb
         )
       end
 
+      # Extract tool call JSON blocks from response text
+      # @param text [String, nil] response text possibly containing tool call JSON
+      # @return [Array<ToolCall>] parsed tool calls
       def extract_tool_calls(text)
         return [] unless text
 

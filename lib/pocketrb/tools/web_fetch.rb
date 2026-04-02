@@ -64,6 +64,9 @@ module Pocketrb
 
       private
 
+      # Parse and validate a URL, adding https if no scheme is present
+      # @param url [String] URL string to parse
+      # @return [URI, nil] parsed URI or nil if invalid
       def parse_url(url)
         # Add https if no scheme
         url = "https://#{url}" unless url.match?(%r{^https?://})
@@ -76,6 +79,9 @@ module Pocketrb
         nil
       end
 
+      # Fetch content from a URI using Faraday
+      # @param uri [URI] parsed URI to fetch
+      # @return [Hash] response hash with :body/:content_type or :error
       def fetch_url(uri)
         conn = Faraday.new(url: uri.to_s) do |f|
           f.options.timeout = TIMEOUT
@@ -95,6 +101,10 @@ module Pocketrb
         end
       end
 
+      # Extract readable content from response body
+      # @param body [String] raw response body
+      # @param selector [String, nil] CSS selector to narrow extraction
+      # @return [String] extracted text content
       def extract_content(body, selector)
         content_type = detect_content_type(body)
 
@@ -108,6 +118,9 @@ module Pocketrb
         end
       end
 
+      # Detect content type by inspecting the body
+      # @param body [String] response body to analyze
+      # @return [Symbol] :json, :html, or :text
       def detect_content_type(body)
         return :json if body.strip.start_with?("{", "[")
         return :html if body.include?("<html") || body.include?("<body")
@@ -115,6 +128,10 @@ module Pocketrb
         :text
       end
 
+      # Convert HTML to plain text by stripping tags
+      # @param html [String] raw HTML content
+      # @param _selector [String, nil] CSS selector (unused, reserved for Nokogiri)
+      # @return [String] extracted plain text
       def extract_html_content(html, _selector)
         # Simple HTML to text conversion
         # A full implementation would use nokogiri
@@ -145,6 +162,9 @@ module Pocketrb
         text.lines.map(&:strip).reject(&:empty?).join("\n")
       end
 
+      # Pretty-print JSON body
+      # @param body [String] raw JSON string
+      # @return [String] formatted JSON or original body on parse error
       def format_json(body)
         data = JSON.parse(body)
         JSON.pretty_generate(data)
@@ -152,6 +172,9 @@ module Pocketrb
         body
       end
 
+      # Truncate content exceeding the maximum size
+      # @param content [String] extracted page text that may exceed size limits
+      # @return [String] truncated or original content
       def truncate_content(content)
         return content if content.length <= MAX_CONTENT_SIZE
 

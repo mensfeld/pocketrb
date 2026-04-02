@@ -172,20 +172,30 @@ module Pocketrb
 
       private
 
+      # Default cache directory in system temp dir
+      # @return [Pathname] default cache directory path
       def default_cache_dir
         Pathname.new(Dir.tmpdir).join("pocketrb-media")
       end
 
+      # Ensure the cache directory exists
+      # @return [void]
       def ensure_cache_dir!
         FileUtils.mkdir_p(@cache_dir)
       end
 
+      # Build a timestamped cache file path for a given filename
+      # @param filename [String] original filename to sanitize and store
+      # @return [Pathname] full path to cached file
       def cache_file_path(filename)
         # Sanitize filename and add timestamp to avoid conflicts
         safe_name = filename.gsub(/[^a-zA-Z0-9._-]/, "_")
         @cache_dir.join("#{Time.now.to_i}_#{safe_name}")
       end
 
+      # Detect media type category from MIME type
+      # @param mime_type [String] MIME type string
+      # @return [Symbol] media type (:image, :audio, :video, or :file)
       def detect_type(mime_type)
         case mime_type
         when %r{^image/}
@@ -199,11 +209,18 @@ module Pocketrb
         end
       end
 
+      # Detect MIME type from file extension
+      # @param path [String] file path
+      # @return [String] MIME type string
       def detect_mime_type(path)
         ext = File.extname(path).downcase
         MIME_TYPES[ext] || "application/octet-stream"
       end
 
+      # Base64-encode content if it is a small vision-compatible image
+      # @param content [String] binary content
+      # @param mime_type [String] MIME type of the content
+      # @return [String, nil] base64 string or nil if too large or not an image
       def encode_if_small(content, mime_type)
         return nil if content.bytesize > MAX_INLINE_SIZE
         return nil unless VISION_IMAGE_TYPES.include?(mime_type)
@@ -211,6 +228,10 @@ module Pocketrb
         Base64.strict_encode64(content)
       end
 
+      # Extract or generate a filename from a URL
+      # @param url [String] source URL
+      # @param content_type [String] MIME type for extension fallback
+      # @return [String] extracted or generated filename
       def extract_filename(url, content_type)
         # Try to get filename from URL
         uri_path = begin
@@ -228,6 +249,9 @@ module Pocketrb
         name
       end
 
+      # Get file extension for a MIME type
+      # @param mime_type [String] MIME type string
+      # @return [String] file extension without dot
       def extension_for(mime_type)
         EXTENSIONS[mime_type] || "bin"
       end

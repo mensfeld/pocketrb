@@ -179,10 +179,15 @@ module Pocketrb
 
       private
 
+      # Access the browser session singleton
+      # @return [BrowserSession]
       def session
         BrowserSession.instance
       end
 
+      # Get the Playwright page for a tab
+      # @param tab_id [String, nil] tab identifier, uses active tab if nil
+      # @return [Playwright::Page, nil]
       def page(tab_id = nil)
         if tab_id
           session.tabs[tab_id]&.dig(:page)
@@ -191,6 +196,8 @@ module Pocketrb
         end
       end
 
+      # Get active page, creating a new tab if none exists
+      # @return [Playwright::Page]
       def ensure_page!
         p = page
         return p if p
@@ -200,8 +207,9 @@ module Pocketrb
         session.active_page
       end
 
-      # === Tab Management ===
-
+      # Open a new browser tab, optionally navigating to a URL
+      # @param url [String, nil] URL to load in the new tab
+      # @return [String] confirmation with tab ID
       def new_tab(url)
         tab_id = session.new_tab(url: url)
         info = session.tab_info(tab_id)
@@ -213,6 +221,9 @@ module Pocketrb
         end
       end
 
+      # Close a browser tab
+      # @param tab_id [String, nil] tab identifier, uses active tab if nil
+      # @return [String] confirmation or error message
       def close_tab(tab_id)
         tab_id ||= session.active_tab_id
         return error("No tab to close") unless tab_id
@@ -225,6 +236,9 @@ module Pocketrb
         end
       end
 
+      # Switch focus to a specific tab
+      # @param tab_id [String] tab identifier to focus
+      # @return [String] confirmation or error message
       def focus_tab(tab_id)
         return error("Tab ID required") unless tab_id
 
@@ -236,6 +250,8 @@ module Pocketrb
         end
       end
 
+      # List all open browser tabs
+      # @return [String] formatted list of open tabs
       def list_tabs
         tabs = session.list_tabs
         return "No tabs open. Use action 'new_tab' to open one." if tabs.empty?
@@ -268,6 +284,8 @@ module Pocketrb
         success("Navigated to: #{title}\nURL: #{p.url}")
       end
 
+      # Navigate back in browser history
+      # @return [String] confirmation message
       def go_back
         p = ensure_page!
         p.go_back
@@ -275,6 +293,8 @@ module Pocketrb
         success("Navigated back to: #{p.title}")
       end
 
+      # Navigate forward in browser history
+      # @return [String] confirmation message
       def go_forward
         p = ensure_page!
         p.go_forward
@@ -282,6 +302,8 @@ module Pocketrb
         success("Navigated forward to: #{p.title}")
       end
 
+      # Reload the current page
+      # @return [String] confirmation message
       def refresh_page
         p = ensure_page!
         p.reload
@@ -304,6 +326,11 @@ module Pocketrb
         success("Clicked: #{selector}")
       end
 
+      # Type text into an element
+      # @param selector [String] CSS or XPath selector
+      # @param text [String] content to fill into the input element
+      # @param _options [Hash] additional options (unused)
+      # @return [String] confirmation or error message
       def type_text(selector, text, _options)
         return error("Selector and text required") unless selector && text
 
@@ -313,6 +340,9 @@ module Pocketrb
         success("Typed into #{selector}: #{text[0..50]}#{"..." if text.length > 50}")
       end
 
+      # Hover over an element
+      # @param selector [String] CSS or XPath selector
+      # @return [String] confirmation or error message
       def hover_element(selector)
         return error("Selector required") unless selector
 
@@ -321,6 +351,10 @@ module Pocketrb
         success("Hovering over: #{selector}")
       end
 
+      # Scroll the page to a position or element
+      # @param direction [String, nil] scroll target: top, bottom, or element
+      # @param selector [String, nil] CSS selector when scrolling to element
+      # @return [String] confirmation or error message
       def scroll_page(direction, selector)
         p = ensure_page!
 
@@ -342,6 +376,10 @@ module Pocketrb
         end
       end
 
+      # Press a keyboard key, optionally targeting an element
+      # @param key [String] key to press (e.g. Enter, Tab, Escape)
+      # @param selector [String, nil] CSS selector to target, uses keyboard if nil
+      # @return [String] confirmation or error message
       def press_key(key, selector)
         return error("Key required") unless key
 
@@ -356,6 +394,9 @@ module Pocketrb
         success("Pressed key: #{key}")
       end
 
+      # Fill multiple form fields at once
+      # @param form_data [Hash] mapping of CSS selectors to values
+      # @return [String] confirmation or error message
       def fill_form(form_data)
         return error("Form data required") unless form_data.is_a?(Hash)
 
@@ -370,6 +411,10 @@ module Pocketrb
         success("Filled #{filled.size} form fields: #{filled.join(", ")}")
       end
 
+      # Select an option from a dropdown element
+      # @param selector [String] CSS selector for the select element
+      # @param value [String] option value to select
+      # @return [String] confirmation or error message
       def select_option(selector, value)
         return error("Selector and value required") unless selector && value
 
@@ -378,8 +423,9 @@ module Pocketrb
         success("Selected '#{value}' in #{selector}")
       end
 
-      # === Content ===
-
+      # Take a screenshot of the current page
+      # @param full_page [Boolean, nil] whether to capture the full scrollable page
+      # @return [String] path to saved screenshot
       def take_screenshot(full_page)
         p = ensure_page!
 
@@ -391,6 +437,8 @@ module Pocketrb
         success("Screenshot saved: #{path}")
       end
 
+      # Get a text snapshot of the page including content and interactive elements
+      # @return [String] formatted page snapshot
       def get_snapshot
         p = ensure_page!
 
@@ -455,6 +503,9 @@ module Pocketrb
         SNAPSHOT
       end
 
+      # Get text content from an element or the entire page
+      # @param selector [String, nil] CSS selector, defaults to body if nil
+      # @return [String] element text content
       def get_text(selector)
         p = ensure_page!
 
@@ -464,6 +515,10 @@ module Pocketrb
         success(text)
       end
 
+      # Get an HTML attribute value from an element
+      # @param selector [String] CSS selector for the element
+      # @param attribute [String] attribute name to retrieve
+      # @return [String] attribute value or error message
       def get_attribute(selector, attribute)
         return error("Selector and attribute required") unless selector && attribute
 
@@ -472,6 +527,9 @@ module Pocketrb
         success("#{selector}[#{attribute}] = #{value}")
       end
 
+      # Execute JavaScript code in the browser context
+      # @param code [String] JavaScript code to evaluate
+      # @return [String] execution result or error message
       def execute_javascript(code)
         return error("JavaScript code required") unless code
 

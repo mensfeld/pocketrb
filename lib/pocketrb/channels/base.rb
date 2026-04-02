@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
   module Channels
     # Base class for channel adapters
@@ -40,12 +41,14 @@ module Pocketrb
       end
 
       # Override in subclasses to send outbound messages
+      # @param message [Bus::OutboundMessage] outbound message to deliver
       def send_message(message)
         raise NotImplementedError
       end
 
       private
 
+      # Consume outbound messages from the bus and dispatch to send_message
       def start_outbound_consumer
         Async do
           while @running
@@ -57,6 +60,13 @@ module Pocketrb
         end
       end
 
+      # Build an inbound message struct for publishing to the bus
+      # @param sender_id [String]
+      # @param chat_id [String] conversation or chat identifier
+      # @param content [String] text content of the message
+      # @param media [Array<Media::Item>] attached media items
+      # @param metadata [Hash] extra channel-specific metadata
+      # @return [Bus::InboundMessage]
       def create_inbound_message(sender_id:, chat_id:, content:, media: [], metadata: {})
         Bus::InboundMessage.new(
           channel: @name,

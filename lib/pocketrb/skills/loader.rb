@@ -89,12 +89,16 @@ module Pocketrb
       end
 
       # Clear the skills cache
+      # @return [void]
       def clear_cache!
         @skills_cache.clear
       end
 
       private
 
+      # Load all skills from a directory and its subdirectories
+      # @param dir [Pathname] directory to scan for SKILL.md files
+      # @return [Array<Skill>] loaded skills
       def load_from_directory(dir)
         return [] unless dir.exist?
 
@@ -113,6 +117,9 @@ module Pocketrb
         skills.compact
       end
 
+      # Find and load a skill by name from workspace or builtin directories
+      # @param name [String] skill name to find
+      # @return [Skill, nil] loaded skill or nil if not found
       def find_and_load_skill(name)
         # Check workspace skills
         skill_path = @workspace.join("skills", name, SKILL_FILE)
@@ -127,6 +134,9 @@ module Pocketrb
         nil
       end
 
+      # Parse a SKILL.md file into a Skill object
+      # @param path [Pathname] path to SKILL.md file
+      # @return [Skill, nil] parsed skill or nil on error
       def parse_skill_file(path)
         return nil unless path.exist?
 
@@ -148,6 +158,9 @@ module Pocketrb
         nil
       end
 
+      # Extract YAML frontmatter and body from markdown content
+      # @param content [String] raw file content
+      # @return [Array] two-element array of metadata Hash and body String
       def extract_frontmatter(content)
         if content.match?(FRONTMATTER_REGEX)
           match = content.match(FRONTMATTER_REGEX)
@@ -159,6 +172,9 @@ module Pocketrb
         end
       end
 
+      # Extract a description from the first line of markdown body
+      # @param body [String] markdown body text
+      # @return [String] extracted description
       def extract_description(body)
         # Extract first line or paragraph as description
         first_line = body.lines.first&.strip

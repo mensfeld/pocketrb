@@ -75,6 +75,8 @@ module Pocketrb
 
       private
 
+      # Access the message bus from context
+      # @return [Object, nil]
       def bus
         @context[:bus]
       end

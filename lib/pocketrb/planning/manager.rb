@@ -147,20 +147,31 @@ module Pocketrb
 
       private
 
+      # Ensure the plans directory exists
+      # @return [void]
       def ensure_plans_dir!
         FileUtils.mkdir_p(@plans_dir) unless @plans_dir.exist?
       end
 
+      # Build the file path for a plan by name
+      # @param name [String] plan name
+      # @return [Pathname] sanitized path to the plan JSON file
       def plan_file(name)
         safe_name = name.gsub(/[^a-zA-Z0-9_-]/, "_")
         @plans_dir.join("#{safe_name}.json")
       end
 
+      # Persist a plan to its JSON file
+      # @param plan [Plan] structured plan with steps to write as JSON
+      # @return [void]
       def save_plan(plan)
         file = plan_file(plan.name)
         File.write(file, JSON.pretty_generate(plan.to_h))
       end
 
+      # Load a plan from its JSON file
+      # @param name [String] plan name
+      # @return [Plan, nil] loaded plan or nil if not found
       def load_plan(name)
         file = plan_file(name)
         return nil unless file.exist?

@@ -87,20 +87,29 @@ module Pocketrb
 
       protected
 
+      # Supported provider features
+      # @return [Array<Symbol>]
       def supported_features
         %i[tools streaming]
       end
 
+      # Validate provider configuration (delegated to RubyLLM)
+      # @return [void]
       def validate_config!
         # RubyLLM handles API key validation internally
       end
 
       private
 
+      # Check if the RubyLLM gem is loaded
+      # @return [Boolean]
       def ruby_llm_available?
         defined?(RubyLLM)
       end
 
+      # Ensure RubyLLM is loaded, attempting to require it if needed
+      # @return [void]
+      # @raise [ConfigurationError] if the gem is not installed
       def ensure_ruby_llm!
         return if ruby_llm_available?
 
@@ -112,6 +121,8 @@ module Pocketrb
         end
       end
 
+      # Configure RubyLLM with available API keys
+      # @return [void]
       def configure_ruby_llm
         RubyLLM.configure do |c|
           c.anthropic_api_key = api_key(:anthropic_api_key) if api_key(:anthropic_api_key)
@@ -119,12 +130,19 @@ module Pocketrb
         end
       end
 
+      # Convert a tool definition to RubyLLM tool format
+      # @param tool [Hash] tool definition with optional :function key
+      # @return [Hash] RubyLLM-compatible tool definition
       def build_ruby_llm_tool(tool)
         tool[:function] || tool
         # RubyLLM uses a different tool format - this would need adaptation
         # based on actual RubyLLM API
       end
 
+      # Add a message to the RubyLLM chat instance based on its role
+      # @param chat [Object] RubyLLM chat instance
+      # @param message [Message] conversation message dispatched by role (system, user, assistant, tool)
+      # @return [void]
       def add_message_to_chat(chat, message)
         case message.role
         when Role::SYSTEM
@@ -138,6 +156,10 @@ module Pocketrb
         end
       end
 
+      # Parse a RubyLLM response into an LLMResponse
+      # @param response [Object] RubyLLM response object
+      # @param model [String] model name used
+      # @return [LLMResponse] structured response
       def parse_ruby_llm_response(response, model)
         tool_calls = (response.tool_calls || []).map do |tc|
           ToolCall.new(

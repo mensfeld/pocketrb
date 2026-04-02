@@ -27,6 +27,7 @@ module Pocketrb
       end
 
       # Start the cron service
+      # @return [void]
       def start
         return if @running
 
@@ -38,6 +39,7 @@ module Pocketrb
       end
 
       # Stop the cron service
+      # @return [void]
       def stop
         @running = false
         @timer_thread&.kill
@@ -207,10 +209,14 @@ module Pocketrb
 
       private
 
+      # Ensure the store directory exists
+      # @return [void]
       def ensure_store_dir!
         FileUtils.mkdir_p(@store_path.dirname)
       end
 
+      # Load persisted jobs from the store file
+      # @return [void]
       def load_jobs!
         return unless @store_path.exist?
 
@@ -222,6 +228,8 @@ module Pocketrb
         @jobs = {}
       end
 
+      # Persist all jobs to the store file
+      # @return [void]
       def save_jobs!
         @mutex.synchronize do
           data = @jobs.transform_values(&:to_h)
@@ -229,6 +237,8 @@ module Pocketrb
         end
       end
 
+      # Recompute next run times for all enabled jobs
+      # @return [void]
       def compute_next_runs!
         now_ms = (Time.now.to_f * 1000).to_i
 
@@ -244,6 +254,9 @@ module Pocketrb
         save_jobs!
       end
 
+      # Compute the next run time for a job based on its schedule
+      # @param job [Job] job to compute next run for
+      # @return [Job] new job instance with updated next_run_at_ms
       def compute_next_run(job)
         now_ms = (Time.now.to_f * 1000).to_i
         next_ms = case job.schedule.kind
@@ -276,6 +289,10 @@ module Pocketrb
         )
       end
 
+      # Compute the next run time from a cron expression
+      # @param expr [String] cron expression to parse
+      # @param tz [String, nil] timezone for cron evaluation
+      # @return [Integer, nil] next run time in milliseconds since epoch
       def compute_cron_next(expr, tz = nil)
         # Try to use fugit if available
 
@@ -294,6 +311,8 @@ module Pocketrb
         ((Time.now.to_f * 1000) + 60_000).to_i
       end
 
+      # Arm the timer thread for the next earliest job
+      # @return [void]
       def arm_timer!
         return unless @running
 
@@ -322,6 +341,8 @@ module Pocketrb
         Pocketrb.logger.debug("Cron timer armed for #{delay_s}s")
       end
 
+      # Process all due jobs and re-arm the timer
+      # @return [void]
       def tick
         now_ms = (Time.now.to_f * 1000).to_i
         due_jobs = @mutex.synchronize do
@@ -335,6 +356,9 @@ module Pocketrb
         arm_timer!
       end
 
+      # Execute a job and update its state
+      # @param job [Job] scheduled cron entry whose callback will be invoked
+      # @return [void]
       def execute_job(job)
         Pocketrb.logger.info("Executing cron job '#{job.name}' (ID: #{job.id})")
 
@@ -355,6 +379,11 @@ module Pocketrb
         end
       end
 
+      # Update a job's execution state after a run
+      # @param job_id [String] job identifier
+      # @param status [String] execution status ("success" or "failed")
+      # @param error [String, nil] error message if failed
+      # @return [void]
       def update_job_state(job_id, status:, error: nil)
         @mutex.synchronize do
           job = @jobs[job_id]
@@ -383,6 +412,9 @@ module Pocketrb
         save_jobs!
       end
 
+      # Recompute and persist the next run time for a job
+      # @param job_id [String] job identifier
+      # @return [void]
       def update_job_next_run(job_id)
         @mutex.synchronize do
           job = @jobs[job_id]

@@ -102,6 +102,10 @@ module Pocketrb
 
       private
 
+      # Execute a subagent lifecycle: create an isolated loop, process the task, and report the result
+      # @param agent_id [String]
+      # @param info [Hash] agent configuration containing :task, :model, :skills, and origin details
+      # @return [void]
       def run_agent(agent_id, info)
         update_status(agent_id, :running)
 
@@ -146,6 +150,11 @@ module Pocketrb
         announce_result(info, "Subagent failed: #{e.message}")
       end
 
+      # Update the tracked status and optional result for a subagent
+      # @param agent_id [String]
+      # @param status [Symbol] new status (e.g. :running, :completed, :failed)
+      # @param result [String, nil] output or error message to store
+      # @return [void]
       def update_status(agent_id, status, result: nil)
         @mutex.synchronize do
           if @active_agents[agent_id]
@@ -156,6 +165,9 @@ module Pocketrb
         end
       end
 
+      # Generate a focused system prompt instructing the subagent on its assigned task
+      # @param info [Hash] agent configuration containing the :task description
+      # @return [String] system prompt for the subagent
       def build_subagent_prompt(info)
         <<~PROMPT
           You are a specialized subagent spawned to complete a specific task.
@@ -171,6 +183,10 @@ module Pocketrb
         PROMPT
       end
 
+      # Load named skills into a subagent loop's system prompt
+      # @param loop [Loop] subagent loop instance to receive skill prompts
+      # @param skill_names [Array<String>] skill names to look up and inject
+      # @return [void]
       def load_skills(loop, skill_names)
         return if skill_names.empty?
 
@@ -183,6 +199,10 @@ module Pocketrb
         loop.context.append_to_system_prompt(skill_content) unless skill_content.empty?
       end
 
+      # Send the subagent's result back to the originating channel via the parent message bus
+      # @param info [Hash] agent configuration with :origin_channel, :origin_chat_id, and :id
+      # @param result [String] completion message to deliver
+      # @return [void]
       def announce_result(info, result)
         outbound = Bus::OutboundMessage.new(
           channel: info[:origin_channel],

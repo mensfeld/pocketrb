@@ -70,11 +70,15 @@ module Pocketrb
       protected
 
       # Helper to build a successful result
+      # @param message [Object] content to convert to string
+      # @return [String]
       def success(message)
         message.to_s
       end
 
       # Helper to build an error result
+      # @param message [String] error description
+      # @return [String]
       def error(message)
         "Error: #{message}"
       end
@@ -90,6 +94,8 @@ module Pocketrb
       end
 
       # Resolve a path relative to workspace
+      # @param path [String] file or directory path
+      # @return [Pathname]
       def resolve_path(path)
         return Pathname.new(path) if Pathname.new(path).absolute?
 
@@ -97,6 +103,8 @@ module Pocketrb
       end
 
       # Check if path is within workspace (security)
+      # @param path [String] file or directory path to check
+      # @return [Boolean]
       def path_allowed?(path)
         return true unless workspace
 
@@ -107,6 +115,10 @@ module Pocketrb
       end
 
       # Validate path is allowed and exists
+      # @param path [String] file or directory path to validate
+      # @param must_exist [Boolean] whether the path must already exist
+      # @return [Pathname] resolved path
+      # @raise [ToolError] if path is outside workspace or does not exist
       def validate_path!(path, must_exist: true)
         resolved = resolve_path(path)
 

@@ -105,16 +105,24 @@ module Pocketrb
 
       private
 
+      # Access the message bus from context
+      # @return [Object, nil]
       def bus
         @context[:bus]
       end
 
+      # Resolve a path, using workspace as base for relative paths
+      # @param path [String] file path to resolve
+      # @return [String] absolute file path
       def resolve_path(path)
         return path if Pathname.new(path).absolute?
 
         workspace.join(path).to_s
       end
 
+      # Create a media object from a file path
+      # @param path [String] path to the file
+      # @return [Bus::Media] media object for sending
       def create_media(path)
         ext = File.extname(path).downcase
         mime_type = detect_mime_type(ext)
@@ -129,6 +137,9 @@ module Pocketrb
         )
       end
 
+      # Detect media type from file extension
+      # @param ext [String] file extension (e.g. ".png")
+      # @return [Symbol] media type (:image, :audio, :video, or :file)
       def detect_type(ext)
         case ext
         when ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"
@@ -142,6 +153,9 @@ module Pocketrb
         end
       end
 
+      # Detect MIME type from file extension
+      # @param ext [String] file extension (e.g. ".png")
+      # @return [String] MIME type string
       def detect_mime_type(ext)
         {
           ".jpg" => "image/jpeg",

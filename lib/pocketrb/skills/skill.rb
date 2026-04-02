@@ -21,11 +21,13 @@ module Pocketrb
       end
 
       # Check if skill should always be included in context
+      # @return [Boolean] true if always-load flag is set
       def always?
         metadata[:always] == true || metadata["always"] == true
       end
 
-      # Check if skill is available (meets requirements)
+      # Check if skill is available (all requirements met)
+      # @return [Boolean] true if all requirements are satisfied
       def available?
         requires = metadata[:requires] || metadata["requires"]
         return true unless requires
@@ -33,7 +35,8 @@ module Pocketrb
         Array(requires).all? { |req| check_requirement(req) }
       end
 
-      # Get skill triggers/keywords
+      # Get skill trigger keywords
+      # @return [Array<String>] trigger keywords
       def triggers
         triggers = metadata[:triggers] || metadata["triggers"] || []
         Array(triggers)
@@ -50,6 +53,7 @@ module Pocketrb
       end
 
       # Get full prompt content for this skill
+      # @return [String] XML-wrapped skill prompt
       def to_prompt
         <<~PROMPT
           <skill name="#{name}">
@@ -58,13 +62,17 @@ module Pocketrb
         PROMPT
       end
 
-      # Summary for skills list
+      # Summary line for skills list
+      # @return [String] formatted summary
       def to_summary
         "- #{name}: #{description}"
       end
 
       private
 
+      # Check if a single requirement is satisfied
+      # @param req [String] requirement string (e.g., "env:VAR", "file:path", "tool:name")
+      # @return [Boolean] true if requirement is met
       def check_requirement(req)
         case req
         when /^env:(.+)/

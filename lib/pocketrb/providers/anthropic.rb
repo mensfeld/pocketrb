@@ -100,10 +100,15 @@ module Pocketrb
 
       protected
 
+      # Supported provider features
+      # @return [Array<Symbol>]
       def supported_features
         %i[tools streaming thinking vision]
       end
 
+      # Validate that required API credentials are present
+      # @return [void]
+      # @raise [ConfigurationError] if no credentials are configured
       def validate_config!
         return if oauth_token
         return if api_key(:anthropic_api_key)
@@ -115,14 +120,19 @@ module Pocketrb
       private
 
       # Check for OAuth token (Max subscription via `claude setup-token`)
+      # @return [String, nil] OAuth token if configured
       def oauth_token
         @config[:anthropic_oauth_token] || ENV.fetch("ANTHROPIC_OAUTH_TOKEN", nil)
       end
 
+      # Whether OAuth authentication is being used
+      # @return [Boolean]
       def using_oauth?
         !oauth_token.nil?
       end
 
+      # Build Faraday HTTP client with appropriate authentication headers
+      # @return [Faraday::Connection]
       def client
         @client ||= Faraday.new(url: API_URL) do |f|
           f.headers["Content-Type"] = "application/json"
@@ -142,6 +152,14 @@ module Pocketrb
         end
       end
 
+      # Build the API request body for Anthropic messages endpoint
+      # @param messages [Array<Message>] conversation messages
+      # @param tools [Array<Hash>, nil] tool definitions
+      # @param model [String] model name
+      # @param temperature [Float] sampling temperature
+      # @param max_tokens [Integer] maximum tokens to generate
+      # @param thinking [Boolean] whether to enable extended thinking
+      # @return [Hash] request body
       def build_request_body(messages, tools, model, temperature, max_tokens, thinking)
         system_message = extract_system_message(messages)
         conversation = format_messages(messages.reject { |m| m.role == Role::SYSTEM })
@@ -161,11 +179,17 @@ module Pocketrb
         body
       end
 
+      # Extract system message content from the message list
+      # @param messages [Array<Message>] conversation messages
+      # @return [String, nil] system message content
       def extract_system_message(messages)
         system_msg = messages.find { |m| m.role == Role::SYSTEM }
         system_msg&.content
       end
 
+      # Format a single message for the Anthropic API
+      # @param message [Message] conversation message with role, content, and optional tool data
+      # @return [Hash] Anthropic-formatted message
       def format_message(message)
         case message.role
         when Role::USER
@@ -187,6 +211,9 @@ module Pocketrb
         end
       end
 
+      # Format user message content, handling text and media blocks
+      # @param content [String, Array, Object] raw user content
+      # @return [String, Array<Hash>] formatted content blocks
       def format_user_content(content)
         return content if content.is_a?(String)
 
@@ -208,6 +235,9 @@ module Pocketrb
         end
       end
 
+      # Format a media attachment as an Anthropic image source block
+      # @param media [Media] attachment to convert to a base64 image source or text fallback
+      # @return [Hash] Anthropic image or text fallback block
       def format_media_block(media)
         return { type: "text", text: "[unsupported media]" } unless media
 
@@ -236,6 +266,9 @@ module Pocketrb
         }
       end
 
+      # Normalize content to a string or array
+      # @param content [String, Array, Object] raw message content to pass through or coerce to string
+      # @return [String, Array] normalized content
       def format_content(content)
         return content if content.is_a?(String)
         return content if content.is_a?(Array)
@@ -243,6 +276,9 @@ module Pocketrb
         content.to_s
       end
 
+      # Format assistant message content including tool use blocks
+      # @param message [Message] assistant message with optional tool calls
+      # @return [String, Array<Hash>] formatted content blocks
       def format_assistant_content(message)
         blocks = []
 
@@ -260,6 +296,9 @@ module Pocketrb
         blocks.empty? ? "" : blocks
       end
 
+      # Convert tool definitions to Anthropic format
+      # @param tools [Array<Hash>, nil] tool definitions (OpenAI or Anthropic format)
+      # @return [Array<Hash>, nil] Anthropic-formatted tool definitions
       def format_tools(tools)
         return nil if tools.nil? || tools.empty?
 
@@ -278,6 +317,10 @@ module Pocketrb
         end
       end
 
+      # Handle HTTP response, raising on errors
+      # @param response [Faraday::Response] HTTP response
+      # @return [LLMResponse] parsed response
+      # @raise [ProviderError] on non-success HTTP status
       def handle_response(response)
         unless response.success?
           error_body = begin
@@ -292,6 +335,9 @@ module Pocketrb
         parse_response(data)
       end
 
+      # Parse Anthropic API response into an LLMResponse
+      # @param data [Hash] parsed JSON response body
+      # @return [LLMResponse] structured response with content, tool calls, and usage
       def parse_response(data)
         content = ""
         thinking = nil
@@ -338,6 +384,12 @@ module Pocketrb
         )
       end
 
+      # Process a single SSE chunk from the streaming response
+      # @param chunk [String] raw SSE data chunk
+      # @param accumulated_content [String] buffer for accumulated text content
+      # @param _accumulated_tool_calls [Array<ToolCall>] buffer for tool calls (unused)
+      # @param block [Proc] callback receiving each text delta
+      # @return [void]
       def process_stream_chunk(chunk, accumulated_content, _accumulated_tool_calls, &block)
         chunk.split("\n").each do |line|
           next unless line.start_with?("data: ")

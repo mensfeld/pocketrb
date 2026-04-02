@@ -62,12 +62,16 @@ module Pocketrb
 
       private
 
+      # Access or initialize the background job manager
+      # @return [BackgroundJobManager]
       def job_manager
         # Use memory_dir for job storage (falls back to workspace if not set)
         storage_dir = @context[:memory_dir] || workspace
         @job_manager ||= BackgroundJobManager.new(workspace: storage_dir)
       end
 
+      # List all background jobs grouped by running/completed status
+      # @return [String] formatted job listing
       def list_jobs
         jobs = job_manager.list
 
@@ -96,6 +100,9 @@ module Pocketrb
         output.join("\n")
       end
 
+      # Get detailed status of a job
+      # @param job_id [String] job identifier
+      # @return [String] job status details or error message
       def get_status(job_id)
         return error("Job ID required") unless job_id
 
@@ -114,6 +121,10 @@ module Pocketrb
         STATUS
       end
 
+      # Get recent output from a job
+      # @param job_id [String] job identifier
+      # @param lines [Integer] number of lines to retrieve
+      # @return [String] job output or error message
       def get_output(job_id, lines)
         return error("Job ID required") unless job_id
 
@@ -123,6 +134,9 @@ module Pocketrb
         "Output (last #{lines} lines):\n#{output}"
       end
 
+      # Kill a running job
+      # @param job_id [String] job identifier
+      # @return [String] confirmation or error message
       def kill_job(job_id)
         return error("Job ID required") unless job_id
 

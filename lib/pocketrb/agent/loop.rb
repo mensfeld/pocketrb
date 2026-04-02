@@ -205,6 +205,11 @@ module Pocketrb
 
       private
 
+      # Execute all tool calls from an LLM response and append results to the message list
+      # @param session [Session::Session] active session to persist tool results into
+      # @param messages [Array<Message>] current message list to extend with assistant and tool messages
+      # @param response [Providers::LLMResponse] LLM response containing tool calls to execute
+      # @return [Array<Message>] updated messages with tool call results appended
       def execute_tool_calls(session, messages, response)
         # Add assistant message with tool calls
         assistant_msg = Providers::Message.assistant(
@@ -260,6 +265,12 @@ module Pocketrb
         messages
       end
 
+      # Publish a tool execution event to the message bus
+      # @param tool_call [Providers::ToolCall] the tool call that was executed
+      # @param result [String, nil] successful execution output, nil on failure
+      # @param error [String, nil] error message if execution failed, nil on success
+      # @param duration_ms [Integer] wall-clock execution time in milliseconds
+      # @return [void]
       def publish_tool_event(tool_call, result, error, duration_ms)
         event = Bus::ToolExecution.new(
           tool_call_id: tool_call.id,
@@ -272,6 +283,12 @@ module Pocketrb
         @bus.publish_tool_event(event)
       end
 
+      # Publish a session state transition event to the message bus
+      # @param session_key [String] identifier of the session changing state
+      # @param from [Symbol] previous state (e.g. :idle, :processing)
+      # @param to [Symbol] new state being transitioned to
+      # @param reason [String, nil] optional explanation for the state change
+      # @return [void]
       def publish_state_change(session_key, from, to, reason = nil)
         event = Bus::StateChange.new(
           session_key: session_key,
@@ -294,6 +311,8 @@ module Pocketrb
       end
 
       # Load skills triggered by a message (for context-aware skill loading)
+      # @param text [String] user message text to match against skill trigger patterns
+      # @return [String] concatenated prompt content from matched skills, empty if none match
       def load_triggered_skills(text)
         triggered = @skills_loader.get_triggered_skills(text)
         return "" if triggered.empty?

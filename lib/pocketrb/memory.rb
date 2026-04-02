@@ -241,6 +241,7 @@ module Pocketrb
     end
 
     # Get memory statistics
+    # @return [Hash] counts of learned topics, facts, preferences, and events
     def stats
       {
         learned_topics: @facts["learned"].keys.size,
@@ -252,7 +253,8 @@ module Pocketrb
       }
     end
 
-    # Dump all memories (for debugging)
+    # Dump all memories for debugging
+    # @return [Hash] all facts and recent events
     def dump_all
       {
         "facts" => @facts,
@@ -262,6 +264,10 @@ module Pocketrb
 
     private
 
+    # Load and parse a JSON file
+    # @param path [Pathname] path to JSON file
+    # @return [Hash, Array, nil] parsed JSON data or nil if file does not exist
+    # @raise [Pocketrb::ConfigurationError] if JSON is invalid
     def load_json(path)
       return nil unless path.exist? # Missing file OK (first run)
 
@@ -272,10 +278,14 @@ module Pocketrb
             "Invalid JSON in #{path}: #{e.message}\nContent preview: #{content[0..100]}"
     end
 
+    # Persist facts to disk
+    # @return [void]
     def save_facts
       @facts_file.write(JSON.pretty_generate(@facts))
     end
 
+    # Persist recent events to disk
+    # @return [void]
     def save_recent
       @recent_file.write(JSON.pretty_generate(@recent))
     end

@@ -95,16 +95,23 @@ module Pocketrb
 
       protected
 
+      # Supported provider features
+      # @return [Array<Symbol>]
       def supported_features
         %i[tools streaming]
       end
 
+      # Validate that an OpenRouter API key is configured
+      # @return [void]
+      # @raise [ConfigurationError] if API key is missing
       def validate_config!
         require_api_key!(:openrouter_api_key)
       end
 
       private
 
+      # Build Faraday HTTP client with OpenRouter headers
+      # @return [Faraday::Connection]
       def client
         @client ||= Faraday.new(url: API_URL) do |f|
           f.headers["Content-Type"] = "application/json"
@@ -115,6 +122,13 @@ module Pocketrb
         end
       end
 
+      # Build the OpenAI-compatible request body for OpenRouter
+      # @param messages [Array<Message>] conversation messages
+      # @param tools [Array<Hash>, nil] tool definitions
+      # @param model [String] model identifier
+      # @param temperature [Float] sampling temperature
+      # @param max_tokens [Integer] maximum tokens to generate
+      # @return [Hash] request body
       def build_request_body(messages, tools, model, temperature, max_tokens)
         body = {
           model: model,
@@ -128,6 +142,9 @@ module Pocketrb
         body
       end
 
+      # Format a single message for the OpenAI-compatible API
+      # @param message [Message] conversation message with role, content, and optional tool data
+      # @return [Hash] formatted message with role and content
       def format_message(message)
         case message.role
         when Role::SYSTEM
@@ -157,6 +174,10 @@ module Pocketrb
         end
       end
 
+      # Handle HTTP response, raising on errors
+      # @param response [Faraday::Response] HTTP response
+      # @return [LLMResponse] parsed response
+      # @raise [ProviderError] on non-success HTTP status
       def handle_response(response)
         unless response.success?
           error_body = begin
@@ -171,6 +192,9 @@ module Pocketrb
         parse_response(data)
       end
 
+      # Parse OpenRouter API response into an LLMResponse
+      # @param data [Hash] parsed JSON response body
+      # @return [LLMResponse] structured response with content, tool calls, and usage
       def parse_response(data)
         choice = data.dig("choices", 0)
         return LLMResponse.new(content: nil) unless choice
@@ -208,6 +232,12 @@ module Pocketrb
         )
       end
 
+      # Process a single SSE chunk from the streaming response
+      # @param chunk [String] raw SSE data chunk
+      # @param accumulated_content [String] buffer for accumulated text content
+      # @param _accumulated_tool_calls [Array<ToolCall>] buffer for tool calls (unused)
+      # @param block [Proc] callback receiving each text delta
+      # @return [void]
       def process_stream_chunk(chunk, accumulated_content, _accumulated_tool_calls, &block)
         chunk.split("\n").each do |line|
           next unless line.start_with?("data: ")

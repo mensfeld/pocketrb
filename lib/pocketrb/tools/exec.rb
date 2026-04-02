@@ -96,10 +96,15 @@ module Pocketrb
 
       private
 
+      # Access or initialize the background job manager
+      # @return [BackgroundJobManager]
       def job_manager
         @job_manager ||= BackgroundJobManager.new(workspace: workspace)
       end
 
+      # Resolve and validate the working directory
+      # @param working_dir [String, nil] explicit directory path or nil for workspace
+      # @return [String] resolved directory path or error string
       def resolve_working_dir(working_dir)
         if working_dir
           resolved = resolve_path(working_dir)
@@ -111,6 +116,10 @@ module Pocketrb
         end
       end
 
+      # Run a command as a background job
+      # @param command [String] shell command to run
+      # @param work_dir [String] working directory
+      # @return [String] job metadata including ID and PID
       def execute_background(command, work_dir)
         Pocketrb.logger.debug("Running in background: #{command}")
 
@@ -130,6 +139,11 @@ module Pocketrb
         OUTPUT
       end
 
+      # Run a command in the foreground with timeout
+      # @param command [String] shell command to run
+      # @param work_dir [String] working directory
+      # @param explicit_timeout [Integer, nil] timeout in seconds, auto-detected if nil
+      # @return [String] command output and exit status
       def execute_foreground(command, work_dir, explicit_timeout)
         timeout = explicit_timeout || smart_timeout(command)
         timeout = [timeout, 600].min if timeout
@@ -153,6 +167,9 @@ module Pocketrb
         format_result(stdout, stderr, status)
       end
 
+      # Determine timeout based on command type
+      # @param command [String] shell command to analyze
+      # @return [Integer, nil] timeout in seconds or nil for no timeout
       def smart_timeout(command)
         return TIMEOUTS[:simple] if quick_command?(command)
         return nil if job_manager.long_running?(command)
@@ -160,12 +177,18 @@ module Pocketrb
         TIMEOUTS[:standard]
       end
 
+      # Check if command matches fast-executing patterns
+      # @param command [String] shell command to check
+      # @return [Boolean]
       def quick_command?(command)
         return false if command.nil? || command.empty?
 
         QUICK_PATTERNS.any? { |p| command.match?(p) }
       end
 
+      # Check if command matches known dangerous patterns
+      # @param command [String] shell command to check
+      # @return [Boolean]
       def dangerous_command?(command)
         dangerous_patterns = [
           %r{\brm\s+-rf\s+[/~]},
@@ -181,6 +204,11 @@ module Pocketrb
         dangerous_patterns.any? { |pattern| command.match?(pattern) }
       end
 
+      # Format command execution result for display
+      # @param stdout [String] standard output
+      # @param stderr [String] standard error
+      # @param status [Process::Status] exit status
+      # @return [String] formatted result
       def format_result(stdout, stderr, status)
         output_parts = []
 
@@ -199,6 +227,9 @@ module Pocketrb
         output_parts.join("\n\n")
       end
 
+      # Truncate output that exceeds the maximum size
+      # @param output [String] output text to truncate
+      # @return [String] truncated or original output
       def truncate_output(output)
         return output if output.length <= MAX_OUTPUT_SIZE
 

@@ -73,10 +73,14 @@ module Pocketrb
 
       private
 
+      # Get the Brave Search API key from context or environment
+      # @return [String, nil]
       def api_key
         @context[:brave_api_key] || ENV.fetch("BRAVE_API_KEY", nil)
       end
 
+      # Build or access the Faraday HTTP client for Brave API
+      # @return [Faraday::Connection]
       def client
         @client ||= Faraday.new(url: BRAVE_API_URL) do |f|
           f.headers["Accept"] = "application/json"
@@ -85,6 +89,10 @@ module Pocketrb
         end
       end
 
+      # Format search response data into readable output
+      # @param data [Hash] parsed JSON response from Brave API
+      # @param query [String] original search query
+      # @return [String] formatted search results
       def format_results(data, query)
         results = data.dig("web", "results") || []
 
@@ -99,6 +107,10 @@ module Pocketrb
         output.join("\n")
       end
 
+      # Format a single search result entry
+      # @param result [Hash] search result with title, url, and description
+      # @param index [Integer] result number for display
+      # @return [String] formatted result entry
       def format_result(result, index)
         title = result["title"] || "Untitled"
         url = result["url"] || ""

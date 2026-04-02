@@ -102,6 +102,9 @@ module Pocketrb
 
       private
 
+      # Launch headless browser and yield the page
+      # @yield [Playwright::Page] browser page instance
+      # @return [Object] result of the block
       def with_browser
         Playwright.create(playwright_cli_executable_path: "npx playwright") do |playwright|
           playwright.chromium.launch(headless: true) do |browser|
@@ -114,6 +117,10 @@ module Pocketrb
         @current_page = nil
       end
 
+      # Navigate to URL and extract page content
+      # @param url [String] URL to navigate to
+      # @param wait_time [Integer] milliseconds to wait after navigation
+      # @return [String] page title and text content
       def navigate_and_extract(url, wait_time)
         with_browser do |page|
           page.goto(url)
@@ -126,6 +133,8 @@ module Pocketrb
         end
       end
 
+      # Extract text content from the currently loaded page
+      # @return [String] page text content or error if no page is loaded
       def extract_text_from_page
         return error("No page is currently loaded. Use navigate action first.") unless @current_page
 
@@ -133,6 +142,9 @@ module Pocketrb
         success(content[0..5000] + (content.length > 5000 ? "...(truncated)" : ""))
       end
 
+      # Take a screenshot and save to the given path
+      # @param path [String] file path to save the screenshot
+      # @return [String] confirmation message
       def take_screenshot(path)
         with_browser do |page|
           screenshot_path = resolve_path(path)
@@ -141,6 +153,10 @@ module Pocketrb
         end
       end
 
+      # Click an element matching the selector
+      # @param selector [String] CSS selector for the element
+      # @param wait_time [Integer] milliseconds to wait after clicking
+      # @return [String] confirmation message
       def click_element(selector, wait_time)
         with_browser do |page|
           page.click(selector)
@@ -149,6 +165,11 @@ module Pocketrb
         end
       end
 
+      # Type text into an element matching the selector
+      # @param selector [String] CSS selector for the input element
+      # @param text [String] content to fill into the input element
+      # @param wait_time [Integer] milliseconds to wait after typing
+      # @return [String] confirmation message
       def type_into_element(selector, text, wait_time)
         with_browser do |page|
           page.fill(selector, text)
@@ -157,6 +178,9 @@ module Pocketrb
         end
       end
 
+      # Execute JavaScript code in the browser page context
+      # @param javascript [String] JavaScript code to evaluate
+      # @return [String] execution result
       def execute_javascript(javascript)
         with_browser do |page|
           result = page.evaluate(javascript)
