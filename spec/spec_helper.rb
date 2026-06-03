@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'warning'
+require "warning"
 
 $VERBOSE = true
 
@@ -12,10 +12,11 @@ end
 
 Warning.process do |warning|
   next unless warning.include?(Dir.pwd)
-  next if warning.include?('_spec')
-  next if warning.include?('vendor/')
-  next if warning.include?('bundle/')
-  next if warning.include?('.bundle/')
+  next if warning.include?("_spec")
+  next if warning.include?("vendor/")
+  next if warning.include?("bundle/")
+  next if warning.include?(".bundle/")
+
   raise "Warning in your code: #{warning}"
 end
 
