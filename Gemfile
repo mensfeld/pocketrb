@@ -10,6 +10,7 @@ group :development, :test do
   gem "rspec", "~> 3.12"
   gem "simplecov", "~> 0.22", require: false
   gem "vcr", "~> 6.2"
+  gem "warning", "~> 1.4"
   gem "webmock", "~> 3.18"
 end
 
