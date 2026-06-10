@@ -58,8 +58,8 @@ RSpec.describe Pocketrb::Tools::WriteFile do
       it "reports line count and byte size" do
         result = tool.execute(path: "test.txt", content: "Line 1\nLine 2\nLine 3")
 
-        expect(result).to match(/Wrote 3 lines/)
-        expect(result).to match(/20 bytes/)
+        expect(result).to include("Wrote 3 lines")
+        expect(result).to include("20 bytes")
       end
     end
 
