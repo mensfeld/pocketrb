@@ -22,16 +22,16 @@ end
 
 require "simplecov"
 SimpleCov.start do
-  add_filter "/spec/"
-  add_group "Bus", "lib/pocketrb/bus"
-  add_group "Providers", "lib/pocketrb/providers"
-  add_group "Tools", "lib/pocketrb/tools"
-  add_group "Agent", "lib/pocketrb/agent"
-  add_group "Session", "lib/pocketrb/session"
-  add_group "MCP", "lib/pocketrb/mcp"
-  add_group "Skills", "lib/pocketrb/skills"
-  add_group "Planning", "lib/pocketrb/planning"
-  add_group "Channels", "lib/pocketrb/channels"
+  skip "/spec/"
+  group "Bus", "lib/pocketrb/bus"
+  group "Providers", "lib/pocketrb/providers"
+  group "Tools", "lib/pocketrb/tools"
+  group "Agent", "lib/pocketrb/agent"
+  group "Session", "lib/pocketrb/session"
+  group "MCP", "lib/pocketrb/mcp"
+  group "Skills", "lib/pocketrb/skills"
+  group "Planning", "lib/pocketrb/planning"
+  group "Channels", "lib/pocketrb/channels"
 end
 
 ENV["POCKETRB_EAGER_LOAD"] = "1"
