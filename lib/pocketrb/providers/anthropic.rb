@@ -5,8 +5,7 @@ require "json"
 
 module Pocketrb
   module Providers
-    # Direct Anthropic Claude API provider
-    # Supports extended thinking and all Claude-specific features
+    # Direct Anthropic Claude API provider. Supports extended thinking and all Claude-specific features
     class Anthropic < Base
       # Anthropic API base URL
       API_URL = "https://api.anthropic.com/v1"

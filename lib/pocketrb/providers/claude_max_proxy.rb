@@ -6,10 +6,9 @@ require "uri"
 
 module Pocketrb
   module Providers
-    # Claude Max API Proxy provider
-    # Uses the claude-max-api-proxy which provides OpenAI-compatible API
-    # Install: npm install -g claude-max-api-proxy
-    # Start: claude-max-api (runs on localhost:3456)
+    # Claude Max API Proxy provider. Uses the claude-max-api-proxy which provides OpenAI-compatible API
+    # - Install: npm install -g claude-max-api-proxy
+    # - Start: claude-max-api (runs on localhost:3456)
     class ClaudeMaxProxy < Base
       # Available model aliases mapped to full model names
       MODELS = {

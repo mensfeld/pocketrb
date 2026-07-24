@@ -33,7 +33,8 @@ module Pocketrb
       attr_reader :cache_dir
 
       # Initialize media processor
-      # @param cache_dir [String, Pathname, nil] Directory path for caching downloaded media (defaults to system temp dir)
+      # @param cache_dir [String, Pathname, nil] Directory path for caching downloaded media (defaults to system temp
+      #   dir)
       def initialize(cache_dir: nil)
         @cache_dir = cache_dir || default_cache_dir
         ensure_cache_dir!

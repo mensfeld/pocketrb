@@ -5,8 +5,7 @@ require "socket"
 
 module Pocketrb
   module Channels
-    # WhatsApp channel via Node.js bridge WebSocket
-    # Connects to a whatsapp-web.js bridge running on localhost
+    # WhatsApp channel via Node.js bridge WebSocket. Connects to a whatsapp-web.js bridge running on localhost
     #
     # Bridge Protocol:
     # - Receive: {type: "message", sender: "...", content: "...", timestamp: ..., isGroup: bool}

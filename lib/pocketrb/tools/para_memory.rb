@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
-  # Tool implementations for agent capabilities
   module Tools
     # PARA-based memory tool for structured knowledge management
     class ParaMemory < Base
@@ -89,7 +87,8 @@ module Pocketrb
       end
 
       # Execute memory action
-      # @param action [String] Action to perform (store, search, entity_info, create_entity, list_entities, context, preferences, learn_preference)
+      # @param action [String] Action to perform (store, search, entity_info, create_entity, list_entities, context,
+      #   preferences, learn_preference)
       # @option args [String] :content Fact content to store
       # @option args [String] :category Fact category (relationship, milestone, status, preference, context)
       # @option args [String] :entity_type PARA entity type (projects, areas, resources, archives)

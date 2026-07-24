@@ -2,7 +2,6 @@
 
 require "thor"
 
-# Main namespace for Pocketrb gem
 module Pocketrb
   # Command-line interface
   class CLI < Thor

@@ -4,8 +4,7 @@ require "telegram/bot"
 
 module Pocketrb
   module Channels
-    # Telegram channel using long polling
-    # Simple and reliable - no webhook/public IP needed
+    # Telegram channel using long polling. Simple and reliable - no webhook/public IP needed
     class Telegram < Base
       # Markdown to HTML conversion patterns for Telegram formatting
       MARKDOWN_TO_HTML = {

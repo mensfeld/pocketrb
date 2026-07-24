@@ -3,7 +3,6 @@
 require "json"
 require "open3"
 
-# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
   # LLM provider implementations
   module Providers
