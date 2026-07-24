@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
-# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
-  # LLM provider implementations
   module Providers
-    # Provider using the RubyLLM gem for multi-model support
-    # This is an alternative to direct API calls
+    # Provider using the RubyLLM gem for multi-model support. This is an alternative to direct API calls
     class RubyLLMProvider < Base
       # Provider name
       # @return [Symbol]
@@ -54,7 +51,6 @@ module Pocketrb
         parse_ruby_llm_response(response, model)
       end
 
-      # Send streaming chat completion request
       # Send streaming chat completion request
       # @param messages [Array<Message>] Conversation messages
       # @param tools [Array<Hash>, nil] Tool definitions

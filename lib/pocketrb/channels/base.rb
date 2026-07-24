@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
   module Channels
     # Base class for channel adapters

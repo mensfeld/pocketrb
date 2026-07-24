@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
   module Agent
     # Context compaction to summarize long conversations and save tokens
@@ -31,11 +30,15 @@ module Pocketrb
       # Initialize a new compaction instance
       # @param provider [Object] LLM provider instance for generating summaries
       # @param model [String, nil] Model name to use for summarization (defaults to provider default)
-      # @param message_threshold [Integer, nil] Maximum messages before compaction (defaults to DEFAULT_MESSAGE_THRESHOLD)
-      # @param token_threshold [Integer, nil] Maximum estimated tokens before compaction (defaults to DEFAULT_TOKEN_THRESHOLD)
-      # @param keep_recent [Integer, nil] Number of recent messages to keep uncompacted (defaults to DEFAULT_KEEP_RECENT)
+      # @param message_threshold [Integer, nil] Maximum messages before compaction (defaults to
+      #   DEFAULT_MESSAGE_THRESHOLD)
+      # @param token_threshold [Integer, nil] Maximum estimated tokens before compaction (defaults to
+      #   DEFAULT_TOKEN_THRESHOLD)
+      # @param keep_recent [Integer, nil] Number of recent messages to keep uncompacted (defaults to
+      #   DEFAULT_KEEP_RECENT)
       # @param context_window [Integer, nil] Model context window size in tokens (defaults to provider value)
-      # @param context_pressure [Float, nil] Fraction of context window that triggers compaction (defaults to DEFAULT_CONTEXT_PRESSURE)
+      # @param context_pressure [Float, nil] Fraction of context window that triggers compaction (defaults to
+      #   DEFAULT_CONTEXT_PRESSURE)
       # @param on_compact [Proc, nil] Callback called after compaction with (summary, compacted_count)
       def initialize(
         provider:,
@@ -239,9 +242,8 @@ module Pocketrb
         true
       end
 
-      # Adjust split point to keep tool_use/tool_result pairs together
-      # If a tool_result is in the kept messages, ensure its corresponding
-      # assistant message with tool_calls is also kept
+      # Adjust split point to keep tool_use/tool_result pairs together. If a tool_result is in the kept messages, ensure
+      # its corresponding assistant message with tool_calls is also kept
       # @param messages [Array<Message>] full conversation history including tool use/result pairs
       # @param split_point [Integer] Initial split point
       # @return [Integer] Adjusted split point

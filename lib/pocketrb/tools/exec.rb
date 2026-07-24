@@ -3,7 +3,6 @@
 require "open3"
 require "timeout"
 
-# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
   # Tool implementations for agent capabilities
   module Tools

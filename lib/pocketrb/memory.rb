@@ -4,8 +4,7 @@ require "json"
 require "fileutils"
 
 module Pocketrb
-  # Simple memory system for facts and recent events
-  # Inspired by nanobot - no vector DB, just JSON + keyword matching
+  # Simple memory system for facts and recent events. Inspired by nanobot - no vector DB, just JSON + keyword matching
   class Memory
     # Maximum number of recent events to keep
     MAX_RECENT = 50

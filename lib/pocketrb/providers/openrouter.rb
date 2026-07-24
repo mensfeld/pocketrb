@@ -3,12 +3,9 @@
 require "faraday"
 require "json"
 
-# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
-  # LLM provider implementations
   module Providers
-    # OpenRouter API provider for multi-model access
-    # Supports Claude, GPT-4, Llama, and many other models
+    # OpenRouter API provider for multi-model access. Supports Claude, GPT-4, Llama, and many other models
     class OpenRouter < Base
       # OpenRouter API base URL
       API_URL = "https://openrouter.ai/api/v1"

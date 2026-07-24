@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
-  # Tool implementations for agent capabilities
   module Tools
     # Simple memory tool - store and recall facts
     class Memory < Base

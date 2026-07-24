@@ -4,12 +4,10 @@ require "faraday"
 require "json"
 require "securerandom"
 
-# Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
   # Model Context Protocol (MCP) integration for memory and tool servers
   module MCP
-    # MCP client for connecting to MCP HTTP Bridge
-    # Implements JSON-RPC 2.0 protocol for MCP communication
+    # MCP client for connecting to MCP HTTP Bridge. Implements JSON-RPC 2.0 protocol for MCP communication
     class Client
       # Default MCP server endpoint URL
       DEFAULT_ENDPOINT = "http://localhost:7878"
