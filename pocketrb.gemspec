@@ -52,6 +52,7 @@ Gem::Specification.new do |spec|
     "changelog_uri" => "https://github.com/mensfeld/pocketrb/blob/master/CHANGELOG.md",
     "homepage_uri" => "https://github.com/mensfeld/pocketrb",
     "source_code_uri" => "https://github.com/mensfeld/pocketrb/tree/master",
+    "documentation_uri" => "https://github.com/mensfeld/pocketrb",
     "rubygems_mfa_required" => "true"
   }
 end
