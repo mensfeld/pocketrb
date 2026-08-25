@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable RSpec/MultipleMemoizedHelpers
+# rubocop:disable-next RSpec/MultipleMemoizedHelpers
 RSpec.describe Pocketrb::Agent::SubagentManager do
   let(:bus) { instance_double(Pocketrb::Bus::MessageBus) }
   let(:provider) { instance_double(Pocketrb::Providers::Base) }
@@ -346,4 +346,3 @@ RSpec.describe Pocketrb::Agent::SubagentManager do
     end
   end
 end
-# rubocop:enable RSpec/MultipleMemoizedHelpers
