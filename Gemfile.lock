@@ -108,7 +108,7 @@ GEM
       uri (>= 0.11.1)
     pastel (0.8.0)
       tty-color (~> 0.5)
-    playwright-ruby-client (1.62.0)
+    playwright-ruby-client (1.63.0)
       base64
       concurrent-ruby (>= 1.1.6)
       mime-types (>= 3.0)
