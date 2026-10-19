@@ -102,13 +102,13 @@ GEM
     mime-types (3.7.0)
       logger
       mime-types-data (~> 3.2025, >= 3.2025.0507)
-    mime-types-data (3.2026.0929)
+    mime-types-data (3.2026.1013)
     multipart-post (2.4.1)
     net-http (0.9.1)
       uri (>= 0.11.1)
     pastel (0.8.0)
       tty-color (~> 0.5)
-    playwright-ruby-client (1.63.0)
+    playwright-ruby-client (1.64.0)
       base64
       concurrent-ruby (>= 1.1.6)
       mime-types (>= 3.0)
