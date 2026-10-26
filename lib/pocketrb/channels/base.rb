@@ -28,6 +28,7 @@ module Pocketrb
       end
 
       # Check if channel is running
+      # @return [Boolean] true if the channel is running
       def running?
         @running
       end

@@ -34,6 +34,7 @@ module Pocketrb
       end
 
       # Check if we can connect to the bridge
+      # @return [Boolean] true if the WebSocket client library is available
       def available?
         require "websocket-client-simple"
         true

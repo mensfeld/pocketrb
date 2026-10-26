@@ -108,6 +108,7 @@ module Pocketrb
       end
 
       # Check if queues have pending messages
+      # @return [Boolean] true if the inbound queue is not empty
       def pending_inbound?
         !@inbound.empty?
       end
