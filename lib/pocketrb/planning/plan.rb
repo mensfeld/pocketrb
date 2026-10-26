@@ -167,11 +167,13 @@ module Pocketrb
       end
 
       # Check if plan is complete
+      # @return [Boolean] true if all steps are completed
       def complete?
         @steps.all?(&:completed?)
       end
 
       # Check if plan has failed
+      # @return [Boolean] true if any step has failed
       def failed?
         @steps.any?(&:failed?)
       end

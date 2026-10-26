@@ -44,6 +44,7 @@ module Pocketrb
       end
 
       # Check if job manager is available (directory accessible)
+      # @return [Boolean] true if the jobs directory is usable
       def available?
         @available
       end

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Enhancement: Add Ruby warning category opt-in to test helpers
+- Maintenance: Document `@return [Boolean]` on predicate methods to satisfy yard-lint 1.13.0
 
 ## [0.2.0] - 2026-03-30
 
