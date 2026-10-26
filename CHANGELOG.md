@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhancement: Add Ruby warning category opt-in to test helpers
 - Maintenance: Document `@return [Boolean]` on predicate methods to satisfy yard-lint 1.13.0
 
+### Fixed
+
+- Fix: `InboundMessage#has_media?` returns `false` instead of `nil` when media is `nil`
+
 ## [0.2.0] - 2026-03-30
 
 ### Added

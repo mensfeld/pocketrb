@@ -102,7 +102,7 @@ RSpec.describe Pocketrb::Bus do
           media: nil
         )
 
-        expect(msg).not_to have_media
+        expect(msg.has_media?).to be false
       end
     end
   end

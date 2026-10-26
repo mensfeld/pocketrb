@@ -31,7 +31,7 @@ module Pocketrb
       # Check if message has media attachments
       # @return [Boolean] true if media is present
       def has_media?
-        media && !media.empty?
+        !media.nil? && !media.empty?
       end
     end
 
