@@ -12,11 +12,12 @@ module Pocketrb
       # Anthropic API version header value
       API_VERSION = "2023-06-01"
 
-      # Supported Claude models with context and output token limits
+      # Supported Claude models with context and output token limits. `sampling: false` marks models
+      # that reject non-default temperature with HTTP 400
       MODELS = {
-        "claude-opus-5-5" => { context: 1_000_000, output: 128_000 },
-        "claude-sonnet-5-5" => { context: 1_000_000, output: 128_000 },
-        "claude-haiku-5-5" => { context: 1_000_000, output: 128_000 }
+        "claude-opus-5-5" => { context: 1_000_000, output: 128_000, sampling: false },
+        "claude-sonnet-5-5" => { context: 1_000_000, output: 128_000, sampling: false },
+        "claude-haiku-5-5" => { context: 1_000_000, output: 128_000, sampling: false }
       }.freeze
 
       # Provider name
@@ -170,7 +171,7 @@ module Pocketrb
         }
 
         body[:system] = system_message if system_message
-        body[:temperature] = temperature unless thinking
+        body[:temperature] = temperature unless thinking || MODELS.dig(model, :sampling) == false
         body[:tools] = format_tools(tools) if tools&.any?
 
         body[:thinking] = { type: "enabled", budget_tokens: [max_tokens / 2, 10_000].min } if thinking

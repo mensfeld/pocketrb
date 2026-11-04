@@ -139,6 +139,48 @@ RSpec.describe Pocketrb::Providers::Anthropic do
     end
   end
 
+  describe "#chat request body" do
+    let(:provider) { described_class.new }
+    let(:messages) { [Pocketrb::Providers::Message.user("Hello")] }
+
+    before do
+      ENV["ANTHROPIC_API_KEY"] = "test-key"
+      stub_request(:post, "https://api.anthropic.com/v1/messages")
+        .to_return(
+          status: 200,
+          body: {
+            "content" => [{ "type" => "text", "text" => "Hi" }],
+            "stop_reason" => "end_turn",
+            "usage" => { "input_tokens" => 1, "output_tokens" => 1 },
+            "model" => "claude-sonnet-5-5"
+          }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+    end
+
+    after { ENV.delete("ANTHROPIC_API_KEY") }
+
+    def request_body
+      body = nil
+      expect(WebMock).to(have_requested(:post, "https://api.anthropic.com/v1/messages")
+        .with { |req| body = JSON.parse(req.body) })
+      body
+    end
+
+    it "omits temperature for the default model" do
+      provider.chat(messages: messages)
+
+      expect(request_body["model"]).to eq("claude-sonnet-5-5")
+      expect(request_body).not_to have_key("temperature")
+    end
+
+    it "sends temperature for an unlisted model" do
+      provider.chat(messages: messages, model: "claude-sonnet-4-6", temperature: 0.3)
+
+      expect(request_body["temperature"]).to eq(0.3)
+    end
+  end
+
   describe "#supports?" do
     before { ENV["ANTHROPIC_API_KEY"] = "test-key" }
     after { ENV.delete("ANTHROPIC_API_KEY") }
