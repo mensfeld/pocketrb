@@ -11,8 +11,8 @@ RSpec.describe Pocketrb::Providers::OpenRouter do
   end
 
   describe "#default_model" do
-    it "returns claude-sonnet-4" do
-      expect(provider.default_model).to eq("anthropic/claude-sonnet-4")
+    it "returns claude-sonnet-5.5" do
+      expect(provider.default_model).to eq("anthropic/claude-sonnet-5.5")
     end
   end
 
@@ -20,7 +20,7 @@ RSpec.describe Pocketrb::Providers::OpenRouter do
     it "returns popular models list" do
       models = provider.available_models
 
-      expect(models).to include("anthropic/claude-sonnet-4")
+      expect(models).to include("anthropic/claude-sonnet-5.5")
       expect(models).to include("openai/gpt-4o")
       expect(models).to be_an(Array)
     end
@@ -82,7 +82,7 @@ RSpec.describe Pocketrb::Providers::OpenRouter do
           "prompt_tokens" => 10,
           "completion_tokens" => 5
         },
-        "model" => "anthropic/claude-sonnet-4"
+        "model" => "anthropic/claude-sonnet-5.5"
       }
     end
 
@@ -99,7 +99,7 @@ RSpec.describe Pocketrb::Providers::OpenRouter do
       response = provider.chat(messages: messages)
 
       expect(response.content).to eq("Hi there!")
-      expect(response.model).to eq("anthropic/claude-sonnet-4")
+      expect(response.model).to eq("anthropic/claude-sonnet-5.5")
     end
 
     it "includes usage information" do
@@ -113,7 +113,7 @@ RSpec.describe Pocketrb::Providers::OpenRouter do
       provider.chat(messages: messages)
 
       expect(WebMock).to(have_requested(:post, "https://openrouter.ai/api/v1/chat/completions")
-        .with { |req| JSON.parse(req.body)["model"] == "anthropic/claude-sonnet-4" })
+        .with { |req| JSON.parse(req.body)["model"] == "anthropic/claude-sonnet-5.5" })
     end
 
     it "uses custom model when specified" do

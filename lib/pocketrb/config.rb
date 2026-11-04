@@ -13,7 +13,7 @@ module Pocketrb
     # Default configuration values
     DEFAULTS = {
       provider: "anthropic",
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-5-5",
       compaction_model: nil,
       compaction_pressure: nil,
       max_iterations: 50,
