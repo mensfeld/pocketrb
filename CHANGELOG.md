@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix: `InboundMessage#has_media?` returns `false` instead of `nil` when media is `nil`
+- Fix: Replace retired default models with `claude-sonnet-5-5` (Anthropic, RubyLLM, config) and `anthropic/claude-sonnet-5.5` (OpenRouter)
+- Fix: `Providers::Anthropic::MODELS` lists `claude-opus-5-5`, `claude-sonnet-5-5` and `claude-haiku-5-5` with their 1M context window, so compaction no longer triggers at 200K
+- Fix: `ClaudeCLI` model aliases report current model IDs; OpenRouter popular models drop IDs OpenRouter no longer serves
 
 ## [0.2.0] - 2026-03-30
 

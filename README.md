@@ -53,7 +53,7 @@ pocketrb chat [options]
 ```
 
 Options:
-- `-m, --model MODEL` - Model to use (default: claude-sonnet-4-20250514)
+- `-m, --model MODEL` - Model to use (default: claude-sonnet-5-5)
 - `-p, --provider PROVIDER` - LLM provider (anthropic, openrouter, ruby_llm)
 - `-w, --workspace DIR` - Workspace directory for file access
 - `-M, --memory-dir DIR` - Memory/persona directory (default: same as workspace)
@@ -322,7 +322,7 @@ Access multiple models:
 
 ```bash
 export OPENROUTER_API_KEY=your-key
-pocketrb chat --provider openrouter --model anthropic/claude-sonnet-4
+pocketrb chat --provider openrouter --model anthropic/claude-sonnet-5.5
 ```
 
 ### RubyLLM
@@ -435,7 +435,7 @@ Located at `workspace/.pocketrb/config.yml` or `~/.pocketrb/config.yml`:
 
 ```yaml
 provider: anthropic
-model: claude-sonnet-4-20250514
+model: claude-sonnet-5-5
 max_iterations: 50
 ```
 
@@ -443,7 +443,7 @@ max_iterations: 50
 
 ```bash
 pocketrb config show
-pocketrb config set model claude-opus-4-20250514
+pocketrb config set model claude-opus-5-5
 pocketrb config get model
 ```
 

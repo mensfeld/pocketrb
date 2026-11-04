@@ -14,9 +14,9 @@ module Pocketrb
 
       # Supported Claude models with context and output token limits
       MODELS = {
-        "claude-opus-4-20250514" => { context: 200_000, output: 32_000 },
-        "claude-sonnet-4-20250514" => { context: 200_000, output: 64_000 },
-        "claude-3-5-haiku-20241022" => { context: 200_000, output: 8192 }
+        "claude-opus-5-5" => { context: 1_000_000, output: 128_000 },
+        "claude-sonnet-5-5" => { context: 1_000_000, output: 128_000 },
+        "claude-haiku-5-5" => { context: 1_000_000, output: 128_000 }
       }.freeze
 
       # Provider name
@@ -36,7 +36,7 @@ module Pocketrb
       # Default model to use
       # @return [String]
       def default_model
-        "claude-sonnet-4-20250514"
+        "claude-sonnet-5-5"
       end
 
       # List of available models

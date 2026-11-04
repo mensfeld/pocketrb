@@ -11,7 +11,7 @@ RSpec.describe Pocketrb::Config do
   describe "#initialize" do
     it "loads default configuration" do
       expect(config[:provider]).to eq("anthropic")
-      expect(config[:model]).to eq("claude-sonnet-4-20250514")
+      expect(config[:model]).to eq("claude-sonnet-5-5")
       expect(config[:max_iterations]).to eq(50)
       expect(config[:heartbeat_interval]).to eq(1800)
     end
@@ -109,7 +109,7 @@ RSpec.describe Pocketrb::Config do
     it "returns provider configuration hash" do
       provider_config = config.provider_config
       expect(provider_config).to be_a(Hash)
-      expect(provider_config[:model]).to eq("claude-sonnet-4-20250514")
+      expect(provider_config[:model]).to eq("claude-sonnet-5-5")
     end
 
     it "includes API keys from config" do

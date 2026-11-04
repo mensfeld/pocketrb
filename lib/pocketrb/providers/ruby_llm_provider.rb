@@ -13,7 +13,7 @@ module Pocketrb
       # Default model
       # @return [String]
       def default_model
-        "claude-sonnet-4-20250514"
+        "claude-sonnet-5-5"
       end
 
       # Available models

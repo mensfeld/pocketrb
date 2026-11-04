@@ -22,12 +22,12 @@ RSpec.describe Pocketrb::Providers do
         response = described_class::LLMResponse.new(
           content: "Hello",
           usage: usage,
-          model: "claude-sonnet-4"
+          model: "claude-sonnet-5-5"
         )
 
         expect(response.content).to eq("Hello")
         expect(response.usage).to eq(usage)
-        expect(response.model).to eq("claude-sonnet-4")
+        expect(response.model).to eq("claude-sonnet-5-5")
       end
 
       it "defaults tool_calls to empty array" do

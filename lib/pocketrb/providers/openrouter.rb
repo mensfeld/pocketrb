@@ -12,11 +12,12 @@ module Pocketrb
 
       # Popular models available through OpenRouter
       POPULAR_MODELS = %w[
-        anthropic/claude-sonnet-4
-        anthropic/claude-3.5-haiku
+        anthropic/claude-sonnet-5.5
+        anthropic/claude-haiku-5.5
+        anthropic/claude-opus-5.5
         openai/gpt-4o
         openai/gpt-4o-mini
-        google/gemini-pro-1.5
+        google/gemini-2.5-pro
         meta-llama/llama-3.1-70b-instruct
         mistralai/mistral-large
       ].freeze
@@ -30,7 +31,7 @@ module Pocketrb
       # Default model
       # @return [String]
       def default_model
-        "anthropic/claude-sonnet-4"
+        "anthropic/claude-sonnet-5.5"
       end
 
       # Available models
@@ -43,7 +44,7 @@ module Pocketrb
       # Send chat completion request
       # @param messages [Array<Message>] Conversation messages
       # @param tools [Array<Hash>, nil] Tool definitions
-      # @param model [String, nil] Model name (e.g., "anthropic/claude-sonnet-4")
+      # @param model [String, nil] Model name (e.g., "anthropic/claude-sonnet-5.5")
       # @param temperature [Float] Sampling temperature
       # @param max_tokens [Integer] Maximum tokens to generate
       # @param thinking [Boolean] Enable extended thinking (model-dependent)
