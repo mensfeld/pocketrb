@@ -50,6 +50,22 @@ RSpec.describe Pocketrb::Providers::OpenAICompatible do
       end
     end
 
+    context "with empty base URL" do
+      it "raises ConfigurationError" do
+        expect do
+          described_class.new(openai_compatible_base_url: "")
+        end.to raise_error(Pocketrb::ConfigurationError, /openai_compatible_base_url is required/)
+      end
+    end
+
+    context "with base URL without scheme" do
+      it "raises ConfigurationError" do
+        expect do
+          described_class.new(openai_compatible_base_url: "localhost:8000/v1")
+        end.to raise_error(Pocketrb::ConfigurationError, /must be an http\(s\) URL/)
+      end
+    end
+
     context "with base URL from environment" do
       around do |example|
         ENV["OPENAI_COMPATIBLE_BASE_URL"] = "http://127.0.0.1:1234/v1"
@@ -125,6 +141,22 @@ RSpec.describe Pocketrb::Providers::OpenAICompatible do
       end
     end
 
+    context "with API key from environment" do
+      around do |example|
+        ENV["OPENAI_COMPATIBLE_API_KEY"] = "env-key"
+        example.run
+      ensure
+        ENV.delete("OPENAI_COMPATIBLE_API_KEY")
+      end
+
+      it "sets authorization header" do
+        provider.chat(messages: messages)
+
+        expect(WebMock).to have_requested(:post, endpoint)
+          .with(headers: { "Authorization" => "Bearer env-key" })
+      end
+    end
+
     context "with API error" do
       before do
         stub_request(:post, endpoint)
@@ -136,6 +168,28 @@ RSpec.describe Pocketrb::Providers::OpenAICompatible do
           provider.chat(messages: messages)
         end.to raise_error(Pocketrb::ProviderError, /OpenAI-compatible API error: model not found/)
       end
+    end
+  end
+
+  describe "#chat_stream" do
+    before do
+      events = [
+        { "choices" => [{ "delta" => { "content" => "Hi" } }] },
+        { "choices" => [{ "delta" => { "content" => " there!" } }] }
+      ].map { |data| "data: #{data.to_json}\n\n" }
+
+      stub_request(:post, endpoint).to_return(status: 200, body: "#{events.join}data: [DONE]\n\n")
+    end
+
+    it "streams from the configured base URL" do
+      chunks = []
+
+      response = provider.chat_stream(messages: messages) { |chunk| chunks << chunk }
+
+      expect(chunks).to eq(["Hi", " there!"])
+      expect(response.content).to eq("Hi there!")
+      expect(WebMock).to(have_requested(:post, endpoint)
+        .with { |req| JSON.parse(req.body)["stream"] == true })
     end
   end
 end

@@ -74,7 +74,7 @@ module Pocketrb
         body = build_request_body(messages, tools, model, temperature, max_tokens)
         body[:stream] = true
 
-        accumulated_content = ""
+        accumulated_content = +""
         accumulated_tool_calls = []
 
         client.post("chat/completions") do |req|
