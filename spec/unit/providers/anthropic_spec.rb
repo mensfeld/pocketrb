@@ -174,8 +174,10 @@ RSpec.describe Pocketrb::Providers::Anthropic do
         .with { |req| JSON.parse(req.body).key?("temperature") })
     end
 
-    %w[claude-opus-4-8 claude-opus-4-7-20260416 claude-sonnet-5 claude-fable-5-1 claude-mythos-preview].each do |model|
-      it "omits temperature for unlisted #{model}, which rejects it" do
+    %w[
+      claude-opus-4-8 claude-opus-4-7-20260416 claude-sonnet-5 claude-haiku-5-5 claude-fable-5-1 claude-mythos-preview
+    ].each do |model|
+      it "omits temperature for #{model}, which rejects it" do
         provider.chat(messages: messages, model: model)
 
         expect(WebMock).to(have_requested(:post, "https://api.anthropic.com/v1/messages")
@@ -183,7 +185,9 @@ RSpec.describe Pocketrb::Providers::Anthropic do
       end
     end
 
-    %w[claude-opus-4-6 claude-opus-4-5-20251101 claude-opus-4-20250514 claude-3-7-sonnet-20250219].each do |model|
+    %w[
+      claude-opus-4-6 claude-opus-4-5-20251101 claude-opus-4-20250514 claude-haiku-4-5-20251001 claude-3-7-sonnet-20250219
+    ].each do |model|
       it "sends temperature for #{model}, which accepts it" do
         provider.chat(messages: messages, model: model)
 
