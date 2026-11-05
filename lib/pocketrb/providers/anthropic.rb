@@ -12,13 +12,18 @@ module Pocketrb
       # Anthropic API version header value
       API_VERSION = "2023-06-01"
 
-      # Supported Claude models with context and output token limits. `sampling: false` marks models
-      # that reject non-default temperature with HTTP 400
+      # Supported Claude models with context and output token limits
       MODELS = {
-        "claude-opus-5-5" => { context: 1_000_000, output: 128_000, sampling: false },
-        "claude-sonnet-5-5" => { context: 1_000_000, output: 128_000, sampling: false },
-        "claude-haiku-5-5" => { context: 1_000_000, output: 128_000, sampling: false }
+        "claude-opus-5-5" => { context: 1_000_000, output: 128_000 },
+        "claude-sonnet-5-5" => { context: 1_000_000, output: 128_000 },
+        "claude-haiku-5-5" => { context: 1_000_000, output: 128_000 }
       }.freeze
+
+      # First [major, minor] version per Claude family that rejects temperature with HTTP 400
+      SAMPLING_REJECTED_SINCE = { "opus" => [4, 7], "sonnet" => [5, 0], "haiku" => [5, 0] }.freeze
+
+      # Claude families that reject temperature in every version
+      SAMPLING_REJECTED_FAMILIES = %w[fable mythos].freeze
 
       # Provider name
       # @return [Symbol]
@@ -171,12 +176,26 @@ module Pocketrb
         }
 
         body[:system] = system_message if system_message
-        body[:temperature] = temperature unless thinking || MODELS.dig(model, :sampling) == false
+        body[:temperature] = temperature unless thinking || rejects_sampling?(model)
         body[:tools] = format_tools(tools) if tools&.any?
 
         body[:thinking] = { type: "enabled", budget_tokens: [max_tokens / 2, 10_000].min } if thinking
 
         body
+      end
+
+      # Whether the model rejects temperature. Matches dated and unlisted IDs by family and version
+      # @param model [String] model name
+      # @return [Boolean]
+      def rejects_sampling?(model)
+        family, major, minor = model.match(/\Aclaude-([a-z]+)-(?:(\d+)(?:-(\d{1,2}))?(?:-|\z))?/)&.captures
+        return false unless family
+        return true if SAMPLING_REJECTED_FAMILIES.include?(family)
+
+        since = SAMPLING_REJECTED_SINCE[family]
+        return false unless since && major
+
+        ([major.to_i, minor.to_i] <=> since) >= 0
       end
 
       # Extract system message content from the message list
