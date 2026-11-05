@@ -66,6 +66,14 @@ RSpec.describe Pocketrb::Providers::OpenAICompatible do
       end
     end
 
+    context "with base URL without host" do
+      it "raises ConfigurationError" do
+        expect do
+          described_class.new(openai_compatible_base_url: "http://")
+        end.to raise_error(Pocketrb::ConfigurationError, /must be an http\(s\) URL/)
+      end
+    end
+
     context "with base URL from environment" do
       around do |example|
         ENV["OPENAI_COMPATIBLE_BASE_URL"] = "http://127.0.0.1:1234/v1"
