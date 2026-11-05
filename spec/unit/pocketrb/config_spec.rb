@@ -118,6 +118,14 @@ RSpec.describe Pocketrb::Config do
       expect(provider_config[:anthropic_api_key]).to eq("test-key")
     end
 
+    it "includes OpenAI-compatible settings from config" do
+      config[:openai_compatible_base_url] = "http://localhost:8000/v1"
+      config[:openai_compatible_api_key] = "local-key"
+      provider_config = config.provider_config
+      expect(provider_config[:openai_compatible_base_url]).to eq("http://localhost:8000/v1")
+      expect(provider_config[:openai_compatible_api_key]).to eq("local-key")
+    end
+
     it "prioritizes ENV variables over config for API keys" do
       config[:anthropic_api_key] = "config-key"
       ENV["ANTHROPIC_API_KEY"] = "env-key"

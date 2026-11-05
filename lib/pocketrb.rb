@@ -54,6 +54,7 @@ loader.inflector.inflect(
   "llm" => "LLM",
   "mcp" => "MCP",
   "openrouter" => "OpenRouter",
+  "openai_compatible" => "OpenAICompatible",
   "ruby_llm_provider" => "RubyLLMProvider",
   "claude_cli" => "ClaudeCLI",
   "claude_max_proxy" => "ClaudeMaxProxy",

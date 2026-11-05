@@ -8,14 +8,15 @@ RSpec.describe Pocketrb::Providers::Registry do
       expect(registry.available).to include(
         :anthropic,
         :openrouter,
+        :openai_compatible,
         :ruby_llm,
         :claude_cli,
         :claude_max_proxy
       )
     end
 
-    it "starts with 5 default providers" do
-      expect(registry.available.length).to eq(5)
+    it "starts with 6 default providers" do
+      expect(registry.available.length).to eq(6)
     end
   end
 

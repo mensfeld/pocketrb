@@ -53,7 +53,7 @@ module Pocketrb
         model ||= default_model
         body = build_request_body(messages, tools, model, temperature, max_tokens)
 
-        response = client.post("/api/v1/chat/completions") do |req|
+        response = client.post("chat/completions") do |req|
           req.body = body.to_json
         end
 
@@ -77,7 +77,7 @@ module Pocketrb
         accumulated_content = ""
         accumulated_tool_calls = []
 
-        client.post("/api/v1/chat/completions") do |req|
+        client.post("chat/completions") do |req|
           req.body = body.to_json
           req.options.on_data = proc do |chunk, _|
             process_stream_chunk(chunk, accumulated_content, accumulated_tool_calls, &block)
@@ -107,6 +107,12 @@ module Pocketrb
       end
 
       private
+
+      # Provider label used in error messages
+      # @return [String]
+      def api_label
+        "OpenRouter"
+      end
 
       # Build Faraday HTTP client with OpenRouter headers
       # @return [Faraday::Connection]
@@ -183,7 +189,7 @@ module Pocketrb
           rescue StandardError
             { "error" => response.body }
           end
-          raise ProviderError, "OpenRouter API error: #{error_body["error"]}"
+          raise ProviderError, "#{api_label} API error: #{error_body["error"]}"
         end
 
         data = JSON.parse(response.body)
