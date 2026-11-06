@@ -86,6 +86,8 @@ module Pocketrb
         anthropic_api_key: ENV["ANTHROPIC_API_KEY"] || self[:anthropic_api_key],
         openrouter_api_key: ENV["OPENROUTER_API_KEY"] || self[:openrouter_api_key],
         openai_api_key: ENV["OPENAI_API_KEY"] || self[:openai_api_key],
+        openai_compatible_base_url: self[:openai_compatible_base_url],
+        openai_compatible_api_key: self[:openai_compatible_api_key],
         brave_api_key: ENV["BRAVE_API_KEY"] || self[:brave_api_key],
         model: self[:model],
         autonomous: self[:autonomous],

@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Enhancement: Add `openai_compatible` provider for any OpenAI chat completions server (vLLM, llama.cpp, llamafile, LM Studio, Ollama), configured with `openai_compatible_base_url` and an optional `openai_compatible_api_key`
 - Enhancement: Add Ruby warning category opt-in to test helpers
 - Maintenance: Document `@return [Boolean]` on predicate methods to satisfy yard-lint 1.13.0
 
 ### Fixed
 
+- Fix: `Providers::OpenRouter#chat_stream` no longer raises `FrozenError` on the first streamed chunk
 - Fix: `InboundMessage#has_media?` returns `false` instead of `nil` when media is `nil`
 - Fix: Replace retired default models with `claude-sonnet-5-5` (Anthropic, config) and `anthropic/claude-sonnet-5.5` (OpenRouter)
 - Fix: `Providers::Anthropic` does not send `temperature` to models that reject it (Opus 4.7+, Sonnet 5+, Haiku 5+, Fable and Mythos, dated IDs included)

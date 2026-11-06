@@ -73,6 +73,7 @@ module Pocketrb
       def register_defaults
         register(:anthropic, Anthropic)
         register(:openrouter, OpenRouter)
+        register(:openai_compatible, OpenAICompatible)
         register(:ruby_llm, RubyLLMProvider)
         register(:claude_cli, ClaudeCLI)
         register(:claude_max_proxy, ClaudeMaxProxy)
