@@ -344,10 +344,10 @@ Without `openai_compatible_api_key`, no `Authorization` header is sent.
 
 ### RubyLLM
 
-Use Ruby-based LLM implementations:
+Route requests through the [ruby_llm](https://rubyllm.com) gem (2.x). Models are resolved from its registry; set `anthropic_api_key` and/or `openai_api_key` for the providers you use:
 
 ```bash
-pocketrb chat --provider ruby_llm
+pocketrb chat --provider ruby_llm --model claude-sonnet-5-5
 ```
 
 ## Memory System
