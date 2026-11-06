@@ -139,6 +139,23 @@ RSpec.describe Pocketrb::Tools::WebFetch do
       end
     end
 
+    context "with invalid bytes for a declared UTF-8 charset" do
+      before do
+        stub_request(:get, "https://example.com/invalid-utf8")
+          .to_return(
+            status: 200,
+            body: "ok \xFF end".b,
+            headers: { "Content-Type" => "text/plain; charset=utf-8" }
+          )
+      end
+
+      it "replaces invalid bytes" do
+        result = tool.execute(url: "https://example.com/invalid-utf8")
+
+        expect(result).to eq("ok \uFFFD end")
+      end
+    end
+
     context "with large content" do
       let(:large_content) { "x" * 600_000 }
 

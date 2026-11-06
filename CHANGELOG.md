@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix: `web_fetch` replaces invalid bytes in the response body, so a page with bytes invalid for its charset (or for UTF-8 when it declares none) no longer raises `JSON::GeneratorError` in the next provider request
+- Fix: `web_fetch` replaces invalid bytes in the response body, so such a page no longer fails with `invalid byte sequence` (declared charset) or raises `JSON::GeneratorError` in the next provider request (no charset)
 - Fix: `Providers::OpenRouter#chat_stream` no longer raises `FrozenError` on the first streamed chunk
 - Fix: `InboundMessage#has_media?` returns `false` instead of `nil` when media is `nil`
 - Fix: Replace retired default models with `claude-sonnet-5-5` (Anthropic, config) and `anthropic/claude-sonnet-5.5` (OpenRouter)
