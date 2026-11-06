@@ -145,7 +145,7 @@ module Pocketrb
         when Role::SYSTEM
           chat.with_instructions(message.content, append: true)
         when Role::USER
-          text, attachments = split_user_content(message.content)
+          text, attachments = split_user_content(chat, message.content)
           chat.add_message(role: :user, content: text, attachments: attachments)
         when Role::ASSISTANT
           chat.add_message(
@@ -158,25 +158,47 @@ module Pocketrb
         end
       end
 
-      # Split user content into text and RubyLLM attachment sources
+      # Split user content into text and RubyLLM attachments. Media the model cannot read, or that is missing,
+      # becomes placeholder text, as RubyLLM raises on it
+      # @param chat [RubyLLM::Chat] chat whose model decides which images it accepts
       # @param content [String, Array<Hash>] text or content blocks with text and media
-      # @return [Array(String, Array)] text and attachment sources
-      def split_user_content(content)
+      # @return [Array(String, Array<RubyLLM::Attachment>)] text and attachments
+      def split_user_content(chat, content)
         return [content, []] unless content.is_a?(Array)
 
-        text = content.filter_map { |block| block[:text] if block[:type] == "text" }.join("\n")
-        media = content.filter_map { |block| block[:media] if block[:type] == "media" }
+        vision = chat.model.modalities.input.include?("image")
+        texts = []
+        attachments = []
 
-        [text, media.map { |m| attachment_source(m) }]
+        content.each do |block|
+          next texts << block[:text] if block[:type] == "text"
+          next unless block[:type] == "media"
+
+          attachment = build_attachment(block[:media], vision)
+          attachment.is_a?(String) ? texts << attachment : attachments << attachment
+        end
+
+        [texts.join("\n"), attachments]
       end
 
-      # Convert a media attachment to a RubyLLM attachment source
-      # @param media [Bus::Media] media with a path or base64 data
-      # @return [String, RubyLLM::Attachment] file path or URL, or an attachment built from inline data
-      def attachment_source(media)
-        return media.path unless media.data
+      # Convert a media item to a RubyLLM attachment, or to placeholder text when it cannot be sent
+      # @param media [Bus::Media, nil] media with a file path or base64 data
+      # @param vision [Boolean] whether the model accepts image input
+      # @return [RubyLLM::Attachment, String] attachment or placeholder text
+      def build_attachment(media, vision)
+        return "[unsupported media]" unless media
+        unless vision && media.image? && Media::Processor::VISION_IMAGE_TYPES.include?(media.mime_type)
+          return "[Attached: #{media.filename} (#{media.mime_type})]"
+        end
 
-        RubyLLM::Attachment.new(StringIO.new(Base64.decode64(media.data)), filename: media.filename || File.basename(media.path.to_s))
+        filename = media.filename || File.basename(media.path.to_s)
+        if media.data
+          RubyLLM::Attachment.new(StringIO.new(Base64.decode64(media.data)), filename: filename)
+        elsif media.path && File.exist?(media.path)
+          RubyLLM::Attachment.new(media.path, filename: filename)
+        else
+          "[Image not available]"
+        end
       end
 
       # Convert pocketrb tool calls to RubyLLM tool calls keyed by ID

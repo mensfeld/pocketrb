@@ -75,6 +75,124 @@ RSpec.describe Pocketrb::Providers::RubyLLMProvider do
       end)
     end
 
+    it "sends every system message" do
+      provider.chat(messages: [Pocketrb::Providers::Message.system("Rule one")] + messages)
+
+      expect(WebMock).to(have_requested(:post, endpoint).with do |req|
+        system = JSON.parse(req.body)["system"].to_s
+        system.include?("Rule one") && system.include?("You are helpful")
+      end)
+    end
+
+    it "sends thinking without temperature and maps the thinking text" do
+      stub_request(:post, endpoint).to_return(
+        status: 200,
+        headers: { "Content-Type" => "application/json" },
+        body: mock_response.merge(
+          "content" => [
+            { "type" => "thinking", "thinking" => "Let me think", "signature" => "sig" },
+            { "type" => "text", "text" => "Hi there!" }
+          ]
+        ).to_json
+      )
+
+      response = provider.chat(messages: messages, model: "claude-haiku-4-5", thinking: true)
+
+      expect(response.thinking).to eq("Let me think")
+      expect(WebMock).to(have_requested(:post, endpoint).with do |req|
+        body = JSON.parse(req.body)
+        body.key?("thinking") && !body.key?("temperature")
+      end)
+    end
+
+    it "maps cache usage and the max_tokens stop reason" do
+      stub_request(:post, endpoint).to_return(
+        status: 200,
+        headers: { "Content-Type" => "application/json" },
+        body: mock_response.merge(
+          "stop_reason" => "max_tokens",
+          "usage" => { "input_tokens" => 10, "output_tokens" => 5, "cache_read_input_tokens" => 7, "cache_creation_input_tokens" => 3 }
+        ).to_json
+      )
+
+      response = provider.chat(messages: messages)
+
+      expect(response.stop_reason).to eq(:max_tokens)
+      expect(response.usage).to have_attributes(cache_read: 7, cache_write: 3)
+    end
+
+    context "with media" do
+      let(:png) { Base64.decode64("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==") }
+
+      def media(**attrs)
+        Pocketrb::Bus::Media.new(type: :image, path: nil, mime_type: "image/png", filename: "pixel.png", **attrs)
+      end
+
+      def user_content(req)
+        JSON.parse(req.body)["messages"].last["content"]
+      end
+
+      it "sends inline image data as an image block" do
+        provider.chat(messages: [Pocketrb::Providers::Message.user("Look", media: [media(data: Base64.strict_encode64(png))])])
+
+        expect(WebMock).to(have_requested(:post, endpoint).with do |req|
+          content = user_content(req)
+          content.any? { |c| c["type"] == "image" } && content.include?({ "type" => "text", "text" => "Look" })
+        end)
+      end
+
+      it "sends an image file as an image block" do
+        path = temp_workspace.join("pixel.png").to_s
+        File.binwrite(path, png)
+
+        provider.chat(messages: [Pocketrb::Providers::Message.user("Look", media: [media(path: path)])])
+
+        expect(WebMock).to(have_requested(:post, endpoint).with { |req| user_content(req).any? { |c| c["type"] == "image" } })
+      end
+
+      it "sends placeholder text for an image when the model has no image input" do
+        openai = "https://api.openai.com/v1/responses"
+        stub_request(:post, openai).to_return(
+          status: 200,
+          headers: { "Content-Type" => "application/json" },
+          body: {
+            "id" => "resp_1",
+            "object" => "response",
+            "model" => "gpt-4",
+            "output" => [{ "type" => "message", "role" => "assistant", "content" => [{ "type" => "output_text", "text" => "ok" }] }],
+            "usage" => { "input_tokens" => 1, "output_tokens" => 1 }
+          }.to_json
+        )
+
+        described_class.new(openai_api_key: "test-key").chat(
+          messages: [Pocketrb::Providers::Message.user("Look", media: [media(data: Base64.strict_encode64(png))])],
+          model: "gpt-4"
+        )
+
+        expect(WebMock).to(have_requested(:post, openai).with do |req|
+          JSON.parse(req.body)["input"].to_json.include?("Look\\n[Attached: pixel.png (image/png)]") && !req.body.include?("input_image")
+        end)
+      end
+
+      it "sends placeholder text for audio" do
+        audio = Pocketrb::Bus::Media.new(type: :audio, path: "/tmp/voice.ogg", mime_type: "audio/ogg", filename: "voice.ogg")
+
+        provider.chat(messages: [Pocketrb::Providers::Message.user("Listen", media: [audio])])
+
+        expect(WebMock).to(have_requested(:post, endpoint).with do |req|
+          user_content(req) == [{ "type" => "text", "text" => "Listen\n[Attached: voice.ogg (audio/ogg)]" }]
+        end)
+      end
+
+      it "sends placeholder text for a missing image file" do
+        provider.chat(messages: [Pocketrb::Providers::Message.user("Look", media: [media(path: "/nonexistent/pixel.png")])])
+
+        expect(WebMock).to(have_requested(:post, endpoint).with do |req|
+          user_content(req) == [{ "type" => "text", "text" => "Look\n[Image not available]" }]
+        end)
+      end
+    end
+
     context "with tools" do
       let(:tools) do
         [
@@ -142,6 +260,7 @@ RSpec.describe Pocketrb::Providers::RubyLLMProvider do
         expect(WebMock).to(have_requested(:post, endpoint).once.with do |req|
           sent = JSON.parse(req.body)["messages"]
           sent.map { |m| m["role"] } == %w[user assistant user] &&
+            sent[1]["content"].include?({ "type" => "text", "text" => "Reading it." }) &&
             sent[1]["content"].any? { |c| c["type"] == "tool_use" && c["id"] == "toolu_1" && c["input"] == { "path" => "a.txt" } } &&
             sent[2]["content"].any? { |c| c["type"] == "tool_result" && c["tool_use_id"] == "toolu_1" && c["content"].to_s.include?("file body") }
         end)
