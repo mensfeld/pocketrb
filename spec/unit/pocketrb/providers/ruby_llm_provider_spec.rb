@@ -124,8 +124,8 @@ RSpec.describe Pocketrb::Providers::RubyLLMProvider do
     context "with media" do
       let(:png) { Base64.decode64("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==") }
 
-      def media(**attrs)
-        Pocketrb::Bus::Media.new(type: :image, path: nil, mime_type: "image/png", filename: "pixel.png", **attrs)
+      def media(path: nil, mime_type: "image/png", filename: "pixel.png", data: nil)
+        Pocketrb::Bus::Media.new(type: :image, path: path, mime_type: mime_type, filename: filename, data: data)
       end
 
       def user_content(req)
@@ -171,6 +171,16 @@ RSpec.describe Pocketrb::Providers::RubyLLMProvider do
 
         expect(WebMock).to(have_requested(:post, openai).with do |req|
           JSON.parse(req.body)["input"].to_json.include?("Look\\n[Attached: pixel.png (image/png)]") && !req.body.include?("input_image")
+        end)
+      end
+
+      it "sends placeholder text for an image type the API does not accept" do
+        svg = media(mime_type: "image/svg+xml", filename: "logo.svg", data: Base64.strict_encode64("<svg/>"))
+
+        provider.chat(messages: [Pocketrb::Providers::Message.user("Look", media: [svg])])
+
+        expect(WebMock).to(have_requested(:post, endpoint).with do |req|
+          user_content(req) == [{ "type" => "text", "text" => "Look\n[Attached: logo.svg (image/svg+xml)]" }]
         end)
       end
 
