@@ -118,7 +118,6 @@ module Pocketrb
           .dup
           .force_encoding(encoding)
           .encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
-          .scrub
       end
 
       # Extract readable content from response body

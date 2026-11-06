@@ -450,7 +450,7 @@ module Pocketrb
 
         # Look for JSON tool calls in code blocks
         text.scan(/```json\s*(\{.*?"tool".*?\})\s*```/m) do |match|
-          parsed = JSON.parse(match[0])
+          parsed = JSON.parse(match[0], allow_duplicate_key: true)
           if parsed["tool"]
             tool_calls << ToolCall.new(
               id: "cli_#{SecureRandom.hex(8)}",
@@ -465,7 +465,7 @@ module Pocketrb
         # Also try inline JSON
         if tool_calls.empty?
           text.scan(/\{"tool"\s*:\s*"\w+"[^}]*\}/m) do |match|
-            parsed = JSON.parse(match)
+            parsed = JSON.parse(match, allow_duplicate_key: true)
             if parsed["tool"]
               tool_calls << ToolCall.new(
                 id: "cli_#{SecureRandom.hex(8)}",
