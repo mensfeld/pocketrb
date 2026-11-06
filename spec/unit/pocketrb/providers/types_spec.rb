@@ -137,6 +137,16 @@ RSpec.describe Pocketrb::Providers do
         expect(tool_call.arguments).to eq({ "path" => "test.txt" })
       end
 
+      it "keeps the last value of a duplicate key" do
+        tool_call = described_class::ToolCall.new(
+          id: "call_123",
+          name: "read_file",
+          arguments: '{"path":"a","path":"b"}'
+        )
+
+        expect(tool_call.arguments).to eq({ "path" => "b" })
+      end
+
       it "handles invalid JSON by using empty hash" do
         tool_call = described_class::ToolCall.new(
           id: "call_123",

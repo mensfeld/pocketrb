@@ -12,10 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhancement: Add `openai_compatible` provider for any OpenAI chat completions server (vLLM, llama.cpp, llamafile, LM Studio, Ollama), configured with `openai_compatible_base_url` and an optional `openai_compatible_api_key`
 - Enhancement: Add Ruby warning category opt-in to test helpers
 - Maintenance: Document `@return [Boolean]` on predicate methods to satisfy yard-lint 1.13.0
-- Maintenance: Remove unused runtime dependencies `anthropic`, `pastel`, `tty-markdown` and `tty-prompt`, allow `json` 3.x and drop the duplicate `playwright-ruby-client` entry from the `Gemfile`
+- Maintenance: Remove unused runtime dependencies `anthropic`, `pastel`, `tty-markdown` and `tty-prompt`, allow `json` 3.x (tool-call arguments with a duplicate key keep the last value, as on json 2.x) and drop the duplicate `playwright-ruby-client` entry from the `Gemfile`
 
 ### Fixed
 
+- Fix: `web_fetch` converts the response body to valid UTF-8 (using the `Content-Type` charset when given), so a non-ASCII page without a charset no longer breaks the provider request
 - Fix: `Providers::OpenRouter#chat_stream` no longer raises `FrozenError` on the first streamed chunk
 - Fix: `InboundMessage#has_media?` returns `false` instead of `nil` when media is `nil`
 - Fix: Replace retired default models with `claude-sonnet-5-5` (Anthropic, config) and `anthropic/claude-sonnet-5.5` (OpenRouter)
