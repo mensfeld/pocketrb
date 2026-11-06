@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix: Replace retired default models with `claude-sonnet-5-5` (Anthropic, config) and `anthropic/claude-sonnet-5.5` (OpenRouter)
 - Fix: `Providers::Anthropic` does not send `temperature` to models that reject it (Opus 4.7+, Sonnet 5+, Haiku 5+, Fable and Mythos, dated IDs included)
 - Fix: `Providers::Anthropic::MODELS` lists `claude-opus-5-5`, `claude-sonnet-5-5` and `claude-haiku-5-5` with their 1M context window, so compaction no longer triggers at 200K
+- Fix: `Providers::RubyLLMProvider` no longer crashes on every call: rewritten on `ruby_llm` 2.x (dependency now `~> 2.0`), sends the whole history (assistant and tool messages included) in one request per turn, passes tool definitions, returns tool calls to the agent loop and streams through `chat_stream`
 - Fix: `ClaudeCLI` model aliases report current model IDs; OpenRouter popular models drop IDs OpenRouter no longer serves
 
 ## [0.2.0] - 2026-03-30

@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "json", "~> 2.7"
   spec.add_dependency "pastel", "~> 0.8"
   spec.add_dependency "playwright-ruby-client", "~> 1.58"
-  spec.add_dependency "ruby_llm", "~> 1.0"
+  spec.add_dependency "ruby_llm", "~> 2.0"
   spec.add_dependency "telegram-bot-ruby", "~> 2.0"
   spec.add_dependency "thor", "~> 1.3"
   spec.add_dependency "tty-markdown", "~> 0.7"
