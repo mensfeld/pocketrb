@@ -52,7 +52,7 @@ module Pocketrb
       # @param name [String] Name of the tool to execute
       # @param arguments [Hash, String] Arguments to pass to the tool (JSON string or hash)
       def initialize(id:, name:, arguments:)
-        args = arguments.is_a?(String) ? JSON.parse(arguments) : arguments
+        args = arguments.is_a?(String) ? JSON.parse(arguments, allow_duplicate_key: true) : arguments
         super(id: id, name: name, arguments: args)
       rescue JSON::ParserError
         super(id: id, name: name, arguments: {})

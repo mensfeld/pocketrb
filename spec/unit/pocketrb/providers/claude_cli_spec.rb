@@ -35,5 +35,28 @@ RSpec.describe Pocketrb::Providers::ClaudeCLI do
     it "keeps an unknown model name as is" do
       expect(provider.chat(messages: messages, model: "custom-model").model).to eq("custom-model")
     end
+
+    context "with a code block tool call that has a duplicate key" do
+      let(:result_event) do
+        text = "```json\n{\"tool\":\"read_file\",\"input\":{\"path\":\"a\",\"path\":\"b\"}}\n```"
+        { "type" => "result", "result" => text, "usage" => {} }.to_json
+      end
+
+      it "keeps the last value" do
+        tool_call = provider.chat(messages: messages).tool_calls.first
+
+        expect(tool_call.arguments).to eq({ "path" => "b" })
+      end
+    end
+
+    context "with an inline tool call that has a duplicate key" do
+      let(:result_event) do
+        { "type" => "result", "result" => '{"tool":"read_file","tool":"list_dir"}', "usage" => {} }.to_json
+      end
+
+      it "keeps the tool call" do
+        expect(provider.chat(messages: messages).tool_calls.map(&:name)).to eq(["list_dir"])
+      end
+    end
   end
 end

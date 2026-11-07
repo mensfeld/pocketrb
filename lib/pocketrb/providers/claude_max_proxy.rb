@@ -336,7 +336,7 @@ module Pocketrb
         # Build final response
         parsed_tool_calls = tool_calls.compact.map do |tc|
           args = begin
-            JSON.parse(tc[:arguments])
+            JSON.parse(tc[:arguments], allow_duplicate_key: true)
           rescue JSON::ParserError
             {}
           end
@@ -397,7 +397,7 @@ module Pocketrb
 
         tool_calls.map do |tc|
           args = begin
-            JSON.parse(tc.dig("function", "arguments") || "{}")
+            JSON.parse(tc.dig("function", "arguments") || "{}", allow_duplicate_key: true)
           rescue JSON::ParserError
             {}
           end

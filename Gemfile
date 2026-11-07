@@ -13,5 +13,3 @@ group :development, :test do
   gem "warning", "~> 1.4"
   gem "webmock", "~> 3.18"
 end
-
-gem "playwright-ruby-client", "~> 1.58"

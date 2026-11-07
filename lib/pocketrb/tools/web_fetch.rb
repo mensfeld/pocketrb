@@ -95,10 +95,29 @@ module Pocketrb
         response = conn.get
 
         if response.success?
-          { body: response.body, content_type: response.headers["content-type"] }
+          content_type = response.headers["content-type"]
+          { body: to_utf8(response.body.to_s, content_type), content_type: content_type }
         else
           { error: "HTTP #{response.status}" }
         end
+      end
+
+      # Convert a raw response body to valid UTF-8
+      # @param body [String] raw response body
+      # @param content_type [String, nil] Content-Type header value
+      # @return [String] UTF-8 body with invalid bytes replaced
+      def to_utf8(body, content_type)
+        charset = content_type.to_s[/charset=["']?([^;"'\s]+)/i, 1]
+        encoding = begin
+          charset ? Encoding.find(charset) : Encoding::UTF_8
+        rescue ArgumentError
+          Encoding::UTF_8
+        end
+
+        body
+          .dup
+          .force_encoding(encoding)
+          .encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
       end
 
       # Extract readable content from response body

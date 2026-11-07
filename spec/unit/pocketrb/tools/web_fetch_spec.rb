@@ -92,6 +92,70 @@ RSpec.describe Pocketrb::Tools::WebFetch do
       end
     end
 
+    context "with non-ASCII content and no charset" do
+      before do
+        stub_request(:get, "https://example.com/binary")
+          .to_return(status: 200, body: "Zażółć gęślą jaźń".b, headers: { "Content-Type" => "text/plain" })
+      end
+
+      it "returns valid UTF-8 that serializes to JSON" do
+        result = tool.execute(url: "https://example.com/binary")
+
+        expect(result.encoding).to eq(Encoding::UTF_8)
+        expect(result).to be_valid_encoding
+        expect(result).to eq("Zażółć gęślą jaźń")
+        expect(JSON.generate({ content: result })).to include("Zażółć")
+      end
+    end
+
+    context "with a declared non-UTF-8 charset" do
+      before do
+        stub_request(:get, "https://example.com/latin1")
+          .to_return(
+            status: 200,
+            body: "Caf\xE9".b,
+            headers: { "Content-Type" => "text/plain; charset=ISO-8859-1" }
+          )
+      end
+
+      it "transcodes the body to UTF-8" do
+        result = tool.execute(url: "https://example.com/latin1")
+
+        expect(result).to eq("Café")
+      end
+    end
+
+    context "with invalid UTF-8 bytes" do
+      before do
+        stub_request(:get, "https://example.com/invalid")
+          .to_return(status: 200, body: "ok \xFF end".b, headers: { "Content-Type" => "text/plain" })
+      end
+
+      it "replaces invalid bytes" do
+        result = tool.execute(url: "https://example.com/invalid")
+
+        expect(result).to be_valid_encoding
+        expect(result).to eq("ok \uFFFD end")
+      end
+    end
+
+    context "with invalid bytes for a declared UTF-8 charset" do
+      before do
+        stub_request(:get, "https://example.com/invalid-utf8")
+          .to_return(
+            status: 200,
+            body: "ok \xFF end".b,
+            headers: { "Content-Type" => "text/plain; charset=utf-8" }
+          )
+      end
+
+      it "replaces invalid bytes" do
+        result = tool.execute(url: "https://example.com/invalid-utf8")
+
+        expect(result).to eq("ok \uFFFD end")
+      end
+    end
+
     context "with large content" do
       let(:large_content) { "x" * 600_000 }
 
