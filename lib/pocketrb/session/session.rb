@@ -22,16 +22,18 @@ module Pocketrb
       # Add a message to the session
       # @param role [String] Message role (user, assistant, tool, system)
       # @param content [String, Array] Message content (text or content blocks)
-      # @option kwargs [String] :name Message name (for tool messages)
-      # @option kwargs [String] :tool_call_id Tool call identifier (for tool result messages)
-      # @option kwargs [Array<ToolCall>] :tool_calls Tool calls made by assistant
+      # @param name [String, nil] Message name (for tool messages)
+      # @param tool_call_id [String, nil] Tool call identifier (for tool result messages)
+      # @param tool_calls [Array<ToolCall>, nil] Tool calls made by assistant
       # @return [void]
-      def add_message(role:, content:, **)
+      def add_message(role:, content:, name: nil, tool_call_id: nil, tool_calls: nil)
         @mutex.synchronize do
           message = Providers::Message.new(
             role: role,
             content: content,
-            **
+            name: name,
+            tool_call_id: tool_call_id,
+            tool_calls: tool_calls
           )
           @messages << message
           save_to_log(message)
