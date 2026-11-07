@@ -66,10 +66,9 @@ module Pocketrb
       # @param model [String, nil] Model name
       # @param temperature [Float] Sampling temperature
       # @param max_tokens [Integer] Maximum tokens to generate
-      # @param block [Proc] Block to receive streaming chunks
       # @yieldparam chunk [String] Streamed text chunk
       # @return [LLMResponse] Final response
-      def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &block)
+      def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &)
         model ||= default_model
         body = build_request_body(messages, tools, model, temperature, max_tokens)
         body[:stream] = true
@@ -80,7 +79,7 @@ module Pocketrb
         client.post("chat/completions") do |req|
           req.body = body.to_json
           req.options.on_data = proc do |chunk, _|
-            process_stream_chunk(chunk, accumulated_content, accumulated_tool_calls, &block)
+            process_stream_chunk(chunk, accumulated_content, accumulated_tool_calls, &)
           end
         end
 

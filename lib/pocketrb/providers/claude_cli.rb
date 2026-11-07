@@ -85,10 +85,9 @@ module Pocketrb
       # @param model [String, nil] Model alias
       # @param temperature [Float] Sampling temperature
       # @param max_tokens [Integer] Maximum tokens to generate
-      # @param block [Proc] Block to receive streaming chunks
       # @yieldparam chunk [String] Streamed text chunk
       # @return [LLMResponse] Final response
-      def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &block)
+      def chat_stream(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, &)
         model ||= default_model
 
         @mutex.synchronize do
@@ -96,7 +95,7 @@ module Pocketrb
 
           prompt = build_prompt(messages, tools)
           send_message(prompt)
-          response = read_response_streaming(&block)
+          response = read_response_streaming(&)
 
           parse_cli_response(response, model)
         end

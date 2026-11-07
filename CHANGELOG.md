@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enhancement: Add `openai_compatible` provider for any OpenAI chat completions server (vLLM, llama.cpp, llamafile, LM Studio, Ollama), configured with `openai_compatible_base_url` and an optional `openai_compatible_api_key`
 - Enhancement: Add Ruby warning category opt-in to test helpers
+- Maintenance: Require Ruby 4.0+ (`required_ruby_version` was `>= 3.2.0`; Ruby 3.2 is EOL and CI tests only Ruby 4.0)
 - Maintenance: Document `@return [Boolean]` on predicate methods to satisfy yard-lint 1.13.0
 - Maintenance: Remove unused runtime dependencies `anthropic`, `pastel`, `tty-markdown` and `tty-prompt`, allow `json` 3.x (`web_fetch` converts a body without a charset to UTF-8, and tool-call arguments with a duplicate key keep the last value, as on json 2.x) and drop the duplicate `playwright-ruby-client` entry from the `Gemfile`
 
