@@ -26,12 +26,12 @@ module Pocketrb
       # @option kwargs [String] :tool_call_id Tool call identifier (for tool result messages)
       # @option kwargs [Array<ToolCall>] :tool_calls Tool calls made by assistant
       # @return [void]
-      def add_message(role:, content:, **kwargs)
+      def add_message(role:, content:, **)
         @mutex.synchronize do
           message = Providers::Message.new(
             role: role,
             content: content,
-            **kwargs
+            **
           )
           @messages << message
           save_to_log(message)

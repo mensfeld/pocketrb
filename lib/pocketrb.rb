@@ -6,7 +6,6 @@ require "json"
 require "yaml"
 require "logger"
 require "fileutils"
-require "pathname"
 
 # Pocketrb: Ruby AI agent with multi-LLM support and advanced planning capabilities
 module Pocketrb
