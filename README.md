@@ -76,7 +76,11 @@ Options:
 
 ### WhatsApp Bot
 
-Requires the [whatsapp-web.js bridge](https://github.com/user/whatsapp-bridge) running.
+Requires the [whatsapp-web.js bridge](https://github.com/user/whatsapp-bridge) running and the `websocket-client-simple` gem, which pocketrb does not install for you:
+
+```bash
+gem install websocket-client-simple   # or add gem "websocket-client-simple" to your Gemfile
+```
 
 ```bash
 pocketrb whatsapp --bridge-url ws://localhost:3001 --allowed-users +1234567890

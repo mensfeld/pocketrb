@@ -42,12 +42,22 @@ module Pocketrb
         false
       end
 
+      # Start the channel
+      # @raise [MissingDependencyError] when the websocket-client-simple gem is not installed
+      def run
+        unless available?
+          raise MissingDependencyError,
+                "The WhatsApp channel needs the websocket-client-simple gem. " \
+                "Add `gem \"websocket-client-simple\"` to your Gemfile or run: gem install websocket-client-simple"
+        end
+
+        super
+      end
+
       protected
 
       # Connect to the WhatsApp bridge and listen for inbound messages
       def run_inbound_loop
-        require "websocket-client-simple"
-
         Pocketrb.logger.info("Starting WhatsApp channel (bridge: #{@bridge_url})")
 
         loop do
@@ -64,9 +74,6 @@ module Pocketrb
             sleep RECONNECT_DELAY
           end
         end
-      rescue LoadError
-        Pocketrb.logger.error("websocket-client-simple gem not installed. Run: gem install websocket-client-simple")
-        raise
       end
 
       # Send an outbound message via the WhatsApp WebSocket bridge

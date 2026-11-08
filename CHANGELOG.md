@@ -11,12 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enhancement: Add `openai_compatible` provider for any OpenAI chat completions server (vLLM, llama.cpp, llamafile, LM Studio, Ollama), configured with `openai_compatible_base_url` and an optional `openai_compatible_api_key`
 - Enhancement: Add Ruby warning category opt-in to test helpers
+- Maintenance: Add `fugit` as a runtime dependency, so cron expressions work without installing it separately
 - Maintenance: Require Ruby 4.0+ (`required_ruby_version` was `>= 3.2.0`; Ruby 3.2 is EOL and CI tests only Ruby 4.0)
 - Maintenance: Document `@return [Boolean]` on predicate methods to satisfy yard-lint 1.13.0
 - Maintenance: Remove unused runtime dependencies `anthropic`, `pastel`, `tty-markdown` and `tty-prompt`, allow `json` 3.x (`web_fetch` converts a body without a charset to UTF-8, and tool-call arguments with a duplicate key keep the last value, as on json 2.x) and drop the duplicate `playwright-ruby-client` entry from the `Gemfile`
 
 ### Fixed
 
+- Fix: `pocketrb whatsapp` without the `websocket-client-simple` gem raises `Pocketrb::MissingDependencyError` (a `LoadError`) that says to add the gem, instead of a bare `LoadError` (#14)
+- Fix: Cron jobs with a cron expression run on that schedule instead of every minute when `fugit` was not installed
 - Fix: `web_fetch` replaces invalid bytes in the response body, so such a page no longer fails with `invalid byte sequence` (declared charset) or raises `JSON::GeneratorError` in the next provider request (no charset)
 - Fix: `Providers::OpenRouter#chat_stream` no longer raises `FrozenError` on the first streamed chunk
 - Fix: `InboundMessage#has_media?` returns `false` instead of `nil` when media is `nil`

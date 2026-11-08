@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "async", "~> 2.0"
   spec.add_dependency "faraday", "~> 2.0"
   spec.add_dependency "faraday-follow_redirects", "~> 0.3"
+  spec.add_dependency "fugit", "~> 1.11"
   spec.add_dependency "json", ">= 2.7", "< 4"
   spec.add_dependency "playwright-ruby-client", "~> 1.58"
   spec.add_dependency "ruby_llm", "~> 2.0"
@@ -55,4 +56,3 @@ end
 
 # Optional dependencies (loaded on demand)
 # For WhatsApp bridge: gem install websocket-client-simple
-# For cron expressions: gem install fugit

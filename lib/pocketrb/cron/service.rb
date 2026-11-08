@@ -3,6 +3,7 @@
 require "json"
 require "securerandom"
 require "fileutils"
+require "fugit"
 require_relative "job"
 
 module Pocketrb
@@ -294,9 +295,6 @@ module Pocketrb
       # @param tz [String, nil] timezone for cron evaluation
       # @return [Integer, nil] next run time in milliseconds since epoch
       def compute_cron_next(expr, tz = nil)
-        # Try to use fugit if available
-
-        require "fugit"
         cron = Fugit.parse_cron(expr)
         return nil unless cron
 
@@ -305,10 +303,6 @@ module Pocketrb
 
         next_time = cron.next_time(now)
         (next_time.to_f * 1000).to_i
-      rescue LoadError
-        # Fallback: simple minute-based scheduling without fugit
-        Pocketrb.logger.warn("Fugit gem not available, cron expressions may not work correctly")
-        ((Time.now.to_f * 1000) + 60_000).to_i
       end
 
       # Arm the timer thread for the next earliest job

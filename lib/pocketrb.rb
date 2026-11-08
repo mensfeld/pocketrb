@@ -27,6 +27,9 @@ module Pocketrb
   # Raised when MCP (Model Context Protocol) operations fail
   class MCPError < Error; end
 
+  # Raised when an optional gem needed by a feature is not installed
+  class MissingDependencyError < LoadError; end
+
   class << self
     attr_writer :logger
 
