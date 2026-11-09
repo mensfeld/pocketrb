@@ -117,7 +117,6 @@ module Pocketrb
       def format_output(content)
         return "" if content.nil? || content.empty?
 
-        # Simple formatting - could be enhanced with tty-markdown
         content
       end
     end

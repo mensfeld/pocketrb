@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Maintenance: Require Ruby 4.0+ (`required_ruby_version` was `>= 3.2.0`; Ruby 3.2 is EOL and CI tests only Ruby 4.0)
 - Maintenance: Document `@return [Boolean]` on predicate methods to satisfy yard-lint 1.13.0
 - Maintenance: Remove unused runtime dependencies `anthropic`, `pastel`, `tty-markdown` and `tty-prompt`, allow `json` 3.x (`web_fetch` converts a body without a charset to UTF-8, and tool-call arguments with a duplicate key keep the last value, as on json 2.x) and drop the duplicate `playwright-ruby-client` entry from the `Gemfile`
+- Maintenance: Remove the leftover `README_ANALYSIS.md`, the placeholder WhatsApp bridge link from the README and list all providers under `chat --provider`
 
 ### Fixed
 

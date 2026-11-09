@@ -54,7 +54,7 @@ pocketrb chat [options]
 
 Options:
 - `-m, --model MODEL` - Model to use (default: claude-sonnet-5-5)
-- `-p, --provider PROVIDER` - LLM provider (anthropic, openrouter, openai_compatible, ruby_llm)
+- `-p, --provider PROVIDER` - LLM provider (anthropic, openrouter, openai_compatible, ruby_llm, claude_cli, claude_max_proxy)
 - `-w, --workspace DIR` - Workspace directory for file access
 - `-M, --memory-dir DIR` - Memory/persona directory (default: same as workspace)
 - `-s, --system-prompt TEXT` - Custom system prompt
@@ -76,7 +76,7 @@ Options:
 
 ### WhatsApp Bot
 
-Requires the [whatsapp-web.js bridge](https://github.com/user/whatsapp-bridge) running and the `websocket-client-simple` gem, which pocketrb does not install for you:
+Requires a whatsapp-web.js bridge running and the `websocket-client-simple` gem, which pocketrb does not install for you:
 
 ```bash
 gem install websocket-client-simple   # or add gem "websocket-client-simple" to your Gemfile
