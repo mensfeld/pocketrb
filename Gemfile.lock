@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    pocketrb (0.2.0)
+    pocketrb (0.3.0)
       async (~> 2.0)
       faraday (~> 2.0)
       faraday-follow_redirects (~> 0.3)
