@@ -122,6 +122,9 @@ module Pocketrb
             task.async { run_channel(channel) }
           end
 
+          # Channels have claimed their messages; drop the rest so they do not pile up
+          task.async { drop_unrouted_outbound(bus) }
+
           # Start all services
           services.each(&:start)
 
@@ -144,6 +147,16 @@ module Pocketrb
         channel.run
       rescue StandardError => e
         Pocketrb.logger.error("#{channel.name} channel stopped: #{e.message}")
+      end
+
+      # Drops outbound messages left in the shared queue, which no running channel consumes
+      # @param bus [Bus::MessageBus] gateway message bus
+      # @return [void]
+      def drop_unrouted_outbound(bus)
+        loop do
+          message = bus.consume_outbound
+          Pocketrb.logger.warn("No consumer for the #{message.channel} channel, dropping outbound message")
+        end
       end
 
       default_task :call

@@ -72,6 +72,36 @@ RSpec.describe Pocketrb::CLI::Gateway do
       expect(agent_loop).to have_received(:stop)
     end
 
+    it "drops outbound messages when no channel runs" do
+      stub_whatsapp(available: false)
+      bus = Pocketrb::Bus::MessageBus.new
+      allow(Pocketrb::Bus::MessageBus).to receive(:new).and_return(bus)
+      allow(agent_loop).to receive(:run) do
+        1000.times { bus.publish_outbound(Pocketrb::Bus::OutboundMessage.new(channel: :cli, chat_id: "c", content: "x")) }
+      end
+      allow(Pocketrb.logger).to receive(:warn)
+      expect { run_gateway }.to output.to_stdout
+      expect(bus.pending_outbound?).to be false
+      expect(Pocketrb.logger).to have_received(:warn).with("No consumer for the cli channel, dropping outbound message").exactly(1000).times
+    end
+
+    it "delivers messages published before start to the running channel" do
+      stub_whatsapp(available: false)
+      bus = Pocketrb::Bus::MessageBus.new
+      allow(Pocketrb::Bus::MessageBus).to receive(:new).and_return(bus)
+      channel = Class.new(Pocketrb::Channels::Base) do
+        define_method(:sent) { @sent ||= [] }
+        define_method(:run_inbound_loop) { sleep }
+        define_method(:send_message) { |message| sent << message }
+      end.new(bus: bus, name: :telegram)
+      allow(Pocketrb::Channels::Telegram).to receive(:new).and_return(channel)
+      allow(agent_loop).to receive(:run) do
+        3.times { bus.publish_outbound(Pocketrb::Bus::OutboundMessage.new(channel: :telegram, chat_id: "t", content: "x")) }
+      end
+      expect { run_gateway("--telegram-token", "token") }.to output.to_stdout
+      expect(channel.sent.size).to eq(3)
+    end
+
     it "shuts down when interrupted before channels and services exist" do
       allow(Pocketrb::Providers::Registry).to receive(:get).and_raise(Interrupt)
       expect { run_gateway }.to output(/Shutting down gateway/).to_stdout
