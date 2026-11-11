@@ -90,9 +90,17 @@ RSpec.describe Pocketrb::CLI::Gateway do
       bus = Pocketrb::Bus::MessageBus.new
       allow(Pocketrb::Bus::MessageBus).to receive(:new).and_return(bus)
       channel = Class.new(Pocketrb::Channels::Base) do
-        define_method(:sent) { @sent ||= [] }
-        define_method(:run_inbound_loop) { sleep }
-        define_method(:send_message) { |message| sent << message }
+        def sent
+          @sent ||= []
+        end
+
+        def run_inbound_loop
+          sleep
+        end
+
+        def send_message(message)
+          sent << message
+        end
       end.new(bus: bus, name: :telegram)
       allow(Pocketrb::Channels::Telegram).to receive(:new).and_return(channel)
       allow(agent_loop).to receive(:run) do

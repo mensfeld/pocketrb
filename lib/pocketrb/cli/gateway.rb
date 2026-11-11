@@ -153,10 +153,7 @@ module Pocketrb
       # @param bus [Bus::MessageBus] gateway message bus
       # @return [void]
       def drop_unrouted_outbound(bus)
-        loop do
-          message = bus.consume_outbound
-          Pocketrb.logger.warn("No consumer for the #{message.channel} channel, dropping outbound message")
-        end
+        loop { bus.drop_outbound(bus.consume_outbound) }
       end
 
       default_task :call

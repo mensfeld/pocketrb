@@ -47,8 +47,15 @@ module Pocketrb
 
         @stats.increment(:outbound)
         queue = @mutex.synchronize { route_outbound(message) }
-        Pocketrb.logger.warn("No consumer for the #{message.channel} channel, dropping outbound message") unless queue
+        drop_outbound(message) unless queue
         notify_subscribers(:outbound, message)
+      end
+
+      # Drop an outbound message that no channel consumes
+      # @param message [OutboundMessage] message addressed to a channel without a consumer
+      # @return [void]
+      def drop_outbound(message)
+        Pocketrb.logger.warn("No consumer for the #{message.channel} channel, dropping outbound message")
       end
 
       # Consume the next outbound message (blocking)
