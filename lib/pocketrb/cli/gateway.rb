@@ -130,9 +130,9 @@ module Pocketrb
         end
       rescue Interrupt
         say "\nShutting down gateway...", :yellow
-        channels.each(&:stop)
-        services.each(&:stop)
-        agent_loop.stop
+        channels&.each(&:stop)
+        services&.each(&:stop)
+        agent_loop&.stop
       end
 
       private

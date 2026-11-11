@@ -44,6 +44,18 @@ RSpec.describe Pocketrb::CLI::Gateway do
       expect(started).to eq(%i[telegram whatsapp])
     end
 
+    it "starts cron and heartbeat while Telegram blocks" do
+      stub_whatsapp(available: true)
+      cron = instance_double(Pocketrb::Cron::Service, start: nil, stop: nil)
+      heartbeat = instance_double(Pocketrb::Heartbeat::Service, start: nil, stop: nil)
+      allow(Pocketrb::Cron::Service).to receive(:new).and_return(cron)
+      allow(Pocketrb::Heartbeat::Service).to receive(:new).and_return(heartbeat)
+      allow(agent_loop).to receive(:tools).and_return(instance_double(Pocketrb::Tools::Registry, update_context: nil))
+      expect { run_gateway("--telegram-token", "token", "--enable-cron", "--enable-heartbeat") }.to output.to_stdout
+      expect(cron).to have_received(:start)
+      expect(heartbeat).to have_received(:start)
+    end
+
     it "logs a failing channel and keeps starting the others" do
       stub_whatsapp(available: true)
       allow(telegram).to receive(:run).and_raise(StandardError, "boom")

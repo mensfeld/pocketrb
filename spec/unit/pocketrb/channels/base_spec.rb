@@ -71,6 +71,29 @@ RSpec.describe Pocketrb::Channels::Base do
     end
   end
 
+  describe "outbound delivery" do
+    let(:bus) { Pocketrb::Bus::MessageBus.new }
+
+    it "delivers each channel only its own messages when channels share a bus" do
+      telegram = TestChannel.new(bus: bus, name: :telegram)
+      whatsapp = TestChannel.new(bus: bus, name: :whatsapp)
+
+      Sync do |task|
+        telegram.run
+        whatsapp.run
+        10.times do |i|
+          bus.publish_outbound(Pocketrb::Bus::OutboundMessage.new(channel: :telegram, chat_id: "t", content: i.to_s))
+          bus.publish_outbound(Pocketrb::Bus::OutboundMessage.new(channel: :whatsapp, chat_id: "w", content: i.to_s))
+        end
+        sleep(0.01)
+        task.children.each(&:stop)
+      end
+
+      expect(telegram.sent_messages.map(&:chat_id)).to eq(["t"] * 10)
+      expect(whatsapp.sent_messages.map(&:chat_id)).to eq(["w"] * 10)
+    end
+  end
+
   describe "#stop" do
     it "sets running to false" do
       channel.instance_variable_set(:@running, true)

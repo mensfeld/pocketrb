@@ -51,12 +51,7 @@ module Pocketrb
       # Consume outbound messages from the bus and dispatch to send_message
       def start_outbound_consumer
         Async do
-          while @running
-            message = @bus.consume_outbound
-            next unless message.channel == @name
-
-            send_message(message)
-          end
+          send_message(@bus.consume_outbound(@name)) while @running
         end
       end
 
