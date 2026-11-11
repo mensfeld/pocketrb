@@ -5,7 +5,9 @@ require "spec_helper"
 RSpec.describe Pocketrb::Agent::Loop do
   let(:workspace) { Dir.mktmpdir("pocketrb-loop") }
   let(:image_path) { File.join(workspace, "photo.png").tap { |p| File.binwrite(p, "\x89PNG\r\n\x1a\nfake") } }
-  let(:agent) do
+  let(:agent) { build_agent }
+
+  def build_agent
     described_class.new(
       bus: Pocketrb::Bus::MessageBus.new,
       provider: Pocketrb::Providers::Anthropic.new,
@@ -69,9 +71,8 @@ RSpec.describe Pocketrb::Agent::Loop do
     it "sends earlier media as text after the session is reloaded from storage" do
       media = [Pocketrb::Bus::Media.new(type: :image, path: image_path, mime_type: "image/png", filename: "photo.png")]
       agent.process_message(inbound("First", media: media))
-      agent.sessions.instance_variable_get(:@sessions).clear
 
-      agent.process_message(inbound("Second"))
+      build_agent.process_message(inbound("Second"))
 
       expect(WebMock).to(have_requested(:post, "https://api.anthropic.com/v1/messages").with do |req|
         JSON.parse(req.body)["messages"] == [

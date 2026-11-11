@@ -284,8 +284,7 @@ RSpec.describe Pocketrb::Session::Manager do
       session.add_user_message("Look", media: [media])
       manager.save(session)
 
-      manager.instance_variable_get(:@sessions).clear
-      loaded = manager.get("test:media")
+      loaded = described_class.new(storage_dir: storage_dir).get("test:media")
 
       expect(loaded.messages.first.content).to eq(session.messages.first.content)
     end
