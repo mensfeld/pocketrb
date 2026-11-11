@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix: The agent loop sends a message's media to the provider instead of raising `NoMethodError` (`image?` on a Hash), sends the current message once instead of twice, and keeps the text of earlier media messages after a session is reloaded from storage
+- Fix: `pocketrb start --provider` help lists all providers instead of only `anthropic` and `openrouter`
 
 ## [0.3.0] - 2026-11-10
 
