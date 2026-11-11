@@ -42,14 +42,21 @@ module Pocketrb
         false
       end
 
+      # Ensure the WebSocket client library is available
+      # @return [void]
+      # @raise [MissingDependencyError] when the websocket-client-simple gem is not installed
+      def ensure_available!
+        return if available?
+
+        raise MissingDependencyError,
+              "The WhatsApp channel needs the websocket-client-simple gem. " \
+              "Add `gem \"websocket-client-simple\"` to your Gemfile or run: gem install websocket-client-simple"
+      end
+
       # Start the channel
       # @raise [MissingDependencyError] when the websocket-client-simple gem is not installed
       def run
-        unless available?
-          raise MissingDependencyError,
-                "The WhatsApp channel needs the websocket-client-simple gem. " \
-                "Add `gem \"websocket-client-simple\"` to your Gemfile or run: gem install websocket-client-simple"
-        end
+        ensure_available!
 
         super
       end

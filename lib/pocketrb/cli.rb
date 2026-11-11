@@ -108,7 +108,7 @@ module Pocketrb
     option :provider, type: :string, aliases: "-p", desc: "LLM provider"
     option :telegram_token, type: :string, desc: "Telegram bot token"
     option :telegram_users, type: :array, desc: "Allowed Telegram users"
-    option :whatsapp_bridge, type: :string, default: "ws://localhost:3001", desc: "WhatsApp bridge URL"
+    option :whatsapp_bridge, type: :string, desc: "WhatsApp bridge URL (default: ws://localhost:3001)"
     option :whatsapp_users, type: :array, desc: "Allowed WhatsApp numbers"
     option :heartbeat_interval, type: :numeric, default: 1800, desc: "Heartbeat interval in seconds"
     option :enable_cron, type: :boolean, default: true, desc: "Enable cron service"

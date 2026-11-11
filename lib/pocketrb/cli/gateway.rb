@@ -9,7 +9,7 @@ module Pocketrb
       option :provider, type: :string, aliases: "-p", desc: "LLM provider"
       option :telegram_token, type: :string, desc: "Telegram bot token"
       option :telegram_users, type: :array, desc: "Allowed Telegram users"
-      option :whatsapp_bridge, type: :string, default: "ws://localhost:3001", desc: "WhatsApp bridge URL"
+      option :whatsapp_bridge, type: :string, desc: "WhatsApp bridge URL (default: ws://localhost:3001)"
       option :whatsapp_users, type: :array, desc: "Allowed WhatsApp numbers"
       option :heartbeat_interval, type: :numeric, default: 1800, desc: "Heartbeat interval in seconds"
       option :enable_cron, type: :boolean, default: true, desc: "Enable cron service"
@@ -60,14 +60,19 @@ module Pocketrb
           say "  - Telegram: enabled"
         end
 
-        # Start WhatsApp if bridge available
-        if options[:whatsapp_bridge]
-          channels << Pocketrb::Channels::WhatsApp.new(
-            bus: bus,
-            bridge_url: options[:whatsapp_bridge],
-            allowed_users: options[:whatsapp_users]
-          )
-          say "  - WhatsApp: enabled (#{options[:whatsapp_bridge]})"
+        # Start WhatsApp; an explicit --whatsapp-bridge requires websocket-client-simple
+        bridge_url = options[:whatsapp_bridge] || Pocketrb::Channels::WhatsApp::DEFAULT_BRIDGE_URL
+        whatsapp = Pocketrb::Channels::WhatsApp.new(
+          bus: bus,
+          bridge_url: bridge_url,
+          allowed_users: options[:whatsapp_users]
+        )
+        if options[:whatsapp_bridge] || whatsapp.available?
+          whatsapp.ensure_available!
+          channels << whatsapp
+          say "  - WhatsApp: enabled (#{bridge_url})"
+        else
+          say "  - WhatsApp: skipped (websocket-client-simple gem not installed)", :yellow
         end
 
         # Start Cron service
@@ -108,12 +113,17 @@ module Pocketrb
 
         say "\nPress Ctrl+C to stop\n"
 
-        Async do
+        Async do |task|
           # Start agent loop
           agent_loop.run
 
-          # Start all channels
-          channels.each(&:run)
+          # Start all channels, each in its own task so a blocking channel does not hold back the rest
+          channels.each do |channel|
+            task.async { run_channel(channel) }
+          end
+
+          # Channels have claimed their messages; drop the rest so they do not pile up
+          task.async { drop_unrouted_outbound(bus) }
 
           # Start all services
           services.each(&:start)
@@ -123,7 +133,27 @@ module Pocketrb
         end
       rescue Interrupt
         say "\nShutting down gateway...", :yellow
-        services.each(&:stop)
+        channels&.each(&:stop)
+        services&.each(&:stop)
+        agent_loop&.stop
+      end
+
+      private
+
+      # Runs a channel and logs its failure, so one failing channel does not stop the others
+      # @param channel [Channels::Base] Telegram or WhatsApp channel started by the gateway
+      # @return [void]
+      def run_channel(channel)
+        channel.run
+      rescue StandardError => e
+        Pocketrb.logger.error("#{channel.name} channel stopped: #{e.message}")
+      end
+
+      # Drops outbound messages left in the shared queue, which no running channel consumes
+      # @param bus [Bus::MessageBus] gateway message bus
+      # @return [void]
+      def drop_unrouted_outbound(bus)
+        loop { bus.drop_outbound(bus.consume_outbound) }
       end
 
       default_task :call

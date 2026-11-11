@@ -12,6 +12,7 @@ module Pocketrb
       def initialize
         @inbound = Async::Queue.new
         @outbound = Async::Queue.new
+        @channel_outbound = {}
         @tool_events = Async::Queue.new
         @state_events = Async::Queue.new
         @subscribers = { inbound: [], outbound: [], tool: [], state: [] }
@@ -45,13 +46,27 @@ module Pocketrb
         raise ArgumentError, "Expected OutboundMessage" unless message.is_a?(OutboundMessage)
 
         @stats.increment(:outbound)
-        @outbound.enqueue(message)
+        queue = @mutex.synchronize { route_outbound(message) }
+        drop_outbound(message) unless queue
         notify_subscribers(:outbound, message)
       end
 
+      # Drop an outbound message that no channel consumes
+      # @param message [OutboundMessage] message addressed to a channel without a consumer
+      # @return [void]
+      def drop_outbound(message)
+        Pocketrb.logger.warn("No consumer for the #{message.channel} channel, dropping outbound message")
+      end
+
       # Consume the next outbound message (blocking)
-      def consume_outbound
-        @outbound.dequeue
+      # @param channel [Symbol, nil] Channel whose messages to consume; once any channel consumes,
+      #   messages no longer reach consumers without a channel, and messages for channels
+      #   without a consumer are dropped
+      # @return [OutboundMessage]
+      def consume_outbound(channel = nil)
+        return @outbound.dequeue unless channel
+
+        @mutex.synchronize { @channel_outbound[channel] ||= claim_outbound(channel) }.dequeue
       end
 
       # Publish a tool execution event
@@ -116,19 +131,41 @@ module Pocketrb
       # Check if there are pending outbound messages
       # @return [Boolean] True if outbound queue is not empty
       def pending_outbound?
-        !@outbound.empty?
+        !@outbound.empty? || @mutex.synchronize { @channel_outbound.values.any? { |queue| !queue.empty? } }
       end
 
       # Clear all queues
       def clear!
         @inbound = Async::Queue.new
         @outbound = Async::Queue.new
+        @mutex.synchronize { @channel_outbound.each_value { |queue| queue.size.times { queue.dequeue } } }
         @tool_events = Async::Queue.new
         @state_events = Async::Queue.new
         @stats.reset!
       end
 
       private
+
+      # Enqueue a message on its channel's queue, or on the shared queue while no channel consumes
+      # @param message [OutboundMessage] message to route
+      # @return [Async::Queue, nil] the queue used, nil when the message was dropped
+      def route_outbound(message)
+        queue = @channel_outbound.fetch(message.channel) { @outbound if @channel_outbound.empty? }
+        queue&.enqueue(message)
+        queue
+      end
+
+      # Build a channel's queue and move its messages already waiting in the shared queue into it
+      # @param channel [Symbol] channel that starts consuming
+      # @return [Async::Queue]
+      def claim_outbound(channel)
+        queue = Async::Queue.new
+        @outbound.size.times do
+          message = @outbound.dequeue
+          (message.channel == channel ? queue : @outbound).enqueue(message)
+        end
+        queue
+      end
 
       # Notify all subscribers of a given event type
       # @param type [Symbol] event type (:inbound, :outbound, :tool, :state)
