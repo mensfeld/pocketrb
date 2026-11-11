@@ -46,13 +46,15 @@ module Pocketrb
         raise ArgumentError, "Expected OutboundMessage" unless message.is_a?(OutboundMessage)
 
         @stats.increment(:outbound)
-        @mutex.synchronize { @channel_outbound.fetch(message.channel, @outbound).enqueue(message) }
+        queue = @mutex.synchronize { route_outbound(message) }
+        Pocketrb.logger.warn("No consumer for the #{message.channel} channel, dropping outbound message") unless queue
         notify_subscribers(:outbound, message)
       end
 
       # Consume the next outbound message (blocking)
-      # @param channel [Symbol, nil] Channel whose messages to consume; once a channel consumes,
-      #   its messages no longer reach consumers without a channel
+      # @param channel [Symbol, nil] Channel whose messages to consume; once any channel consumes,
+      #   messages no longer reach consumers without a channel, and messages for channels
+      #   without a consumer are dropped
       # @return [OutboundMessage]
       def consume_outbound(channel = nil)
         return @outbound.dequeue unless channel
@@ -136,6 +138,15 @@ module Pocketrb
       end
 
       private
+
+      # Enqueue a message on its channel's queue, or on the shared queue while no channel consumes
+      # @param message [OutboundMessage] message to route
+      # @return [Async::Queue, nil] the queue used, nil when the message was dropped
+      def route_outbound(message)
+        queue = @channel_outbound.fetch(message.channel) { @outbound if @channel_outbound.empty? }
+        queue&.enqueue(message)
+        queue
+      end
 
       # Build a channel's queue and move its messages already waiting in the shared queue into it
       # @param channel [Symbol] channel that starts consuming

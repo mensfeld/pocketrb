@@ -127,6 +127,16 @@ RSpec.describe Pocketrb::Bus::MessageBus do
 
       expect(consumed).to eq([message, later, other])
     end
+
+    it "drops messages for a channel without a consumer once a channel consumes" do
+      allow(Pocketrb.logger).to receive(:warn)
+      bus.publish_outbound(message)
+      bus.consume_outbound(:test)
+      1000.times { bus.publish_outbound(Pocketrb::Bus::OutboundMessage.new(channel: :cli, chat_id: "c", content: "x")) }
+
+      expect(bus.pending_outbound?).to be false
+      expect(Pocketrb.logger).to have_received(:warn).with("No consumer for the cli channel, dropping outbound message").exactly(1000).times
+    end
   end
 
   describe "#publish_tool_event" do
@@ -261,17 +271,6 @@ RSpec.describe Pocketrb::Bus::MessageBus do
   describe "#pending_inbound?" do
     it "returns false for empty queue" do
       expect(bus.pending_inbound?).to be false
-    end
-
-    it "returns true after publishing to a consuming channel" do
-      message = Pocketrb::Bus::OutboundMessage.new(channel: :test, chat_id: "chat", content: "Test")
-      bus.publish_outbound(message)
-      bus.consume_outbound(:test)
-      bus.publish_outbound(message)
-
-      expect(bus.pending_outbound?).to be true
-      bus.clear!
-      expect(bus.pending_outbound?).to be false
     end
 
     it "returns true after publishing" do

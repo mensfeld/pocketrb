@@ -72,6 +72,11 @@ RSpec.describe Pocketrb::CLI::Gateway do
       expect(agent_loop).to have_received(:stop)
     end
 
+    it "shuts down when interrupted before channels and services exist" do
+      allow(Pocketrb::Providers::Registry).to receive(:get).and_raise(Interrupt)
+      expect { run_gateway }.to output(/Shutting down gateway/).to_stdout
+    end
+
     it "skips WhatsApp with a warning when the default bridge lacks the gem" do
       stub_whatsapp(available: false)
       expect { run_gateway("--telegram-token", "token") }
