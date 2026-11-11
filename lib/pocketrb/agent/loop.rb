@@ -135,16 +135,14 @@ module Pocketrb
         # Get relevant memory context for this message
         memory_context = @memory.relevant_context(msg.content, max_facts: 10)
 
-        # Build initial messages (with media support)
+        # The session stores the current message with media metadata only; build_messages adds it
+        # again with the inbound media objects, so leave it out of the history
         messages = @context.build_messages(
-          history: session.get_history(max_messages: 50),
+          history: session.get_history(max_messages: 51)[0...-1],
           current: msg.content,
           media: msg.media,
           memory_context: memory_context
         )
-
-        # Drop the last message since we already added it to history
-        messages = messages[0..-2] + [session.last_message]
 
         iteration = 0
         final_response = nil

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fix: The agent loop sends a message's media to the provider instead of raising `NoMethodError` (`image?` on a Hash), sends the current message once instead of twice, and keeps the text of earlier media messages after a session is reloaded from storage
+
 ## [0.3.0] - 2026-11-10
 
 ### Changed
