@@ -432,12 +432,14 @@ Options:
 - `-p, --provider` - LLM provider
 - `--telegram-token` - Telegram bot token
 - `--telegram-users` - Allowed Telegram usernames/IDs
-- `--whatsapp-bridge` - WhatsApp bridge WebSocket URL (default: ws://localhost:3001)
+- `--whatsapp-bridge` - WhatsApp bridge WebSocket URL (default: ws://localhost:3001). Without this option, the gateway skips WhatsApp when the `websocket-client-simple` gem is not installed; with it, the gem is required
 - `--whatsapp-users` - Allowed WhatsApp phone numbers
 - `--enable-cron` - Enable cron service (default: true)
 - `--enable-heartbeat` - Enable heartbeat service (default: true)
 - `--heartbeat-interval` - Heartbeat interval in seconds (default: 1800)
 - `--autonomous` - Skip permission prompts for sandboxed environments
+
+All channels run at the same time. A channel that fails is logged and the others keep running.
 
 ## Context Compaction
 
