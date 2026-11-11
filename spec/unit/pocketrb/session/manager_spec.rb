@@ -278,6 +278,17 @@ RSpec.describe Pocketrb::Session::Manager do
       expect(loaded.messages.first.content).to eq("File contents")
     end
 
+    it "loads media blocks with symbol keys" do
+      session = Pocketrb::Session::Session.new(key: "test:media")
+      media = Pocketrb::Bus::Media.new(type: :image, path: "/tmp/pic.png", mime_type: "image/png", filename: "pic.png")
+      session.add_user_message("Look", media: [media])
+      manager.save(session)
+
+      loaded = described_class.new(storage_dir: storage_dir).get("test:media")
+
+      expect(loaded.messages.first.content).to eq(session.messages.first.content)
+    end
+
     it "handles invalid UTF-8 in content" do
       session = Pocketrb::Session::Session.new(key: "test:utf8")
       invalid_string = (+"Test \xFF invalid UTF-8").force_encoding("UTF-8")

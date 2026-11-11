@@ -126,7 +126,7 @@ module Pocketrb
           data = JSON.parse(line.strip)
           messages << Providers::Message.new(
             role: data["role"],
-            content: data["content"],
+            content: parse_content(data["content"]),
             name: data["name"],
             tool_call_id: data["tool_call_id"],
             tool_calls: parse_tool_calls(data["tool_calls"])
@@ -137,6 +137,25 @@ module Pocketrb
       rescue JSON::ParserError => e
         Pocketrb.logger.error("Failed to parse session #{key}: #{e.message}")
         Session.new(key: key)
+      end
+
+      # Restore the symbol keys of content blocks, as Session#add_user_message builds them
+      # @param content [String, Array<Hash>, nil] content as parsed from JSON
+      # @return [String, Array<Hash>, nil] content with symbol-keyed blocks and media
+      def parse_content(content)
+        return content unless content.is_a?(Array)
+
+        content.map do |block|
+          next block unless block.is_a?(Hash)
+
+          block = block.transform_keys(&:to_sym)
+          if block[:media].is_a?(Hash)
+            media = block[:media].transform_keys(&:to_sym)
+            media[:type] = media[:type]&.to_sym
+            block[:media] = media
+          end
+          block
+        end
       end
 
       # Parse raw tool call hashes into ToolCall objects
