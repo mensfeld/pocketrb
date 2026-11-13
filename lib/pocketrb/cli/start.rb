@@ -6,7 +6,7 @@ module Pocketrb
     class Start < Base
       desc "start", "Start the agent in continuous mode"
       option :model, type: :string, aliases: "-m", desc: "Model to use"
-      option :provider, type: :string, aliases: "-p", desc: "LLM provider (anthropic, openrouter, openai_compatible, ruby_llm, claude_cli, claude_max_proxy)"
+      option :provider, type: :string, aliases: "-p", desc: "LLM provider (anthropic, openrouter, openai_compatible, ruby_llm, claude_cli)"
       option :channel, type: :string, aliases: "-c", default: "cli", desc: "Channel to connect to"
 
       # Starts the agent in continuous mode with CLI channel

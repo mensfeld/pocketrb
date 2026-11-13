@@ -114,43 +114,20 @@ module Pocketrb
       # @return [void]
       # @raise [ConfigurationError] if no credentials are configured
       def validate_config!
-        return if oauth_token
         return if api_key(:anthropic_api_key)
 
-        raise ConfigurationError,
-              "Either ANTHROPIC_OAUTH_TOKEN or ANTHROPIC_API_KEY is required for #{self.class.name}"
+        raise ConfigurationError, "ANTHROPIC_API_KEY is required for #{self.class.name}"
       end
 
       private
 
-      # Check for OAuth token (Max subscription via `claude setup-token`)
-      # @return [String, nil] OAuth token if configured
-      def oauth_token
-        @config[:anthropic_oauth_token] || ENV.fetch("ANTHROPIC_OAUTH_TOKEN", nil)
-      end
-
-      # Whether OAuth authentication is being used
-      # @return [Boolean]
-      def using_oauth?
-        !oauth_token.nil?
-      end
-
-      # Build Faraday HTTP client with appropriate authentication headers
+      # Build Faraday HTTP client with API key authentication headers
       # @return [Faraday::Connection]
       def client
         @client ||= Faraday.new(url: API_URL) do |f|
           f.headers["Content-Type"] = "application/json"
           f.headers["anthropic-version"] = API_VERSION
-
-          if using_oauth?
-            # OAuth authentication for Max subscription
-            # Token generated via: claude setup-token
-            f.headers["Authorization"] = "Bearer #{oauth_token}"
-            f.headers["anthropic-beta"] = "oauth-2025-04-20"
-          else
-            # Standard API key authentication
-            f.headers["x-api-key"] = api_key(:anthropic_api_key)
-          end
+          f.headers["x-api-key"] = api_key(:anthropic_api_key)
 
           f.adapter Faraday.default_adapter
         end

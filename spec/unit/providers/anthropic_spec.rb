@@ -4,93 +4,79 @@ require "spec_helper"
 
 RSpec.describe Pocketrb::Providers::Anthropic do
   describe "authentication" do
+    let(:url) { "https://api.anthropic.com/v1/messages" }
+    let(:messages) { [Pocketrb::Providers::Message.user("Hello")] }
+
+    before do
+      stub_request(:post, url)
+        .to_return(
+          status: 200,
+          body: {
+            "content" => [{ "type" => "text", "text" => "Hi" }],
+            "stop_reason" => "end_turn",
+            "usage" => { "input_tokens" => 1, "output_tokens" => 1 },
+            "model" => "claude-sonnet-5-5"
+          }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        )
+    end
+
     context "with API key" do
-      before do
-        ENV["ANTHROPIC_API_KEY"] = "test-api-key"
-        ENV.delete("ANTHROPIC_OAUTH_TOKEN")
-      end
-
-      after do
-        ENV.delete("ANTHROPIC_API_KEY")
-      end
+      before { ENV["ANTHROPIC_API_KEY"] = "test-api-key" }
+      after { ENV.delete("ANTHROPIC_API_KEY") }
 
       it "creates provider successfully" do
         provider = described_class.new
         expect(provider.name).to eq(:anthropic)
       end
 
-      it "uses x-api-key header" do
-        provider = described_class.new
-        expect(provider.send(:using_oauth?)).to be false
+      it "sends the API key in the x-api-key header" do
+        described_class.new.chat(messages: messages)
+
+        expect(WebMock).to(have_requested(:post, url)
+          .with { |req| req.headers["X-Api-Key"] == "test-api-key" && !req.headers.key?("Authorization") })
       end
     end
 
-    context "with OAuth token (Max subscription)" do
+    context "with API key via config" do
+      it "sends the configured API key" do
+        described_class.new(anthropic_api_key: "config-api-key").chat(messages: messages)
+
+        expect(WebMock).to(have_requested(:post, url)
+          .with { |req| req.headers["X-Api-Key"] == "config-api-key" })
+      end
+    end
+
+    context "with only ANTHROPIC_OAUTH_TOKEN" do
       before do
         ENV.delete("ANTHROPIC_API_KEY")
         ENV["ANTHROPIC_OAUTH_TOKEN"] = "test-oauth-token"
       end
 
-      after do
-        ENV.delete("ANTHROPIC_OAUTH_TOKEN")
+      after { ENV.delete("ANTHROPIC_OAUTH_TOKEN") }
+
+      it "does not authenticate with the OAuth token" do
+        expect { described_class.new }.to raise_error(
+          Pocketrb::ConfigurationError,
+          /ANTHROPIC_API_KEY is required/
+        )
       end
 
-      it "creates provider successfully" do
-        provider = described_class.new
-        expect(provider.name).to eq(:anthropic)
-      end
-
-      it "uses OAuth authentication" do
-        provider = described_class.new
-        expect(provider.send(:using_oauth?)).to be true
-      end
-
-      it "returns the OAuth token" do
-        provider = described_class.new
-        expect(provider.send(:oauth_token)).to eq("test-oauth-token")
-      end
-    end
-
-    context "with both API key and OAuth token" do
-      before do
-        ENV["ANTHROPIC_API_KEY"] = "test-api-key"
-        ENV["ANTHROPIC_OAUTH_TOKEN"] = "test-oauth-token"
-      end
-
-      after do
-        ENV.delete("ANTHROPIC_API_KEY")
-        ENV.delete("ANTHROPIC_OAUTH_TOKEN")
-      end
-
-      it "prefers OAuth token" do
-        provider = described_class.new
-        expect(provider.send(:using_oauth?)).to be true
-      end
-    end
-
-    context "with config hash" do
-      it "accepts OAuth token via config" do
-        provider = described_class.new(anthropic_oauth_token: "config-oauth-token")
-        expect(provider.send(:oauth_token)).to eq("config-oauth-token")
-        expect(provider.send(:using_oauth?)).to be true
-      end
-
-      it "accepts API key via config" do
-        provider = described_class.new(anthropic_api_key: "config-api-key")
-        expect(provider.send(:using_oauth?)).to be false
+      it "does not accept an OAuth token via config" do
+        expect { described_class.new(anthropic_oauth_token: "config-oauth-token") }.to raise_error(
+          Pocketrb::ConfigurationError,
+          /ANTHROPIC_API_KEY is required/
+        )
       end
     end
 
     context "without any credentials" do
-      before do
-        ENV.delete("ANTHROPIC_API_KEY")
-        ENV.delete("ANTHROPIC_OAUTH_TOKEN")
-      end
+      before { ENV.delete("ANTHROPIC_API_KEY") }
 
       it "raises ConfigurationError" do
         expect { described_class.new }.to raise_error(
           Pocketrb::ConfigurationError,
-          /Either ANTHROPIC_OAUTH_TOKEN or ANTHROPIC_API_KEY is required/
+          "ANTHROPIC_API_KEY is required for Pocketrb::Providers::Anthropic"
         )
       end
     end
