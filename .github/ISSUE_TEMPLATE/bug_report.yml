@@ -83,7 +83,6 @@ body:
       label: LLM Provider
       options:
         - Anthropic API
-        - Anthropic OAuth (Max)
         - OpenRouter
         - RubyLLM
         - ClaudeCLI

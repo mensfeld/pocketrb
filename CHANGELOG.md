@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Maintenance: Remove the `ANTHROPIC_OAUTH_TOKEN` (`anthropic_oauth_token`) authentication from the `anthropic` provider and the `claude_max_proxy` provider. Anthropic's terms do not permit third-party apps to route requests through Claude subscription (Free, Pro, Max) credentials. The `anthropic` provider now requires `ANTHROPIC_API_KEY`; for subscription use, use the `claude_cli` provider, which runs the official `claude` binary
+
 ### Fixed
 
 - Fix: `pocketrb gateway` runs its channels at the same time, so WhatsApp, cron and heartbeat start when Telegram is enabled, and a failing channel is logged without stopping the others. Each channel consumes its own outbound messages (`MessageBus#consume_outbound(channel)`), so replies reach WhatsApp while Telegram runs; a reply for a channel that is not running (or any reply when no channel runs) is dropped with a warning. Without `--whatsapp-bridge` and without the `websocket-client-simple` gem, it skips WhatsApp with a warning instead of exiting; an explicit `--whatsapp-bridge` still raises `Pocketrb::MissingDependencyError`

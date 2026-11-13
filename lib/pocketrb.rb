@@ -59,7 +59,6 @@ loader.inflector.inflect(
   "openai_compatible" => "OpenAICompatible",
   "ruby_llm_provider" => "RubyLLMProvider",
   "claude_cli" => "ClaudeCLI",
-  "claude_max_proxy" => "ClaudeMaxProxy",
   "whatsapp" => "WhatsApp"
 )
 

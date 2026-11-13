@@ -9,7 +9,7 @@ A pocket-sized Ruby AI agent framework with multi-LLM support and advanced capab
 ## Features
 
 - **Clean async architecture**: MessageBus, proper tool_use API, async processing
-- **Multi-LLM support**: Claude (API + Max/OAuth + Proxy), OpenRouter, OpenAI-compatible APIs, RubyLLM, Claude CLI
+- **Multi-LLM support**: Claude (API key + Claude CLI), OpenRouter, OpenAI-compatible APIs, RubyLLM, Claude CLI
 - **Multi-channel**: CLI, Telegram, WhatsApp (via bridge)
 - **Advanced features**: Planning system, context compaction, runtime skills system
 - **Simple memory**: JSON-based memory with keyword matching (no external dependencies)
@@ -54,7 +54,7 @@ pocketrb chat [options]
 
 Options:
 - `-m, --model MODEL` - Model to use (default: claude-sonnet-5-5)
-- `-p, --provider PROVIDER` - LLM provider (anthropic, openrouter, openai_compatible, ruby_llm, claude_cli, claude_max_proxy)
+- `-p, --provider PROVIDER` - LLM provider (anthropic, openrouter, openai_compatible, ruby_llm, claude_cli)
 - `-w, --workspace DIR` - Workspace directory for file access
 - `-M, --memory-dir DIR` - Memory/persona directory (default: same as workspace)
 - `-s, --system-prompt TEXT` - Custom system prompt
@@ -295,26 +295,9 @@ export ANTHROPIC_API_KEY=sk-ant-...
 pocketrb chat --provider anthropic
 ```
 
-### Claude Max (OAuth)
-
-For Claude Max subscribers using OAuth token:
-
-```bash
-export ANTHROPIC_OAUTH_TOKEN=your-oauth-token
-pocketrb chat --provider anthropic
-```
-
-### Claude Max Proxy
-
-Alternative Claude Max access via proxy:
-
-```bash
-pocketrb chat --provider claude_max_proxy
-```
-
 ### Claude CLI
 
-Use the official Claude CLI (requires `claude` binary):
+Use the official Claude CLI (requires `claude` binary). Use this provider to run on a Claude subscription; the `claude` binary handles its own login:
 
 ```bash
 pocketrb chat --provider claude_cli
@@ -475,13 +458,12 @@ pocketrb config get model
 | Variable | Description |
 |----------|-------------|
 | `ANTHROPIC_API_KEY` | Anthropic API key |
-| `ANTHROPIC_OAUTH_TOKEN` | Claude Max OAuth token |
 | `OPENROUTER_API_KEY` | OpenRouter API key |
 | `OPENAI_COMPATIBLE_BASE_URL` | Base URL for the `openai_compatible` provider |
 | `OPENAI_COMPATIBLE_API_KEY` | API key for the `openai_compatible` provider (optional) |
 | `BRAVE_API_KEY` | Brave Search API key (for web_search tool) |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token |
-| `POCKETRB_PROVIDER` | Default provider (anthropic, openrouter, openai_compatible, ruby_llm, claude_cli, claude_max_proxy) |
+| `POCKETRB_PROVIDER` | Default provider (anthropic, openrouter, openai_compatible, ruby_llm, claude_cli) |
 | `POCKETRB_MODEL` | Default model |
 | `POCKETRB_LOG_LEVEL` | Log level (debug, info, warn, error) |
 | `POCKETRB_AUTONOMOUS` | Enable autonomous mode (1, true) - skips permission prompts |
