@@ -9,7 +9,7 @@ A pocket-sized Ruby AI agent framework with multi-LLM support and advanced capab
 ## Features
 
 - **Clean async architecture**: MessageBus, proper tool_use API, async processing
-- **Multi-LLM support**: Claude (API key + Claude CLI), OpenRouter, OpenAI-compatible APIs, RubyLLM, Claude CLI
+- **Multi-LLM support**: Claude API, OpenRouter, OpenAI-compatible APIs, RubyLLM, Claude CLI (subscription)
 - **Multi-channel**: CLI, Telegram, WhatsApp (via bridge)
 - **Advanced features**: Planning system, context compaction, runtime skills system
 - **Simple memory**: JSON-based memory with keyword matching (no external dependencies)
