@@ -160,6 +160,13 @@ RSpec.describe Pocketrb::Providers::Anthropic do
         .with { |req| JSON.parse(req.body).key?("temperature") })
     end
 
+    it "sends no thinking without thinking: true" do
+      provider.chat(messages: messages)
+
+      expect(WebMock).to(have_requested(:post, "https://api.anthropic.com/v1/messages")
+        .with { |req| !JSON.parse(req.body).key?("thinking") })
+    end
+
     %w[claude-sonnet-5-5 claude-opus-4-6].each do |model|
       it "sends adaptive thinking without budget_tokens or temperature for #{model}" do
         provider.chat(messages: messages, model: model, temperature: 0.3, thinking: true)

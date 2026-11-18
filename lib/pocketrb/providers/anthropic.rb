@@ -57,7 +57,8 @@ module Pocketrb
       # @param model [String, nil] Model name (defaults to default_model)
       # @param temperature [Float] Sampling temperature (0.0-1.0)
       # @param max_tokens [Integer] Maximum tokens to generate
-      # @param thinking [Boolean] Whether to enable adaptive thinking
+      # @param thinking [Boolean] Whether to enable adaptive thinking. Needs Claude 4.6 or later;
+      #   Claude 4.5 and earlier models return HTTP 400 with it
       # @return [LLMResponse] Parsed response with content and tool calls
       def chat(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, thinking: false)
         model ||= default_model
