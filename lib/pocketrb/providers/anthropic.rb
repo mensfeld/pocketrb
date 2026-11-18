@@ -57,7 +57,7 @@ module Pocketrb
       # @param model [String, nil] Model name (defaults to default_model)
       # @param temperature [Float] Sampling temperature (0.0-1.0)
       # @param max_tokens [Integer] Maximum tokens to generate
-      # @param thinking [Boolean] Whether to enable extended thinking mode
+      # @param thinking [Boolean] Whether to enable adaptive thinking
       # @return [LLMResponse] Parsed response with content and tool calls
       def chat(messages:, tools: nil, model: nil, temperature: 0.7, max_tokens: 4096, thinking: false)
         model ||= default_model
@@ -139,7 +139,7 @@ module Pocketrb
       # @param model [String] model name
       # @param temperature [Float] sampling temperature
       # @param max_tokens [Integer] maximum tokens to generate
-      # @param thinking [Boolean] whether to enable extended thinking
+      # @param thinking [Boolean] whether to enable adaptive thinking
       # @return [Hash] request body
       def build_request_body(messages, tools, model, temperature, max_tokens, thinking)
         system_message = extract_system_message(messages)
@@ -155,7 +155,7 @@ module Pocketrb
         body[:temperature] = temperature unless thinking || rejects_sampling?(model)
         body[:tools] = format_tools(tools) if tools&.any?
 
-        body[:thinking] = { type: "enabled", budget_tokens: [max_tokens / 2, 10_000].min } if thinking
+        body[:thinking] = { type: "adaptive" } if thinking
 
         body
       end
