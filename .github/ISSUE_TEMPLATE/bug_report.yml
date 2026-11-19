@@ -65,7 +65,7 @@ body:
     attributes:
       label: Ruby Version
       description: Output of `ruby -v`
-      placeholder: "ruby 4.0.9"
+      placeholder: "ruby 4.0.10"
     validations:
       required: true
 
