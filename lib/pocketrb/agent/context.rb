@@ -147,8 +147,8 @@ module Pocketrb
                   block[:text]
                 when "media"
                   media = block[:media]
-                  filename = media.is_a?(Hash) ? media[:filename] : media&.filename
-                  "[Previous image: #{filename || "attachment"}]"
+                  type, filename = media.is_a?(Hash) ? media.values_at(:type, :filename) : [media&.type, media&.filename]
+                  "[Previous #{type || "media"}: #{filename || "attachment"}]"
                 end
               elsif block.is_a?(String)
                 block
