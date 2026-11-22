@@ -67,10 +67,7 @@ RSpec.describe Pocketrb::Session::Manager do
       session.add_message(role: "system", content: "Test")
       manager.save(session)
 
-      # Clear memory cache
-      manager.instance_variable_get(:@sessions).clear
-
-      loaded = manager.get("test:456")
+      loaded = described_class.new(storage_dir: storage_dir).get("test:456")
 
       expect(loaded).not_to be_nil
       expect(loaded.messages.length).to eq(1)
@@ -146,20 +143,15 @@ RSpec.describe Pocketrb::Session::Manager do
       session = Pocketrb::Session::Session.new(key: "persisted")
       manager.save(session)
 
-      # Clear memory
-      manager.instance_variable_get(:@sessions).clear
-
-      keys = manager.list_keys
+      keys = described_class.new(storage_dir: storage_dir).list_keys
 
       expect(keys).to include("persisted")
     end
 
     it "returns unique keys from both memory and disk" do
-      manager.get_or_create("memory_only")
-
       session = Pocketrb::Session::Session.new(key: "disk_only")
-      manager.save(session)
-      manager.instance_variable_get(:@sessions).delete("disk_only")
+      described_class.new(storage_dir: storage_dir).save(session)
+      manager.get_or_create("memory_only")
 
       keys = manager.list_keys
 
@@ -223,9 +215,7 @@ RSpec.describe Pocketrb::Session::Manager do
       session.add_message(role: "user", content: "User message")
       manager.save(session)
 
-      # Clear cache and reload
-      manager.instance_variable_get(:@sessions).clear
-      loaded = manager.get("test:user")
+      loaded = described_class.new(storage_dir: storage_dir).get("test:user")
 
       expect(loaded.messages.first.role).to eq(Pocketrb::Providers::Role::USER)
       expect(loaded.messages.first.content).to eq("User message")
@@ -236,8 +226,7 @@ RSpec.describe Pocketrb::Session::Manager do
       session.add_message(role: "assistant", content: "Assistant response")
       manager.save(session)
 
-      manager.instance_variable_get(:@sessions).clear
-      loaded = manager.get("test:assistant")
+      loaded = described_class.new(storage_dir: storage_dir).get("test:assistant")
 
       expect(loaded.messages.first.role).to eq(Pocketrb::Providers::Role::ASSISTANT)
       expect(loaded.messages.first.content).to eq("Assistant response")
@@ -253,8 +242,7 @@ RSpec.describe Pocketrb::Session::Manager do
       session.add_message(role: "assistant", content: "Using tool", tool_calls: [tool_call])
       manager.save(session)
 
-      manager.instance_variable_get(:@sessions).clear
-      loaded = manager.get("test:tools")
+      loaded = described_class.new(storage_dir: storage_dir).get("test:tools")
 
       expect(loaded.messages.first.tool_calls.length).to eq(1)
       expect(loaded.messages.first.tool_calls.first.name).to eq("read_file")
@@ -270,8 +258,7 @@ RSpec.describe Pocketrb::Session::Manager do
       )
       manager.save(session)
 
-      manager.instance_variable_get(:@sessions).clear
-      loaded = manager.get("test:result")
+      loaded = described_class.new(storage_dir: storage_dir).get("test:result")
 
       expect(loaded.messages.first.role).to eq(Pocketrb::Providers::Role::TOOL)
       expect(loaded.messages.first.tool_call_id).to eq("call_123")
@@ -295,8 +282,7 @@ RSpec.describe Pocketrb::Session::Manager do
       session.add_message(role: "user", content: invalid_string)
       manager.save(session)
 
-      manager.instance_variable_get(:@sessions).clear
-      loaded = manager.get("test:utf8")
+      loaded = described_class.new(storage_dir: storage_dir).get("test:utf8")
 
       expect(loaded.messages.first.content).to be_a(String)
       expect(loaded.messages.first.content.valid_encoding?).to be true
