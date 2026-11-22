@@ -3,6 +3,7 @@
 require "base64"
 require "faraday"
 require "json"
+require "uri"
 
 module Pocketrb
   module Providers
@@ -22,6 +23,9 @@ module Pocketrb
         meta-llama/llama-3.1-70b-instruct
         mistralai/mistral-large
       ].freeze
+
+      # Audio formats the API expects, by MIME subtype, where the two differ
+      AUDIO_FORMATS = { "mpeg" => "mp3", "x-wav" => "wav", "wave" => "wav", "x-m4a" => "m4a", "mp4" => "m4a" }.freeze
 
       # Provider name
       # @return [Symbol]
@@ -204,7 +208,7 @@ module Pocketrb
         return attachment_text(media) unless media
 
         if media.image? && Media::Processor::VISION_IMAGE_TYPES.include?(media.mime_type)
-          url = remote_url?(media.path) && !media.data ? media.path : data_uri(media)
+          url = http_url?(media.path) && !media.data ? media.path : data_uri(media)
           return url ? { type: "image_url", image_url: { url: url } } : attachment_text(media)
         end
 
@@ -227,7 +231,7 @@ module Pocketrb
       # @return [String, nil] base64 data, or nil when neither is available
       def base64_data(media)
         return media.data if media.data
-        return nil if media.path.nil? || remote_url?(media.path) || !File.file?(media.path)
+        return nil if media.path.nil? || http_url?(media.path) || !File.file?(media.path)
 
         Base64.strict_encode64(File.binread(media.path))
       end
@@ -247,14 +251,17 @@ module Pocketrb
         subtype = media.mime_type.to_s.split("/")[1]
         return nil if subtype.nil? || subtype.empty?
 
-        { "mpeg" => "mp3", "x-wav" => "wav", "wave" => "wav", "x-m4a" => "m4a", "mp4" => "m4a" }.fetch(subtype, subtype)
+        AUDIO_FORMATS.fetch(subtype, subtype)
       end
 
-      # Check whether a media path is an http(s) URL
-      # @param path [String, nil] file path or URL
+      # Check that a value is an http(s) URL with a host
+      # @param value [String, nil] URL or file path to check
       # @return [Boolean]
-      def remote_url?(path)
-        path.to_s.start_with?("http://", "https://")
+      def http_url?(value)
+        uri = URI.parse(value.to_s)
+        uri.is_a?(URI::HTTP) && !uri.host.to_s.empty?
+      rescue URI::InvalidURIError
+        false
       end
 
       # Text part that stands in for media the API cannot take
