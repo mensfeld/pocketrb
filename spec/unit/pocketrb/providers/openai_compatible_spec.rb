@@ -179,6 +179,20 @@ RSpec.describe Pocketrb::Providers::OpenAICompatible do
     end
   end
 
+  describe "#chat with media" do
+    it "sends an image as an image_url part instead of a raw media block" do
+      image = Pocketrb::Bus::Media.new(type: :image, path: "/tmp/x.png", mime_type: "image/png", data: "QUJD")
+      described_class.new(config).chat(messages: [Pocketrb::Providers::Message.user("Look", media: [image])])
+
+      expect(WebMock).to(have_requested(:post, endpoint).with do |req|
+        JSON.parse(req.body, symbolize_names: true)[:messages][0][:content] == [
+          { type: "text", text: "Look" },
+          { type: "image_url", image_url: { url: "data:image/png;base64,QUJD" } }
+        ]
+      end)
+    end
+  end
+
   describe "#chat_stream" do
     before do
       events = [
