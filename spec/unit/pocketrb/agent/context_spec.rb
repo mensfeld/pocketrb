@@ -105,7 +105,7 @@ RSpec.describe Pocketrb::Agent::Context do
         role: "user",
         content: [
           { type: "text", text: "Look at this" },
-          { type: "media", media: { filename: "image.png" } }
+          { type: "media", media: { type: :image, filename: "image.png" } }
         ]
       )
 
@@ -184,6 +184,42 @@ RSpec.describe Pocketrb::Agent::Context do
 
       # History message should have placeholder
       expect(messages[1].content).to include("[Previous image: test.jpg]")
+    end
+
+    it "labels earlier audio and file attachments by their type" do
+      audio = Pocketrb::Bus::Media.new(type: :audio, path: "/tmp/voice.ogg", mime_type: "audio/ogg", filename: "voice.ogg")
+      file = Pocketrb::Bus::Media.new(type: :file, path: "/tmp/doc.pdf", mime_type: "application/pdf", filename: "doc.pdf")
+
+      msg = Pocketrb::Providers::Message.user("Listen and read", media: [audio, file])
+      messages = context.build_messages(history: [msg], current: "What now?")
+
+      expect(messages[1].content).to eq("Listen and read\n[Previous audio: voice.ogg]\n[Previous file: doc.pdf]")
+    end
+
+    it "labels reloaded session media blocks by their type" do
+      msg = Pocketrb::Providers::Message.new(
+        role: "user",
+        content: [
+          { type: "media", media: { type: :audio, path: "/tmp/voice.ogg", filename: "voice.ogg" } },
+          { type: "media", media: { type: :file, path: "/tmp/doc.pdf", filename: "doc.pdf" } }
+        ]
+      )
+      messages = context.build_messages(history: [msg], current: "What now?")
+
+      expect(messages[1].content).to eq("[Previous audio: voice.ogg]\n[Previous file: doc.pdf]")
+    end
+
+    it "labels media blocks without a type as media" do
+      msg = Pocketrb::Providers::Message.new(
+        role: "user",
+        content: [
+          { type: "media", media: { filename: "x.bin" } },
+          { type: "media", media: nil }
+        ]
+      )
+      messages = context.build_messages(history: [msg], current: "What now?")
+
+      expect(messages[1].content).to eq("[Previous media: x.bin]\n[Previous media: attachment]")
     end
 
     it "preserves text-only messages unchanged" do

@@ -7,10 +7,23 @@ module Pocketrb
   class CLI < Thor
     include Thor::Actions
 
-    # Configures Thor to exit with error status on command failure
-    # @return [Boolean] true to exit on failure
-    def self.exit_on_failure?
-      true
+    class << self
+      # Configures Thor to exit with error status on command failure
+      # @return [Boolean] true to exit on failure
+      def exit_on_failure?
+        true
+      end
+
+      # Runs the CLI, printing configuration errors without a backtrace
+      # @param given_args [Array<String>] command-line arguments
+      # @param config [Hash] Thor configuration
+      # @return [void]
+      def start(given_args = ARGV, config = {})
+        super
+      rescue ConfigurationError => e
+        Thor::Base.shell.new.error("Error: #{e.message}")
+        exit 1
+      end
     end
 
     # Global options available to all commands
