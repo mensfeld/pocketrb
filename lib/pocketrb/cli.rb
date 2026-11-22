@@ -13,7 +13,7 @@ module Pocketrb
       true
     end
 
-    # Runs the CLI, printing configuration errors as one line instead of a backtrace
+    # Runs the CLI, printing configuration errors without a backtrace
     # @param given_args [Array<String>] command-line arguments
     # @param config [Hash] Thor configuration
     # @return [void]
