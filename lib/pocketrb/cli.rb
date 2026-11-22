@@ -13,6 +13,17 @@ module Pocketrb
       true
     end
 
+    # Runs the CLI, printing configuration errors as one line instead of a backtrace
+    # @param given_args [Array<String>] command-line arguments
+    # @param config [Hash] Thor configuration
+    # @return [void]
+    def self.start(given_args = ARGV, config = {})
+      super
+    rescue ConfigurationError => e
+      Thor::Base.shell.new.error("Error: #{e.message}")
+      exit 1
+    end
+
     # Global options available to all commands
     class_option :workspace, type: :string, aliases: "-w",
                              desc: "Workspace directory for file access (default: current directory)"
