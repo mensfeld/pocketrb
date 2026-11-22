@@ -215,7 +215,8 @@ module Pocketrb
 
         if media.type == :audio || Media::Processor::AUDIO_TYPES.include?(media.mime_type)
           data = base64_data(media)
-          return data ? { type: "input_audio", input_audio: { data: data, format: audio_format(media) } } : attachment_text(media)
+          format = audio_format(media)
+          return data && format ? { type: "input_audio", input_audio: { data: data, format: format } } : attachment_text(media)
         end
 
         attachment_text(media)
@@ -241,10 +242,12 @@ module Pocketrb
 
       # Audio format name the API expects, derived from the MIME type
       # @param media [Bus::Media] audio attachment
-      # @return [String] format such as "mp3", "wav" or "ogg"
+      # @return [String, nil] format such as "mp3", "wav" or "ogg", or nil without a MIME subtype
       def audio_format(media)
-        subtype = media.mime_type.to_s.split("/").last.to_s
-        { "mpeg" => "mp3", "x-wav" => "wav", "wave" => "wav", "x-m4a" => "m4a" }.fetch(subtype, subtype)
+        subtype = media.mime_type.to_s.split("/")[1]
+        return nil if subtype.nil? || subtype.empty?
+
+        { "mpeg" => "mp3", "x-wav" => "wav", "wave" => "wav", "x-m4a" => "m4a", "mp4" => "m4a" }.fetch(subtype, subtype)
       end
 
       # Check whether a media path is an http(s) URL

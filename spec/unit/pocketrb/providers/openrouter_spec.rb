@@ -293,6 +293,36 @@ RSpec.describe Pocketrb::Providers::OpenRouter do
       expect(WebMock).to sent?({ type: "text", text: "[attachment: gone.png]" })
     end
 
+    it "sends a text part for an image type the API cannot take" do
+      chat_with(media(:image, "image/svg+xml", filename: "logo.svg"))
+
+      expect(WebMock).to sent?({ type: "text", text: "[attachment: logo.svg]" })
+    end
+
+    it "sends a text part for a PDF file that does not exist" do
+      chat_with(media(:file, "application/pdf", data: nil, filename: "gone.pdf"))
+
+      expect(WebMock).to sent?({ type: "text", text: "[attachment: gone.pdf]" })
+    end
+
+    it "sends a text part for an audio file that does not exist" do
+      chat_with(media(:audio, "audio/mpeg", data: nil, filename: "gone.mp3"))
+
+      expect(WebMock).to sent?({ type: "text", text: "[attachment: gone.mp3]" })
+    end
+
+    it "sends audio/mp4 as m4a" do
+      chat_with(media(:audio, "audio/mp4"))
+
+      expect(WebMock).to sent?({ type: "input_audio", input_audio: { data: "QUJD", format: "m4a" } })
+    end
+
+    it "sends a text part for audio without a MIME subtype" do
+      chat_with(media(:audio, "audio", filename: "voice"))
+
+      expect(WebMock).to sent?({ type: "text", text: "[attachment: voice]" })
+    end
+
     it "never sends a raw media block" do
       chat_with(media(:file, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", filename: "a.docx"))
 
