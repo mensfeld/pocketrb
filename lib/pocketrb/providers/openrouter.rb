@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "base64"
 require "faraday"
 require "json"
 
@@ -153,7 +154,7 @@ module Pocketrb
         when Role::SYSTEM
           { role: "system", content: message.content }
         when Role::USER
-          { role: "user", content: message.content }
+          { role: "user", content: format_user_content(message.content) }
         when Role::ASSISTANT
           msg = { role: "assistant", content: message.content }
           if message.tool_calls&.any?
@@ -175,6 +176,98 @@ module Pocketrb
         else
           raise ArgumentError, "Unknown role: #{message.role}"
         end
+      end
+
+      # Format user message content, mapping media blocks to chat completions content parts
+      # @param content [String, Array, Object] raw user content
+      # @return [String, Array<Hash>] text or content parts
+      def format_user_content(content)
+        return content unless content.is_a?(Array)
+
+        content.map do |block|
+          if block.is_a?(Hash) && block[:type] == "media"
+            format_media_part(block[:media])
+          elsif block.is_a?(Hash) && block[:type] == "text"
+            { type: "text", text: block[:text] }
+          elsif block.is_a?(String)
+            { type: "text", text: block }
+          else
+            block
+          end
+        end
+      end
+
+      # Format a media attachment as an image, file or audio content part
+      # @param media [Bus::Media, nil] attachment with base64 data, a file path or an image URL
+      # @return [Hash] content part, or a text part when the media cannot be sent
+      def format_media_part(media)
+        return attachment_text(media) unless media
+
+        if media.image? && Media::Processor::VISION_IMAGE_TYPES.include?(media.mime_type)
+          url = remote_url?(media.path) && !media.data ? media.path : data_uri(media)
+          return url ? { type: "image_url", image_url: { url: url } } : attachment_text(media)
+        end
+
+        if media.mime_type == "application/pdf"
+          uri = data_uri(media)
+          return uri ? { type: "file", file: { filename: attachment_name(media), file_data: uri } } : attachment_text(media)
+        end
+
+        if media.type == :audio || Media::Processor::AUDIO_TYPES.include?(media.mime_type)
+          data = base64_data(media)
+          return data ? { type: "input_audio", input_audio: { data: data, format: audio_format(media) } } : attachment_text(media)
+        end
+
+        attachment_text(media)
+      end
+
+      # Base64 data of a media attachment, from inline data or a local file
+      # @param media [Bus::Media] attachment
+      # @return [String, nil] base64 data, or nil when neither is available
+      def base64_data(media)
+        return media.data if media.data
+        return nil if media.path.nil? || remote_url?(media.path) || !File.file?(media.path)
+
+        Base64.strict_encode64(File.binread(media.path))
+      end
+
+      # Data URI of a media attachment
+      # @param media [Bus::Media] attachment
+      # @return [String, nil] data URI, or nil when no data is available
+      def data_uri(media)
+        data = base64_data(media)
+        data && "data:#{media.mime_type};base64,#{data}"
+      end
+
+      # Audio format name the API expects, derived from the MIME type
+      # @param media [Bus::Media] audio attachment
+      # @return [String] format such as "mp3", "wav" or "ogg"
+      def audio_format(media)
+        subtype = media.mime_type.to_s.split("/").last.to_s
+        { "mpeg" => "mp3", "x-wav" => "wav", "wave" => "wav", "x-m4a" => "m4a" }.fetch(subtype, subtype)
+      end
+
+      # Check whether a media path is an http(s) URL
+      # @param path [String, nil] file path or URL
+      # @return [Boolean]
+      def remote_url?(path)
+        path.to_s.start_with?("http://", "https://")
+      end
+
+      # Text part that stands in for media the API cannot take
+      # @param media [Bus::Media, nil] attachment
+      # @return [Hash] text content part
+      def attachment_text(media)
+        { type: "text", text: "[attachment: #{attachment_name(media)}]" }
+      end
+
+      # Display name of a media attachment
+      # @param media [Bus::Media, nil] attachment
+      # @return [String] filename, path basename or "file"
+      def attachment_name(media)
+        return "file" unless media
+
+        media.filename || (media.path && File.basename(media.path.to_s)) || "file"
       end
 
       # Handle HTTP response, raising on errors

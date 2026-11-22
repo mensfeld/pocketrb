@@ -222,6 +222,84 @@ RSpec.describe Pocketrb::Providers::OpenRouter do
     end
   end
 
+  describe "#chat with media" do
+    let(:url) { "https://openrouter.ai/api/v1/chat/completions" }
+
+    before do
+      stub_request(:post, url).to_return(
+        status: 200,
+        body: { "choices" => [{ "message" => { "content" => "ok" } }] }.to_json
+      )
+    end
+
+    def chat_with(media)
+      provider.chat(messages: [Pocketrb::Providers::Message.user("Look", media: [media])])
+    end
+
+    def media(type, mime_type, path: "/nonexistent/file", data: "QUJD", filename: "file.bin")
+      Pocketrb::Bus::Media.new(type: type, path: path, mime_type: mime_type, filename: filename, data: data)
+    end
+
+    def sent?(part)
+      have_requested(:post, url).with do |req|
+        JSON.parse(req.body, symbolize_names: true)[:messages][0][:content] == [{ type: "text", text: "Look" }, part]
+      end
+    end
+
+    it "sends an image with base64 data as an image_url data URI" do
+      chat_with(media(:image, "image/png"))
+
+      expect(WebMock).to sent?({ type: "image_url", image_url: { url: "data:image/png;base64,QUJD" } })
+    end
+
+    it "sends an image with a URL path and no data as an image_url URL" do
+      chat_with(media(:image, "image/jpeg", path: "https://example.com/cat.jpg", data: nil))
+
+      expect(WebMock).to sent?({ type: "image_url", image_url: { url: "https://example.com/cat.jpg" } })
+    end
+
+    it "reads a local image file into a data URI" do
+      Tempfile.create(["img", ".png"]) do |file|
+        file.binmode
+        file.write("ABC")
+        file.flush
+        chat_with(media(:image, "image/png", path: file.path, data: nil))
+      end
+
+      expect(WebMock).to sent?({ type: "image_url", image_url: { url: "data:image/png;base64,QUJD" } })
+    end
+
+    it "sends a PDF as a file part" do
+      chat_with(media(:file, "application/pdf", filename: "doc.pdf"))
+
+      expect(WebMock).to sent?({ type: "file", file: { filename: "doc.pdf", file_data: "data:application/pdf;base64,QUJD" } })
+    end
+
+    it "sends audio as an input_audio part" do
+      chat_with(media(:audio, "audio/mpeg"))
+
+      expect(WebMock).to sent?({ type: "input_audio", input_audio: { data: "QUJD", format: "mp3" } })
+    end
+
+    it "sends a text part for media with no content part mapping" do
+      chat_with(media(:video, "video/mp4", filename: "clip.mp4"))
+
+      expect(WebMock).to sent?({ type: "text", text: "[attachment: clip.mp4]" })
+    end
+
+    it "sends a text part for an image file that does not exist" do
+      chat_with(media(:image, "image/png", data: nil, filename: "gone.png"))
+
+      expect(WebMock).to sent?({ type: "text", text: "[attachment: gone.png]" })
+    end
+
+    it "never sends a raw media block" do
+      chat_with(media(:file, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", filename: "a.docx"))
+
+      expect(WebMock).to sent?({ type: "text", text: "[attachment: a.docx]" })
+    end
+  end
+
   describe "message formatting" do
     it "formats system messages" do
       msg = Pocketrb::Providers::Message.system("You are helpful")
