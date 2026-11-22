@@ -12,6 +12,7 @@ RSpec.describe Pocketrb::CLI do
   describe "configuration errors" do
     def run_cli(*args)
       Dir.mktmpdir do |workspace|
+        allow(Dir).to receive(:home).and_return(workspace)
         described_class.start(["chat", "--workspace", workspace, *args])
       end
     rescue SystemExit => e
