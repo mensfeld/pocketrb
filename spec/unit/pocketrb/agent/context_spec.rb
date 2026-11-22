@@ -209,6 +209,19 @@ RSpec.describe Pocketrb::Agent::Context do
       expect(messages[1].content).to eq("[Previous audio: voice.ogg]\n[Previous file: doc.pdf]")
     end
 
+    it "labels media blocks without a type as media" do
+      msg = Pocketrb::Providers::Message.new(
+        role: "user",
+        content: [
+          { type: "media", media: { filename: "x.bin" } },
+          { type: "media", media: nil }
+        ]
+      )
+      messages = context.build_messages(history: [msg], current: "What now?")
+
+      expect(messages[1].content).to eq("[Previous media: x.bin]\n[Previous media: attachment]")
+    end
+
     it "preserves text-only messages unchanged" do
       msg = Pocketrb::Providers::Message.user("Text only")
       messages = context.build_messages(history: [msg], current: "Follow-up")
